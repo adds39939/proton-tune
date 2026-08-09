@@ -1,7 +1,7 @@
 using Microsoft.AspNetCore.Components;
 using ProtonTune.Services.Steam;
 
-namespace ProtonTune.UI.Components;
+namespace ProtonTune.UI.Components.Configuration;
 
 /// <summary>
 /// Shows how ProtonTune is reading the local Steam installation.

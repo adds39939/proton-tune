@@ -2,7 +2,7 @@ using Microsoft.AspNetCore.Components;
 using ProtonTune.Core.Steam;
 using ProtonTune.Services.Steam;
 
-namespace ProtonTune.UI.Components;
+namespace ProtonTune.UI.Components.Library;
 
 /// <summary>
 /// Lists the Steam apps installed on this machine, filtered by a search term and by whether
@@ -23,6 +23,9 @@ public partial class GameLibrary : ComponentBase
     private static readonly LibraryViewMode[] ViewModes = Enum.GetValues<LibraryViewMode>();
 
     private LibraryViewMode ViewMode { get; set; } = LibraryViewMode.Grid;
+
+    /// <summary>The entry whose configuration dialog is open, or null when none is.</summary>
+    private SteamLibraryEntry? SelectedApp { get; set; }
 
     private bool IsLoading { get; set; } = true;
 
@@ -83,6 +86,10 @@ public partial class GameLibrary : ComponentBase
     private void OnShowToolsChanged(ChangeEventArgs args) => ShowTools = args.Value is true;
 
     private void SetViewMode(LibraryViewMode mode) => ViewMode = mode;
+
+    private void Select(SteamLibraryEntry entry) => SelectedApp = entry;
+
+    private void CloseDialog() => SelectedApp = null;
 
     private bool MatchesSearch(SteamLibraryEntry app)
     {

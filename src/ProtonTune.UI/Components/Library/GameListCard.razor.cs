@@ -1,7 +1,7 @@
 using Microsoft.AspNetCore.Components;
 using ProtonTune.Core.Steam;
 
-namespace ProtonTune.UI.Components;
+namespace ProtonTune.UI.Components.Library;
 
 /// <summary>
 /// A library entry as a compact row, which fits more games on screen and lines their metadata up
@@ -14,4 +14,10 @@ public partial class GameListCard : ComponentBase
     [Parameter]
     [EditorRequired]
     public required SteamLibraryEntry Entry { get; set; }
+
+    /// <summary>Raised when the row is chosen for configuration.</summary>
+    [Parameter]
+    public EventCallback<SteamLibraryEntry> OnSelect { get; set; }
+
+    private Task Select() => OnSelect.InvokeAsync(Entry);
 }

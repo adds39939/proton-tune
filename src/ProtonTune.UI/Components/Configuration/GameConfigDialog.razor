@@ -1,0 +1,47 @@
+<div class="backdrop" @onclick="Close" @onkeydown="OnKeyDown">
+    @* Clicks inside the panel must not reach the backdrop's dismiss handler. *@
+    <div class="panel"
+         role="dialog"
+         aria-modal="true"
+         aria-label="@($"Configure {Entry.Name}")"
+         @onclick:stopPropagation="true">
+
+        <header class="panel-header">
+            <GameArtwork AppId="@Entry.AppId" Name="@Entry.Name" Kind="GameArtworkKind.Header"/>
+
+            <div class="panel-heading">
+                <h2 class="panel-title" title="@Entry.Name">@Entry.Name</h2>
+                <p class="panel-subtitle">App ID @Entry.AppId</p>
+            </div>
+        </header>
+
+        <div class="panel-body">
+            <div class="field">
+                <label for="launch-options">Launch options</label>
+                <input id="launch-options"
+                       class="field-input"
+                       type="text"
+                       placeholder="%command%"
+                       disabled/>
+            </div>
+
+            <div class="field">
+                <label for="environment">Environment variables</label>
+                <textarea id="environment"
+                          class="field-input field-textarea"
+                          rows="4"
+                          placeholder="PROTON_ENABLE_NVAPI=1"
+                          disabled></textarea>
+            </div>
+
+            <p class="panel-note">
+                Nothing here is wired up yet — these fields are a placeholder for the launch
+                options and environment variables ProtonTune will write to Steam.
+            </p>
+        </div>
+
+        <footer class="panel-footer">
+            <button type="button" class="button" @onclick="Close" autofocus>Close</button>
+        </footer>
+    </div>
+</div>

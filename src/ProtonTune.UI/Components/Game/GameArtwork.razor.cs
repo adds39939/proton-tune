@@ -2,7 +2,7 @@ using Microsoft.AspNetCore.Components;
 using ProtonTune.Core.Steam;
 using ProtonTune.Services.Steam;
 
-namespace ProtonTune.UI.Components;
+namespace ProtonTune.UI.Components.Game;
 
 /// <summary>
 /// Cover art for an app, falling back to a lettered tile. Steam publishes no artwork for

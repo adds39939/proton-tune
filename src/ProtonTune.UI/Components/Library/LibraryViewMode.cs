@@ -1,4 +1,4 @@
-namespace ProtonTune.UI.Components;
+namespace ProtonTune.UI.Components.Library;
 
 /// <summary>
 /// How the library presents its entries.

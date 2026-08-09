@@ -1,7 +1,7 @@
 using Microsoft.AspNetCore.Components;
 using ProtonTune.Core.Steam;
 
-namespace ProtonTune.UI.Components;
+namespace ProtonTune.UI.Components.Game;
 
 /// <summary>
 /// The badges that qualify a library entry — whether it is a compatibility tool rather than a

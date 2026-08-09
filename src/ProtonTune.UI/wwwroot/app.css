@@ -23,6 +23,22 @@
     box-sizing: border-box;
 }
 
+/*
+ * Content for assistive technology only. Used by click targets that cover a card, which have no
+ * visible text of their own but still need an accessible name.
+ */
+.sr-only {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    margin: -1px;
+    padding: 0;
+    overflow: hidden;
+    white-space: nowrap;
+    border: 0;
+    clip-path: inset(50%);
+}
+
 html,
 body {
     height: 100%;

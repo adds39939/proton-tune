@@ -1,4 +1,5 @@
 .game-row {
+    position: relative;
     display: flex;
     align-items: center;
     gap: 14px;
@@ -63,4 +64,19 @@
     font-size: 13px;
     font-variant-numeric: tabular-nums;
     white-space: nowrap;
+}
+
+.card-overlay {
+    position: absolute;
+    inset: 0;
+    padding: 0;
+    border: none;
+    border-radius: 10px;
+    background: none;
+    cursor: pointer;
+}
+
+.card-overlay:focus-visible {
+    outline: 2px solid var(--accent);
+    outline-offset: 2px;
 }

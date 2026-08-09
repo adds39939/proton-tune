@@ -53,7 +53,7 @@
         <ul class="game-grid">
             @foreach (var app in VisibleApps)
             {
-                <GameGridCard Entry="@app" @key="app.AppId"/>
+                <GameGridCard Entry="@app" OnSelect="Select" @key="app.AppId"/>
             }
         </ul>
     }
@@ -62,8 +62,13 @@
         <ul class="game-list">
             @foreach (var app in VisibleApps)
             {
-                <GameListCard Entry="@app" @key="app.AppId"/>
+                <GameListCard Entry="@app" OnSelect="Select" @key="app.AppId"/>
             }
         </ul>
+    }
+
+    @if (SelectedApp is not null)
+    {
+        <GameConfigDialog Entry="@SelectedApp" OnClose="CloseDialog"/>
     }
 </section>

@@ -26,4 +26,12 @@
             <dd>@LastPlayedDisplay.Format(Entry.LastPlayed)</dd>
         </div>
     </dl>
+
+    @*
+        A definition list cannot legally sit inside a button, so the click target is an overlay
+        stretched across the row rather than a wrapper around its content.
+    *@
+    <button type="button" class="card-overlay" @onclick="Select">
+        <span class="sr-only">Configure @Entry.Name</span>
+    </button>
 </li>

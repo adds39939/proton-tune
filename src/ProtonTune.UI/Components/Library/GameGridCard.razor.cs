@@ -1,7 +1,7 @@
 using Microsoft.AspNetCore.Components;
 using ProtonTune.Core.Steam;
 
-namespace ProtonTune.UI.Components;
+namespace ProtonTune.UI.Components.Library;
 
 /// <summary>
 /// A library entry as a cover-art tile, the way Steam presents a library.
@@ -13,4 +13,10 @@ public partial class GameGridCard : ComponentBase
     [Parameter]
     [EditorRequired]
     public required SteamLibraryEntry Entry { get; set; }
+
+    /// <summary>Raised when the card is chosen for configuration.</summary>
+    [Parameter]
+    public EventCallback<SteamLibraryEntry> OnSelect { get; set; }
+
+    private Task Select() => OnSelect.InvokeAsync(Entry);
 }
