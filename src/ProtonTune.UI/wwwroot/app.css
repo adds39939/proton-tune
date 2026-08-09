@@ -29,6 +29,10 @@ body {
     margin: 0;
 }
 
+h1:focus {
+    outline: none;
+}
+
 body {
     background: var(--surface-0);
     color: var(--text);

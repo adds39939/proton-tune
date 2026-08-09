@@ -1,10 +1,11 @@
-﻿<div class="app-shell">
-    <div class="titlebar">
-        <span class="wordmark">Proton<strong>Tune</strong></span>
-        <span class="titlebar-hint">Launch options and environment variables for Steam on Linux</span>
-    </div>
-
-    <main class="content">
-        <GameLibrary/>
-    </main>
-</div>
+﻿<Router AppAssembly="@typeof(App).Assembly">
+    <Found Context="routeData">
+        <RouteView RouteData="@routeData" DefaultLayout="@typeof(MainLayout)"/>
+        <FocusOnNavigate RouteData="@routeData" Selector="h1"/>
+    </Found>
+    <NotFound>
+        <LayoutView Layout="@typeof(MainLayout)">
+            <p class="not-found">That page does not exist.</p>
+        </LayoutView>
+    </NotFound>
+</Router>
