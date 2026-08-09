@@ -5,4 +5,7 @@
     <Project Path="src/ProtonTune.Services/ProtonTune.Services.csproj" />
     <Project Path="src/ProtonTune.UI/ProtonTune.UI.csproj" />
   </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/ProtonTune.Core.Tests/ProtonTune.Core.Tests.csproj" />
+  </Folder>
 </Solution>
