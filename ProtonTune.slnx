@@ -1,0 +1,6 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/ProtonTune.App/ProtonTune.App.csproj" />
+    <Project Path="src/ProtonTune.UI/ProtonTune.UI.csproj" />
+  </Folder>
+</Solution>

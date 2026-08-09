@@ -1,0 +1,34 @@
+﻿// See https://aka.ms/new-console-template for more information
+
+using Photino.Blazor;
+using ProtonTune.UI.DependencyExtensions;
+
+namespace ProtonTune.App;
+
+internal class Program
+{
+    [STAThread]
+    private static void Main(string[] args)
+    {
+        WebKitEnvironment.EnsureOsIsLinux();
+        WebKitEnvironment.DisableDmaBufRenderer();
+
+        var appBuilder = PhotinoBlazorAppBuilder.CreateDefault();
+
+        appBuilder.Services
+            .AddProtonTuneUI();
+        
+        appBuilder.RootComponents.Add<UI.App>("app");
+        
+        var app = appBuilder.Build();
+    
+        app.MainWindow.SetTitle("Proton Tune");
+
+        AppDomain.CurrentDomain.UnhandledException += (s, e) =>
+        {
+            app.MainWindow.ShowMessage("Unhandled Exception", e.ExceptionObject.ToString());
+        };
+    
+        app.Run();
+    }
+}
