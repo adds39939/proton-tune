@@ -1,0 +1,80 @@
+<section class="library">
+    <header class="library-header">
+        <div>
+            <h1>Library</h1>
+            <p class="library-subtitle">@SubtitleText</p>
+        </div>
+
+        <button class="button" @onclick="LoadAsync" disabled="@IsLoading">
+            @(IsLoading ? "Scanning…" : "Rescan")
+        </button>
+    </header>
+
+    <div class="library-filters">
+        <input class="search"
+               type="search"
+               placeholder="Search installed games…"
+               value="@SearchTerm"
+               @oninput="OnSearchChanged"/>
+
+        <label class="toggle">
+            <input type="checkbox" checked="@ShowTools" @onchange="OnShowToolsChanged"/>
+            <span>Show compatibility tools</span>
+        </label>
+    </div>
+
+    @if (IsLoading)
+    {
+        <p class="library-message">Scanning Steam libraries…</p>
+    }
+    else if (LoadError is not null)
+    {
+        <p class="library-message library-message-error">@LoadError</p>
+    }
+    else if (VisibleApps.Count == 0)
+    {
+        <p class="library-message">@EmptyMessage</p>
+    }
+    else
+    {
+        <ul class="game-grid">
+            @foreach (var app in VisibleApps)
+            {
+                <li class="game-card" @key="app.AppId">
+                    <div class="game-art" aria-hidden="true">@GetInitials(app.Name)</div>
+
+                    <div class="game-body">
+                        <div class="game-title-row">
+                            <h2 class="game-title" title="@app.Name">@app.Name</h2>
+                            @if (app.Kind == SteamAppKind.Tool)
+                            {
+                                <span class="tag tag-tool">Tool</span>
+                            }
+                            @if (!app.IsFullyInstalled)
+                            {
+                                <span class="tag tag-warning">Incomplete</span>
+                            }
+                        </div>
+
+                        <dl class="game-meta">
+                            <div>
+                                <dt>App ID</dt>
+                                <dd>@app.AppId</dd>
+                            </div>
+                            <div>
+                                <dt>Size</dt>
+                                <dd>@FormatSize(app.SizeOnDisk)</dd>
+                            </div>
+                            <div>
+                                <dt>Last played</dt>
+                                <dd>@FormatLastPlayed(app.LastPlayed)</dd>
+                            </div>
+                        </dl>
+
+                        <p class="game-path" title="@app.InstallDirectory">@Abbreviate(app.InstallDirectory)</p>
+                    </div>
+                </li>
+            }
+        </ul>
+    }
+</section>

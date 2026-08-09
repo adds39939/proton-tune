@@ -1,0 +1,39 @@
+/*
+ * Global styles only: design tokens, the reset, and document-level defaults.
+ * Anything that belongs to a single component lives in that component's .razor.css.
+ */
+
+:root {
+    --surface-0: #10141c;
+    --surface-1: #171c26;
+    --surface-2: #1f2634;
+    --border: #2b3446;
+    --text: #e7ecf4;
+    --text-muted: #8b97ac;
+    --accent: #6f8fff;
+    --accent-soft: rgba(111, 143, 255, 0.16);
+    --warning: #f0b429;
+    --warning-soft: rgba(240, 180, 41, 0.16);
+    --danger: #ff7b72;
+
+    color-scheme: dark;
+}
+
+* {
+    box-sizing: border-box;
+}
+
+html,
+body {
+    height: 100%;
+    margin: 0;
+}
+
+body {
+    background: var(--surface-0);
+    color: var(--text);
+    font-family: "Inter", "Segoe UI", system-ui, -apple-system, sans-serif;
+    font-size: 14px;
+    line-height: 1.5;
+    -webkit-font-smoothing: antialiased;
+}

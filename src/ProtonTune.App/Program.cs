@@ -1,5 +1,7 @@
 ﻿// See https://aka.ms/new-console-template for more information
 
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
 using Photino.Blazor;
 using ProtonTune.Services.DependencyExtensions;
 using ProtonTune.UI.DependencyExtensions;
@@ -17,6 +19,7 @@ internal class Program
         var appBuilder = PhotinoBlazorAppBuilder.CreateDefault();
 
         appBuilder.Services
+            .AddLogging(logging => logging.AddConsole())
             .AddProtonTuneServices()
             .AddProtonTuneUI();
         
