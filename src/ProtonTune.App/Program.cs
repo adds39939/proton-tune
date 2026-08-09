@@ -25,7 +25,7 @@ internal class Program
         
         var app = appBuilder.Build();
     
-        app.MainWindow.SetTitle("Proton Tune");
+        app.MainWindow.SetTitle("ProtonTune");
 
         AppDomain.CurrentDomain.UnhandledException += (s, e) =>
         {
