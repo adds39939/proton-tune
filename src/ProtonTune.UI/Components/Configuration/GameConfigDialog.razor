@@ -119,15 +119,25 @@
                     else if (SelectedSection == RawSection)
                     {
                         <h3 class="section-title">Raw launch options</h3>
-                        <p class="section-note">Exactly what Steam has stored for this game.</p>
+                        <p class="section-note">
+                            The whole string, as Steam stores it. Editing here is the escape hatch for
+                            anything ProtonTune does not yet understand.
+                        </p>
 
-                        @if (Options.IsEmpty)
+                        <textarea class="raw-editor"
+                                  rows="6"
+                                  spellcheck="false"
+                                  placeholder="No launch options are set."
+                                  disabled="@IsSaving"
+                                  value="@Draft"
+                                  @oninput="OnDraftChanged"></textarea>
+
+                        @if (HasChanges)
                         {
-                            <p class="section-empty">No launch options are set.</p>
-                        }
-                        else
-                        {
-                            <pre class="raw">@Options.Format()</pre>
+                            <div class="preview">
+                                <span class="preview-label">Will be written as</span>
+                                <pre class="raw">@Preview</pre>
+                            </div>
                         }
                     }
                     else
@@ -150,7 +160,45 @@
             </div>
 
             <footer class="panel-footer">
-                <span class="panel-status">Read-only — ProtonTune cannot change these yet.</span>
+                <div class="footer-status">
+                    @if (SaveMessage is not null)
+                    {
+                        <span class="@(SaveFailed ? "status-error" : "status-success")">@SaveMessage</span>
+                    }
+                    else if (GameIsRunning)
+                    {
+                        <span class="status-warning">
+                            A game is running. Close it before changing launch options.
+                        </span>
+                    }
+                    else if (HasChanges && WillRestartSteam)
+                    {
+                        <span class="status-warning">
+                            Steam is running. Saving will close it and start it again — it keeps this
+                            file in memory and would otherwise overwrite the change on exit.
+                        </span>
+                    }
+                    else if (HasChanges)
+                    {
+                        <span>Unsaved changes.</span>
+                    }
+                </div>
+
+                <div class="footer-actions">
+                    <button type="button"
+                            class="button"
+                            disabled="@(!HasChanges || IsSaving)"
+                            @onclick="RevertDraft">
+                        Revert
+                    </button>
+
+                    <button type="button"
+                            class="button button-primary"
+                            disabled="@(!HasChanges || IsSaving || GameIsRunning)"
+                            @onclick="SaveAsync">
+                        @(IsSaving ? "Saving…" : WillRestartSteam ? "Save and restart Steam" : "Save")
+                    </button>
+                </div>
             </footer>
         }
     </div>

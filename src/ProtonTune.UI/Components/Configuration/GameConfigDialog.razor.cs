@@ -7,12 +7,12 @@ using ProtonTune.Services.Steam;
 namespace ProtonTune.UI.Components.Configuration;
 
 /// <summary>
-/// Per-game configuration, read from the launch options Steam already has stored.
+/// Per-game configuration, read from and written back to the launch options Steam has stored.
 /// </summary>
 /// <remarks>
-/// Read-only for now, deliberately. Everything the parser found is shown — recognised settings
-/// under their section, everything else under custom variables and the launch chain — so the
-/// parse can be checked against a real game before ProtonTune is given the ability to write.
+/// Only the raw string is editable for now. The typed controls come later; being able to edit the
+/// string directly is what exercises the whole write path, and it is the escape hatch when
+/// ProtonTune does not understand a setting.
 /// </remarks>
 public partial class GameConfigDialog : ComponentBase
 {
@@ -42,13 +42,36 @@ public partial class GameConfigDialog : ComponentBase
 
     private string SelectedSection { get; set; } = RawSection;
 
-    /// <summary>
-    /// Recognised settings that are actually set, grouped by section and ordered for display.
-    /// Categories with nothing set are left out rather than shown empty.
-    /// </summary>
     private IReadOnlyList<SettingSection> Sections { get; set; } = [];
 
-    /// <summary>Assignments ProtonTune has no definition for. Never dropped, just ungrouped.</summary>
+    /// <summary>What is in the editor, which may differ from what Steam has stored.</summary>
+    private string Draft { get; set; } = string.Empty;
+
+    /// <summary>What Steam has stored, to compare the draft against.</summary>
+    private string Saved { get; set; } = string.Empty;
+
+    private bool IsSaving { get; set; }
+
+    private string? SaveMessage { get; set; }
+
+    private bool SaveFailed { get; set; }
+
+    /// <summary>Whether the draft differs from what is stored.</summary>
+    private bool HasChanges => !string.Equals(Draft.Trim(), Saved, StringComparison.Ordinal);
+
+    /// <summary>
+    /// What would actually be written: the draft after a parse and format, which is what any
+    /// later typed editing would produce too. Showing this rather than the raw text means the
+    /// user approves the exact string, not an approximation of it.
+    /// </summary>
+    private string Preview => LaunchOptions.Parse(Draft).Format();
+
+    /// <summary>Whether saving now would close and reopen Steam.</summary>
+    private bool WillRestartSteam { get; set; }
+
+    /// <summary>Whether a game is running, which blocks saving entirely.</summary>
+    private bool GameIsRunning { get; set; }
+
     private IReadOnlyList<EnvironmentVariable> CustomVariables =>
         Options.Environment.Where(variable => SettingCatalog.Find(variable.Name) is null).ToList();
 
@@ -57,12 +80,17 @@ public partial class GameConfigDialog : ComponentBase
     {
         IsLoading = true;
         LoadError = null;
+        SaveMessage = null;
 
         try
         {
             Options = await LaunchOptionsService.GetAsync(Entry.AppId);
+            Saved = Options.Format();
+            Draft = Saved;
             Sections = BuildSections(Options);
             SelectedSection = Sections.Count > 0 ? Sections[0].Title : RawSection;
+
+            RefreshSteamState();
         }
         catch (Exception e)
         {
@@ -76,9 +104,6 @@ public partial class GameConfigDialog : ComponentBase
         }
     }
 
-    /// <summary>
-    /// Groups the assignments this game has set into the sections that have something to show.
-    /// </summary>
     private static IReadOnlyList<SettingSection> BuildSections(LaunchOptions options)
     {
         var known = options.Environment
@@ -98,14 +123,72 @@ public partial class GameConfigDialog : ComponentBase
 
     private void SelectSection(string section) => SelectedSection = section;
 
+    private void OnDraftChanged(ChangeEventArgs args)
+    {
+        Draft = args.Value?.ToString() ?? string.Empty;
+        SaveMessage = null;
+    }
+
+    private void RevertDraft()
+    {
+        Draft = Saved;
+        SaveMessage = null;
+    }
+
+    /// <summary>Re-checks Steam's state, which can change while the dialog is open.</summary>
+    private void RefreshSteamState()
+    {
+        GameIsRunning = LaunchOptionsService.IsGameRunning();
+        WillRestartSteam = LaunchOptionsService.RequiresSteamRestart();
+    }
+
+    private async Task SaveAsync()
+    {
+        IsSaving = true;
+        SaveMessage = null;
+
+        try
+        {
+            var result = await LaunchOptionsService.SaveAsync(Entry.AppId, Preview);
+
+            SaveFailed = !result.IsSuccess;
+
+            if (result.IsSuccess)
+            {
+                Saved = Preview;
+                Draft = Preview;
+                Options = LaunchOptions.Parse(Saved);
+                Sections = BuildSections(Options);
+
+                SaveMessage = result.SteamWasRestarted
+                    ? "Saved. Steam was closed and started again so the change would stick."
+                    : "Saved.";
+            }
+            else
+            {
+                SaveMessage = result.Message ?? "The launch options could not be saved.";
+            }
+        }
+        catch (Exception e)
+        {
+            SaveFailed = true;
+            SaveMessage = $"The launch options could not be saved: {e.Message}";
+        }
+        finally
+        {
+            IsSaving = false;
+            RefreshSteamState();
+        }
+    }
+
     private Task Close() => OnClose.InvokeAsync();
 
     /// <summary>
-    /// Dismisses on Escape. The close button takes focus when the dialog opens, so the key event
-    /// starts inside the panel and bubbles to the handler.
+    /// Dismisses on Escape, unless a save is in flight — Steam is mid-restart at that point and
+    /// closing the dialog would hide what is happening.
     /// </summary>
     private Task OnKeyDown(KeyboardEventArgs args) =>
-        args.Key == "Escape" ? Close() : Task.CompletedTask;
+        args.Key == "Escape" && !IsSaving ? Close() : Task.CompletedTask;
 
     /// <summary>One named group of settings in the sidebar.</summary>
     private sealed record SettingSection(string Title, IReadOnlyList<SettingValue> Settings);

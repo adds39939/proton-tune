@@ -7,5 +7,6 @@
   </Folder>
   <Folder Name="/tests/">
     <Project Path="tests/ProtonTune.Core.Tests/ProtonTune.Core.Tests.csproj" />
+    <Project Path="tests/ProtonTune.Services.Tests/ProtonTune.Services.Tests.csproj" />
   </Folder>
 </Solution>

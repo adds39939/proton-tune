@@ -11,8 +11,15 @@ namespace ProtonTune.Services.Steam;
 /// </remarks>
 public sealed class SteamLaunchOptionsService(
     ISteamInstallLocator installLocator,
+    ISteamClient steamClient,
     ILogger<SteamLaunchOptionsService> logger) : ISteamLaunchOptionsService
 {
+    /// <summary>
+    /// How long to wait for Steam to exit. It flushes its configuration on the way out, so this
+    /// covers a slow write rather than a hung process.
+    /// </summary>
+    private static readonly TimeSpan ShutdownTimeout = TimeSpan.FromSeconds(30);
+
     /// <inheritdoc />
     public async Task<LaunchOptions> GetAsync(uint appId, CancellationToken cancellationToken = default)
     {
@@ -23,33 +30,148 @@ public sealed class SteamLaunchOptionsService(
             return new LaunchOptions();
         }
 
-        var config = await SteamVdf.TryReadAsync(configPath, cancellationToken).ConfigureAwait(false);
-
-        if (config is null)
+        try
         {
-            logger.LogWarning("Could not read Steam user configuration at {ConfigPath}.", configPath);
+            var document = await File.ReadAllTextAsync(configPath, cancellationToken).ConfigureAwait(false);
+
+            return LaunchOptions.Parse(SteamConfigText.GetValue(document, PathTo(appId)));
+        }
+        catch (Exception e) when (e is IOException or UnauthorizedAccessException)
+        {
+            logger.LogWarning(e, "Could not read {ConfigPath}.", configPath);
 
             return new LaunchOptions();
         }
-
-        var apps = config
-            .GetObject("Software")?
-            .GetObject("Valve")?
-            .GetObject("Steam")?
-            .GetObject("apps");
-
-        if (apps is null)
-        {
-            logger.LogWarning("{ConfigPath} has no app section.", configPath);
-
-            return new LaunchOptions();
-        }
-
-        // A game with no launch options set has no key at all, which is not an error.
-        var launchOptions = apps.GetObject(appId.ToString())?.GetString("LaunchOptions");
-
-        return LaunchOptions.Parse(launchOptions);
     }
+
+    /// <inheritdoc />
+    public bool RequiresSteamRestart() => steamClient.IsRunning();
+
+    /// <inheritdoc />
+    public bool IsGameRunning() => steamClient.IsGameRunning();
+
+    /// <inheritdoc />
+    public async Task<LaunchOptionsSaveResult> SaveAsync(
+        uint appId,
+        string launchOptions,
+        CancellationToken cancellationToken = default)
+    {
+        var configPath = FindUserConfig();
+
+        if (configPath is null)
+        {
+            return new LaunchOptionsSaveResult(
+                LaunchOptionsSaveStatus.NoUserConfig,
+                "No Steam user configuration was found to write to.");
+        }
+
+        if (steamClient.IsGameRunning())
+        {
+            return new LaunchOptionsSaveResult(
+                LaunchOptionsSaveStatus.GameRunning,
+                "A game is running. Close it before changing launch options.");
+        }
+
+        var steamWasRunning = steamClient.IsRunning();
+
+        if (steamWasRunning && !await steamClient.ShutdownAsync(ShutdownTimeout, cancellationToken).ConfigureAwait(false))
+        {
+            return new LaunchOptionsSaveResult(
+                LaunchOptionsSaveStatus.SteamStillRunning,
+                $"Steam did not close within {ShutdownTimeout.TotalSeconds:0} seconds. Nothing was changed.");
+        }
+
+        try
+        {
+            // Read only now. Steam rewrites this file as it exits, so anything read before the
+            // shutdown is already stale and would undo whatever else changed in the meantime.
+            var document = await File.ReadAllTextAsync(configPath, cancellationToken).ConfigureAwait(false);
+            var updated = SteamConfigText.SetValue(document, PathTo(appId), launchOptions);
+
+            if (updated is null)
+            {
+                return Restart(new LaunchOptionsSaveResult(
+                    LaunchOptionsSaveStatus.ConfigUnrecognised,
+                    "The Steam configuration file was not in the expected format. Nothing was changed."));
+            }
+
+            var backupPath = await BackUpAsync(configPath, document, cancellationToken).ConfigureAwait(false);
+
+            await WriteAtomicallyAsync(configPath, updated, cancellationToken).ConfigureAwait(false);
+
+            var written = SteamConfigText.GetValue(
+                await File.ReadAllTextAsync(configPath, cancellationToken).ConfigureAwait(false),
+                PathTo(appId));
+
+            if (written != launchOptions)
+            {
+                return Restart(new LaunchOptionsSaveResult(
+                    LaunchOptionsSaveStatus.WriteFailed,
+                    $"The file was written but read back differently. The previous version is at {backupPath}.")
+                {
+                    BackupPath = backupPath
+                });
+            }
+
+            logger.LogInformation("Wrote launch options for {AppId}; previous configuration at {BackupPath}.",
+                appId, backupPath);
+
+            return Restart(new LaunchOptionsSaveResult(LaunchOptionsSaveStatus.Saved) { BackupPath = backupPath });
+        }
+        catch (Exception e) when (e is IOException or UnauthorizedAccessException)
+        {
+            logger.LogError(e, "Could not write {ConfigPath}.", configPath);
+
+            return Restart(new LaunchOptionsSaveResult(LaunchOptionsSaveStatus.WriteFailed, e.Message));
+        }
+
+        LaunchOptionsSaveResult Restart(LaunchOptionsSaveResult result)
+        {
+            // Steam goes back up however the write went, so the user is never left without it
+            // because ProtonTune failed.
+            if (steamWasRunning)
+            {
+                steamClient.Start();
+            }
+
+            return result with { SteamWasRestarted = steamWasRunning };
+        }
+    }
+
+    /// <summary>
+    /// Copies the configuration aside before it is changed, named so several backups can coexist.
+    /// </summary>
+    private static async Task<string> BackUpAsync(
+        string configPath,
+        string document,
+        CancellationToken cancellationToken)
+    {
+        var backupPath = $"{configPath}.protontune-{DateTime.Now:yyyyMMdd-HHmmss}.bak";
+
+        await File.WriteAllTextAsync(backupPath, document, cancellationToken).ConfigureAwait(false);
+
+        return backupPath;
+    }
+
+    /// <summary>
+    /// Writes through a temporary file in the same directory, then moves it into place, so an
+    /// interrupted write cannot leave a half-written configuration behind.
+    /// </summary>
+    private static async Task WriteAtomicallyAsync(
+        string configPath,
+        string document,
+        CancellationToken cancellationToken)
+    {
+        var temporaryPath = $"{configPath}.protontune-tmp";
+
+        await File.WriteAllTextAsync(temporaryPath, document, cancellationToken).ConfigureAwait(false);
+
+        File.Move(temporaryPath, configPath, overwrite: true);
+    }
+
+    /// <summary>The key path a game's launch options live at.</summary>
+    private static string[] PathTo(uint appId) =>
+        ["UserLocalConfigStore", "Software", "Valve", "Steam", "apps", appId.ToString(), "LaunchOptions"];
 
     /// <summary>
     /// Finds the <c>localconfig.vdf</c> of the Steam user to act on.
