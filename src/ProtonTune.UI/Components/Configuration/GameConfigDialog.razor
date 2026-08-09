@@ -1,11 +1,5 @@
-<div class="backdrop" @onclick="Close" @onkeydown="OnKeyDown">
-    @* Clicks inside the panel must not reach the backdrop's dismiss handler. *@
-    <div class="panel"
-         role="dialog"
-         aria-modal="true"
-         aria-label="@($"Configure {Entry.Name}")"
-         @onclick:stopPropagation="true">
-
+<div class="backdrop" @onkeydown="OnKeyDown">
+    <div class="panel" role="dialog" aria-modal="true" aria-label="@($"Configure {Entry.Name}")">
         <header class="panel-header">
             <GameArtwork AppId="@Entry.AppId" Name="@Entry.Name" Kind="GameArtworkKind.Header"/>
 
@@ -13,35 +7,151 @@
                 <h2 class="panel-title" title="@Entry.Name">@Entry.Name</h2>
                 <p class="panel-subtitle">App ID @Entry.AppId</p>
             </div>
+
+            <button type="button" class="button" @onclick="Close" autofocus>Close</button>
         </header>
 
-        <div class="panel-body">
-            <div class="field">
-                <label for="launch-options">Launch options</label>
-                <input id="launch-options"
-                       class="field-input"
-                       type="text"
-                       placeholder="%command%"
-                       disabled/>
+        @if (IsLoading)
+        {
+            <p class="panel-message">Reading launch options…</p>
+        }
+        else if (LoadError is not null)
+        {
+            <p class="panel-message panel-message-error">@LoadError</p>
+        }
+        else
+        {
+            <div class="panel-body">
+                <nav class="sections" aria-label="Setting sections">
+                    @foreach (var item in Sections)
+                    {
+                        <button type="button"
+                                class="section-tab @(SelectedSection == item.Title ? "is-active" : string.Empty)"
+                                @key="item.Title"
+                                @onclick="() => SelectSection(item.Title)">
+                            <span>@item.Title</span>
+                            <span class="section-count">@item.Settings.Count</span>
+                        </button>
+                    }
+
+                    <hr class="section-divider"/>
+
+                    <button type="button"
+                            class="section-tab @(SelectedSection == LaunchChainSection ? "is-active" : string.Empty)"
+                            @onclick="() => SelectSection(LaunchChainSection)">
+                        <span>@LaunchChainSection</span>
+                        <span class="section-count">@Options.Wrapper.Count</span>
+                    </button>
+
+                    <button type="button"
+                            class="section-tab @(SelectedSection == CustomSection ? "is-active" : string.Empty)"
+                            @onclick="() => SelectSection(CustomSection)">
+                        <span>@CustomSection</span>
+                        <span class="section-count">@CustomVariables.Count</span>
+                    </button>
+
+                    <button type="button"
+                            class="section-tab @(SelectedSection == RawSection ? "is-active" : string.Empty)"
+                            @onclick="() => SelectSection(RawSection)">
+                        <span>@RawSection</span>
+                    </button>
+                </nav>
+
+                <div class="section-content">
+                    @if (SelectedSection == LaunchChainSection)
+                    {
+                        <h3 class="section-title">Launch chain</h3>
+                        <p class="section-note">
+                            Commands the game is launched through, in order. ProtonTune keeps unknown
+                            entries exactly where they are.
+                        </p>
+
+                        @if (Options.Wrapper.Count == 0)
+                        {
+                            <p class="section-empty">The game is launched directly.</p>
+                        }
+                        else
+                        {
+                            <ol class="chain">
+                                @foreach (var token in Options.Wrapper)
+                                {
+                                    <li><code>@token</code></li>
+                                }
+                            </ol>
+                        }
+
+                        <SettingRow Label="Command placeholder"
+                                    Variable="%command%"
+                                    Value="@(Options.HasCommandPlaceholder ? "present" : "absent — options are appended")"
+                                    Description="Where Steam substitutes the game's own command line."/>
+
+                        @if (Options.Arguments.Count > 0)
+                        {
+                            <SettingRow Label="Game arguments"
+                                        Variable="after %command%"
+                                        Value="@string.Join(' ', Options.Arguments)"
+                                        Description="Passed to the game itself."/>
+                        }
+                    }
+                    else if (SelectedSection == CustomSection)
+                    {
+                        <h3 class="section-title">Custom variables</h3>
+                        <p class="section-note">
+                            Environment variables ProtonTune has no definition for. They are preserved
+                            untouched.
+                        </p>
+
+                        @if (CustomVariables.Count == 0)
+                        {
+                            <p class="section-empty">Every variable set on this game is recognised.</p>
+                        }
+                        else
+                        {
+                            @foreach (var variable in CustomVariables)
+                            {
+                                <SettingRow Label="@variable.Name"
+                                            Variable="@variable.Name"
+                                            Value="@variable.Value"
+                                            @key="variable.Name"/>
+                            }
+                        }
+                    }
+                    else if (SelectedSection == RawSection)
+                    {
+                        <h3 class="section-title">Raw launch options</h3>
+                        <p class="section-note">Exactly what Steam has stored for this game.</p>
+
+                        @if (Options.IsEmpty)
+                        {
+                            <p class="section-empty">No launch options are set.</p>
+                        }
+                        else
+                        {
+                            <pre class="raw">@Options.Format()</pre>
+                        }
+                    }
+                    else
+                    {
+                        @foreach (var item in Sections.Where(s => s.Title == SelectedSection))
+                        {
+                            <h3 class="section-title">@item.Title</h3>
+
+                            @foreach (var setting in item.Settings)
+                            {
+                                <SettingRow Label="@setting.Definition.Label"
+                                            Variable="@setting.Definition.Variable"
+                                            Value="@setting.Value"
+                                            Description="@setting.Definition.Description"
+                                            @key="setting.Definition.Variable"/>
+                            }
+                        }
+                    }
+                </div>
             </div>
 
-            <div class="field">
-                <label for="environment">Environment variables</label>
-                <textarea id="environment"
-                          class="field-input field-textarea"
-                          rows="4"
-                          placeholder="PROTON_ENABLE_NVAPI=1"
-                          disabled></textarea>
-            </div>
-
-            <p class="panel-note">
-                Nothing here is wired up yet — these fields are a placeholder for the launch
-                options and environment variables ProtonTune will write to Steam.
-            </p>
-        </div>
-
-        <footer class="panel-footer">
-            <button type="button" class="button" @onclick="Close" autofocus>Close</button>
-        </footer>
+            <footer class="panel-footer">
+                <span class="panel-status">Read-only — ProtonTune cannot change these yet.</span>
+            </footer>
+        }
     </div>
 </div>

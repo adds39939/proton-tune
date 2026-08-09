@@ -10,6 +10,29 @@ namespace ProtonTune.Services.Steam;
 internal static class SteamVdf
 {
     /// <summary>
+    /// Reader settings sized for the largest of these files rather than the smallest.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// Steam caches JSON blobs inside <c>localconfig.vdf</c> — notification and store preferences
+    /// run to tens of thousands of characters in a single token. The library's 4096-character
+    /// default is far too small for those, and it overruns its own buffer rather than reporting a
+    /// clean error, so the symptom is an <see cref="IndexOutOfRangeException" /> from deep inside
+    /// the reader.
+    /// </para>
+    /// <para>
+    /// Those same blobs contain escaped quotes, so escape sequences have to be honoured or the
+    /// document ends early and parses as truncated. That is safe here because ProtonTune is Linux
+    /// only: the backslash-heavy Windows paths that make escape handling ambiguous never appear.
+    /// </para>
+    /// </remarks>
+    private static readonly VdfSerializerSettings ReaderSettings = new()
+    {
+        MaximumTokenSize = 1 << 18,
+        UsesEscapeSequences = true
+    };
+
+    /// <summary>
     /// Reads a KeyValues file and returns its single root object.
     /// </summary>
     /// <returns>
@@ -23,9 +46,14 @@ internal static class SteamVdf
         {
             var text = await File.ReadAllTextAsync(path, cancellationToken).ConfigureAwait(false);
 
-            return VdfConvert.Deserialize(text).Value as VObject;
+            return VdfConvert.Deserialize(text, ReaderSettings).Value as VObject;
         }
-        catch (Exception e) when (e is IOException or UnauthorizedAccessException or VdfException)
+        // IndexOutOfRangeException is how the reader reports a token it cannot fit, so it belongs
+        // with the other malformed-input cases rather than escaping as an unhandled fault.
+        catch (Exception e) when (e is IOException
+                                      or UnauthorizedAccessException
+                                      or VdfException
+                                      or IndexOutOfRangeException)
         {
             return null;
         }
@@ -45,6 +73,24 @@ internal static class SteamVdf
                     property.Value is VValue value)
                 {
                     return value.Value?.ToString();
+                }
+            }
+
+            return null;
+        }
+
+        /// <summary>
+        /// Reads a nested object by key, ignoring case for the same reason
+        /// <see cref="GetString" /> does.
+        /// </summary>
+        public VObject? GetObject(string key)
+        {
+            foreach (var property in owner.Properties())
+            {
+                if (string.Equals(property.Key, key, StringComparison.OrdinalIgnoreCase) &&
+                    property.Value is VObject nested)
+                {
+                    return nested;
                 }
             }
 
