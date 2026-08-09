@@ -1,0 +1,14 @@
+<li class="game-tile">
+    <GameArtwork AppId="@Entry.AppId" Name="@Entry.Name" Kind="GameArtworkKind.Capsule"/>
+
+    <div class="tile-tags">
+        <GameTags Entry="@Entry"/>
+    </div>
+
+    <div class="tile-body">
+        <h2 class="tile-title" title="@Entry.Name">@Entry.Name</h2>
+        <p class="tile-meta">
+            @FileSizeDisplay.Format(Entry.SizeOnDisk) · @LastPlayedDisplay.Format(Entry.LastPlayed)
+        </p>
+    </div>
+</li>

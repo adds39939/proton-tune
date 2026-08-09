@@ -9,6 +9,7 @@ public static class ServiceCollectionExtensions
     {
         services.AddSingleton<ISteamInstallLocator, SteamInstallLocator>();
         services.AddSingleton<ISteamLibraryService, SteamLibraryService>();
+        services.AddSingleton<IGameArtworkService, SteamCdnArtworkService>();
 
         return services;
     }

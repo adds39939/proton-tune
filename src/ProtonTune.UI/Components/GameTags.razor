@@ -1,0 +1,9 @@
+@if (Entry.Kind == SteamAppKind.Tool)
+{
+    <span class="tag tag-tool">Tool</span>
+}
+
+@if (!Entry.IsFullyInstalled)
+{
+    <span class="tag tag-warning">Incomplete</span>
+}

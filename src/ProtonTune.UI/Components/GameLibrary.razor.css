@@ -25,7 +25,7 @@
 .library-filters {
     display: flex;
     align-items: center;
-    gap: 20px;
+    gap: 16px;
     margin: 20px 0 24px;
 }
 
@@ -64,6 +64,7 @@
 
 .search {
     flex: 1;
+    min-width: 0;
     padding: 9px 14px;
     border: 1px solid var(--border);
     border-radius: 8px;
@@ -99,117 +100,52 @@
     cursor: pointer;
 }
 
-/* Game cards ------------------------------------------------------------- */
+.view-toggle {
+    display: flex;
+    flex: none;
+    padding: 2px;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    background: var(--surface-1);
+}
+
+.view-button {
+    padding: 6px 14px;
+    border: none;
+    border-radius: 6px;
+    background: transparent;
+    color: var(--text-muted);
+    font: inherit;
+    font-size: 13px;
+    cursor: pointer;
+    transition: background 120ms ease, color 120ms ease;
+}
+
+.view-button:hover {
+    color: var(--text);
+}
+
+.view-button.is-active {
+    background: var(--surface-2);
+    color: var(--text);
+}
+
+/* Layout containers ------------------------------------------------------ */
 
 .game-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(330px, 1fr));
-    gap: 14px;
+    grid-template-columns: repeat(auto-fill, minmax(168px, 1fr));
+    gap: 18px;
     margin: 0;
     padding: 0;
     list-style: none;
 }
 
-.game-card {
+.game-list {
     display: flex;
-    gap: 14px;
-    padding: 14px;
-    border: 1px solid var(--border);
-    border-radius: 10px;
-    background: var(--surface-1);
-    transition: border-color 120ms ease, transform 120ms ease;
-}
-
-.game-card:hover {
-    border-color: var(--accent);
-    transform: translateY(-1px);
-}
-
-.game-art {
-    flex: none;
-    display: grid;
-    place-items: center;
-    width: 54px;
-    height: 54px;
-    border-radius: 8px;
-    background: var(--surface-2);
-    color: var(--accent);
-    font-size: 17px;
-    font-weight: 600;
-    letter-spacing: 0.04em;
-}
-
-.game-body {
-    min-width: 0;
-    flex: 1;
-}
-
-.game-title-row {
-    display: flex;
-    align-items: center;
+    flex-direction: column;
     gap: 8px;
-}
-
-.game-title {
     margin: 0;
-    font-size: 15px;
-    font-weight: 600;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-}
-
-.tag {
-    flex: none;
-    padding: 1px 7px;
-    border-radius: 999px;
-    font-size: 10px;
-    font-weight: 600;
-    letter-spacing: 0.05em;
-    text-transform: uppercase;
-}
-
-.tag-tool {
-    background: var(--accent-soft);
-    color: var(--accent);
-}
-
-.tag-warning {
-    background: var(--warning-soft);
-    color: var(--warning);
-}
-
-.game-meta {
-    display: flex;
-    gap: 18px;
-    margin: 8px 0 0;
-}
-
-.game-meta div {
-    min-width: 0;
-}
-
-.game-meta dt {
-    color: var(--text-muted);
-    font-size: 10px;
-    font-weight: 600;
-    letter-spacing: 0.06em;
-    text-transform: uppercase;
-}
-
-.game-meta dd {
-    margin: 1px 0 0;
-    font-size: 13px;
-    font-variant-numeric: tabular-nums;
-    white-space: nowrap;
-}
-
-.game-path {
-    margin: 10px 0 0;
-    color: var(--text-muted);
-    font-family: "JetBrains Mono", ui-monospace, monospace;
-    font-size: 11px;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
+    padding: 0;
+    list-style: none;
 }

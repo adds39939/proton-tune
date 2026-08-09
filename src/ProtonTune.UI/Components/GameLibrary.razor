@@ -21,6 +21,19 @@
             <input type="checkbox" checked="@ShowTools" @onchange="OnShowToolsChanged"/>
             <span>Show compatibility tools</span>
         </label>
+
+        <div class="view-toggle" role="group" aria-label="View mode">
+            @foreach (var mode in ViewModes)
+            {
+                <button type="button"
+                        class="view-button @(ViewMode == mode ? "is-active" : string.Empty)"
+                        aria-pressed="@(ViewMode == mode)"
+                        @key="mode"
+                        @onclick="() => SetViewMode(mode)">
+                    @mode
+                </button>
+            }
+        </div>
     </div>
 
     @if (IsLoading)
@@ -35,45 +48,21 @@
     {
         <p class="library-message">@EmptyMessage</p>
     }
-    else
+    else if (ViewMode == LibraryViewMode.Grid)
     {
         <ul class="game-grid">
             @foreach (var app in VisibleApps)
             {
-                <li class="game-card" @key="app.AppId">
-                    <div class="game-art" aria-hidden="true">@GetInitials(app.Name)</div>
-
-                    <div class="game-body">
-                        <div class="game-title-row">
-                            <h2 class="game-title" title="@app.Name">@app.Name</h2>
-                            @if (app.Kind == SteamAppKind.Tool)
-                            {
-                                <span class="tag tag-tool">Tool</span>
-                            }
-                            @if (!app.IsFullyInstalled)
-                            {
-                                <span class="tag tag-warning">Incomplete</span>
-                            }
-                        </div>
-
-                        <dl class="game-meta">
-                            <div>
-                                <dt>App ID</dt>
-                                <dd>@app.AppId</dd>
-                            </div>
-                            <div>
-                                <dt>Size</dt>
-                                <dd>@FormatSize(app.SizeOnDisk)</dd>
-                            </div>
-                            <div>
-                                <dt>Last played</dt>
-                                <dd>@FormatLastPlayed(app.LastPlayed)</dd>
-                            </div>
-                        </dl>
-
-                        <p class="game-path" title="@app.InstallDirectory">@PathDisplay.Abbreviate(app.InstallDirectory)</p>
-                    </div>
-                </li>
+                <GameGridCard Entry="@app" @key="app.AppId"/>
+            }
+        </ul>
+    }
+    else
+    {
+        <ul class="game-list">
+            @foreach (var app in VisibleApps)
+            {
+                <GameListCard Entry="@app" @key="app.AppId"/>
             }
         </ul>
     }

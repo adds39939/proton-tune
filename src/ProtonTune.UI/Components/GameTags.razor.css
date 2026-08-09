@@ -1,0 +1,19 @@
+.tag {
+    flex: none;
+    padding: 1px 7px;
+    border-radius: 999px;
+    font-size: 10px;
+    font-weight: 600;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+}
+
+.tag-tool {
+    background: var(--accent-soft);
+    color: var(--accent);
+}
+
+.tag-warning {
+    background: var(--warning-soft);
+    color: var(--warning);
+}

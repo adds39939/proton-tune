@@ -19,6 +19,11 @@ public partial class GameLibrary : ComponentBase
 
     private bool ShowTools { get; set; }
 
+    /// <summary>The available view modes, in the order their buttons appear.</summary>
+    private static readonly LibraryViewMode[] ViewModes = Enum.GetValues<LibraryViewMode>();
+
+    private LibraryViewMode ViewMode { get; set; } = LibraryViewMode.Grid;
+
     private bool IsLoading { get; set; } = true;
 
     private string? LoadError { get; set; }
@@ -77,6 +82,8 @@ public partial class GameLibrary : ComponentBase
 
     private void OnShowToolsChanged(ChangeEventArgs args) => ShowTools = args.Value is true;
 
+    private void SetViewMode(LibraryViewMode mode) => ViewMode = mode;
+
     private bool MatchesSearch(SteamLibraryEntry app)
     {
         if (string.IsNullOrWhiteSpace(SearchTerm))
@@ -88,60 +95,6 @@ public partial class GameLibrary : ComponentBase
 
         return app.Name.Contains(term, StringComparison.CurrentCultureIgnoreCase) ||
                app.AppId.ToString().Contains(term, StringComparison.Ordinal);
-    }
-
-    /// <summary>
-    /// Builds the placeholder tile shown in place of cover art, which Steam only caches under
-    /// content-hashed filenames we cannot map back to an app id.
-    /// </summary>
-    private static string GetInitials(string name)
-    {
-        var words = name.Split(' ', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
-
-        return words.Length switch
-        {
-            0 => "?",
-            1 => words[0][..Math.Min(2, words[0].Length)].ToUpperInvariant(),
-            _ => $"{words[0][0]}{words[1][0]}".ToUpperInvariant()
-        };
-    }
-
-    private static string FormatSize(long bytes)
-    {
-        if (bytes <= 0)
-        {
-            return "Unknown";
-        }
-
-        string[] units = ["B", "KiB", "MiB", "GiB", "TiB"];
-        double size = bytes;
-        var unit = 0;
-
-        while (size >= 1024 && unit < units.Length - 1)
-        {
-            size /= 1024;
-            unit++;
-        }
-
-        return $"{size:0.#} {units[unit]}";
-    }
-
-    private static string FormatLastPlayed(DateTimeOffset? lastPlayed)
-    {
-        if (lastPlayed is null)
-        {
-            return "Never";
-        }
-
-        var days = (DateTimeOffset.Now - lastPlayed.Value).Days;
-
-        return days switch
-        {
-            <= 0 => "Today",
-            1 => "Yesterday",
-            < 30 => $"{days} days ago",
-            _ => lastPlayed.Value.ToLocalTime().ToString("d MMM yyyy")
-        };
     }
 
     private static string Pluralise(int count, string singular, string plural) => count == 1 ? singular : plural;
