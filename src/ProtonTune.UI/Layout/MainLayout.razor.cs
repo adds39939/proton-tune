@@ -14,7 +14,8 @@ public partial class MainLayout : LayoutComponentBase
     /// </summary>
     private static readonly IReadOnlyList<NavItem> NavItems =
     [
-        new("/", "Library", NavLinkMatch.All)
+        new("/", "Library", NavLinkMatch.All),
+        new("/settings", "Settings")
     ];
 
     /// <param name="Path">The route, matching the page's <c>@page</c> directive.</param>

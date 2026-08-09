@@ -1,0 +1,29 @@
+<section class="settings">
+    <header class="settings-header">
+        <h1>Settings</h1>
+        <p class="settings-subtitle">How ProtonTune reads your Steam installation</p>
+    </header>
+
+    <section class="setting">
+        <div class="setting-label">
+            <h2>Steam installation</h2>
+            <p>Detected automatically. ProtonTune reads installed games from this location.</p>
+        </div>
+
+        <div class="setting-value">
+            @if (SteamRoot is null)
+            {
+                <p class="setting-missing">No Steam installation found for this user.</p>
+            }
+            else
+            {
+                <p class="setting-path" title="@SteamRoot">@PathDisplay.Abbreviate(SteamRoot)</p>
+            }
+        </div>
+    </section>
+
+    <p class="settings-note">
+        Nothing here is configurable yet. Default launch options and environment variables will
+        live on this page.
+    </p>
+</section>

@@ -10,9 +10,6 @@ namespace ProtonTune.UI.Components;
 /// </summary>
 public partial class GameLibrary : ComponentBase
 {
-    private static readonly string HomeDirectory =
-        Environment.GetFolderPath(Environment.SpecialFolder.UserProfile);
-
     [Inject]
     private ISteamLibraryService SteamLibrary { get; set; } = null!;
 
@@ -146,12 +143,6 @@ public partial class GameLibrary : ComponentBase
             _ => lastPlayed.Value.ToLocalTime().ToString("d MMM yyyy")
         };
     }
-
-    /// <summary>Shortens an install path for display by collapsing the home directory to <c>~</c>.</summary>
-    private static string Abbreviate(string path) =>
-        !string.IsNullOrEmpty(HomeDirectory) && path.StartsWith(HomeDirectory, StringComparison.Ordinal)
-            ? string.Concat("~", path.AsSpan(HomeDirectory.Length))
-            : path;
 
     private static string Pluralise(int count, string singular, string plural) => count == 1 ? singular : plural;
 }

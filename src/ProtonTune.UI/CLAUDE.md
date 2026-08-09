@@ -9,6 +9,7 @@ App.razor(.css)               Router. Root component — no page markup belongs 
 Layout/MainLayout.razor       Shell: titlebar, nav tabs, and the @Body pages render into.
 Pages/*.razor                 Routable pages. Exactly one @page directive each.
 Components/*.razor(.cs|.css)  Reusable components. Never routable.
+Formatting/                   Display helpers shared across components (PathDisplay, …).
 DependencyExtensions/         AddProtonTuneUI() — UI-only service registration.
 wwwroot/app.css               Global styles ONLY (see below).
 wwwroot/index.html            Document shell. Stylesheet links live here.
