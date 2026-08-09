@@ -12,6 +12,7 @@
     </ItemGroup>
 
     <ItemGroup>
+      <ProjectReference Include="..\ProtonTune.Services\ProtonTune.Services.csproj" />
       <ProjectReference Include="..\ProtonTune.UI\ProtonTune.UI.csproj" />
     </ItemGroup>
 
