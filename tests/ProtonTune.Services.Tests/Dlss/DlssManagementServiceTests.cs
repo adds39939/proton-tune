@@ -203,6 +203,48 @@ public sealed class DlssManagementServiceTests : IDisposable
         Assert.True(status.HasManagedLinks);
     }
 
+    /// <summary>
+    /// The script re-establishes a backup it finds missing. Steam restores a game's own libraries
+    /// when it verifies or updates it, and that is the one moment the original is on disk to be
+    /// kept — without this, a swap re-applied after the backup has gone can never be undone.
+    /// </summary>
+    [Fact]
+    public async Task TheScriptKeepsTheGamesOwnFileWhenNoBackupRemains()
+    {
+        var service = CreateService();
+        var scriptPath = await service.ApplyAsync(Entry, Runtime);
+        var script = await File.ReadAllTextAsync(scriptPath);
+
+        Assert.Contains("cp -f \"$dst\" \"$bak\"", script);
+
+        // Only when what is there is the game's own file rather than a link back to the store.
+        Assert.Contains("[ -f \"$dst\" ] && [ ! -L \"$dst\" ]", script);
+        Assert.Contains(Path.Combine(_root, "storage", "dlss-backup", "2138720"), script);
+    }
+
+    /// <summary>
+    /// A game update replaces the libraries it ships, so the file found in the install is a newer
+    /// original than the one stored the first time. Keeping the older one would revert the game to
+    /// a library it no longer has.
+    /// </summary>
+    [Fact]
+    public async Task ReplacesAStaleBackupWithWhatTheGameNowShips()
+    {
+        var service = CreateService();
+        var nested = Path.Combine(InstallDirectory, NestedPath, "nvngx_dlss.dll");
+
+        await service.ApplyAsync(Entry, Runtime);
+        await service.RevertAsync(Entry);
+
+        // The game updates: a different file, under the same name.
+        await File.WriteAllTextAsync(nested, "the game's own, after an update");
+
+        await service.ApplyAsync(Entry, Runtime);
+        await service.RevertAsync(Entry);
+
+        Assert.Equal("the game's own, after an update", await File.ReadAllTextAsync(nested));
+    }
+
     [Fact]
     public async Task ApplyingTwiceDoesNotDestroyTheOriginal()
     {

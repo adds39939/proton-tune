@@ -80,7 +80,7 @@ public sealed class DlssManagementService(
     {
         var store = await EnsureStoredAsync(runtime, cancellationToken).ConfigureAwait(false);
         var status = Inspect(entry);
-        var links = new List<(string Source, string Destination)>();
+        var links = new List<DlssLink>();
 
         foreach (var library in status.Libraries)
         {
@@ -89,10 +89,12 @@ public sealed class DlssManagementService(
                 continue;
             }
 
-            BackUp(entry.AppId, library);
+            var backupPath = BackupPathFor(entry.AppId, library);
+
+            BackUp(backupPath, library);
             Link(source, library.Path);
 
-            links.Add((source, library.Path));
+            links.Add(new DlssLink(source, library.Path, backupPath));
         }
 
         var scriptPath = await WriteLaunchScriptAsync(entry, links, cancellationToken).ConfigureAwait(false);
@@ -205,28 +207,36 @@ public sealed class DlssManagementService(
         return stored;
     }
 
+    /// <summary>Where a game's own copy of a library is kept while a link stands in for it.</summary>
+    private string BackupPathFor(uint appId, DlssLibrary library) =>
+        Path.Combine(storage.BackupsFor(appId), library.RelativePath);
+
     /// <summary>
-    /// Moves a game's own library aside, once. A second apply must not overwrite the first
-    /// backup with a link, which would lose the original for good.
+    /// Moves a game's own library aside so the swap can be undone.
     /// </summary>
-    private void BackUp(uint appId, DlssLibrary library)
+    /// <remarks>
+    /// <para>
+    /// Only a real file is ever moved. A second apply sees a link rather than a file, and moving
+    /// that aside would store a link where the original should be and lose the original for good.
+    /// </para>
+    /// <para>
+    /// An earlier backup is replaced rather than kept. Steam puts the game's own file back
+    /// whenever it verifies or updates it, so a real file here after an update is a newer original
+    /// than whatever was stored the first time — keeping the older one would mean reverting the
+    /// game to a library it no longer ships.
+    /// </para>
+    /// </remarks>
+    private void BackUp(string backupPath, DlssLibrary library)
     {
         if (library.State != DlssLinkState.Original)
         {
             return;
         }
 
-        var backupPath = Path.Combine(storage.BackupsFor(appId), library.RelativePath);
-
-        if (File.Exists(backupPath))
-        {
-            logger.LogInformation("Keeping the existing backup of {RelativePath}.", library.RelativePath);
-
-            return;
-        }
-
         Directory.CreateDirectory(Path.GetDirectoryName(backupPath)!);
-        File.Move(library.Path, backupPath);
+        File.Move(library.Path, backupPath, overwrite: true);
+
+        logger.LogInformation("Kept {RelativePath} aside at {BackupPath}.", library.RelativePath, backupPath);
     }
 
     /// <summary>Replaces a path with a symlink, removing whatever was there.</summary>
@@ -248,9 +258,12 @@ public sealed class DlssManagementService(
     /// verifies or updates it, which silently undoes the swap — so the script re-applies them on
     /// every launch and then hands over to the game.
     /// </remarks>
+    /// <summary>One library the script maintains: what it points at, and where its own copy is.</summary>
+    private sealed record DlssLink(string Source, string Destination, string Backup);
+
     private async Task<string> WriteLaunchScriptAsync(
         SteamLibraryEntry entry,
-        IReadOnlyList<(string Source, string Destination)> links,
+        IReadOnlyList<DlssLink> links,
         CancellationToken cancellationToken)
     {
         Directory.CreateDirectory(storage.Scripts);
@@ -265,12 +278,25 @@ public sealed class DlssManagementService(
             .AppendLine("set -u")
             .AppendLine();
 
-        foreach (var (source, destination) in links)
+        foreach (var (source, destination, backup) in links)
         {
             script
                 .AppendLine($"src={Quote(source)}")
                 .AppendLine($"dst={Quote(destination)}")
+                .AppendLine($"bak={Quote(backup)}")
                 .AppendLine("if [ -f \"$src\" ] && [ \"$(readlink -f \"$dst\" 2>/dev/null)\" != \"$src\" ]; then")
+                // Steam has put the game's own file back. It is about to be replaced again, and it
+                // is the only copy of the original, so it is kept first — otherwise the swap
+                // becomes impossible to undo. Size is enough to spot a file the game has updated:
+                // these are tens of megabytes and a new release is never byte-identical in length.
+                .AppendLine("    if [ -f \"$dst\" ] && [ ! -L \"$dst\" ]; then")
+                .AppendLine("        if [ ! -f \"$bak\" ] || " +
+                            "[ \"$(stat -c%s \"$dst\")\" != \"$(stat -c%s \"$bak\")\" ]; then")
+                .AppendLine("            mkdir -p \"$(dirname \"$bak\")\"")
+                .AppendLine("            cp -f \"$dst\" \"$bak\"")
+                .AppendLine("            echo \"protontune: kept the game's own $(basename \"$dst\")\" >&2")
+                .AppendLine("        fi")
+                .AppendLine("    fi")
                 .AppendLine("    ln -sfn \"$src\" \"$dst\"")
                 .AppendLine("    echo \"protontune: relinked $(basename \"$dst\")\" >&2")
                 .AppendLine("fi")
