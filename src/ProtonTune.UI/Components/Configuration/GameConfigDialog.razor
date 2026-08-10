@@ -81,12 +81,32 @@
                             They only apply when the game is launched through mangohud.
                         </p>
 
+                        <CommandToggle Label="Launch through MangoHud"
+                                       Command="@MangoHudCommand"
+                                       Description="Adds mangohud to the launch chain. Without it none of these options apply."
+                                       IsOn="@Editing.HasWrapperCommand(MangoHudCommand)"
+                                       IsOnChanged="@(on => ApplyWrapperCommand(MangoHudCommand, on))"/>
+
                         <MangoHudEditor Value="@Editing.FindEnvironment(MangoHudVariable)?.Value"
                                         ValueChanged="@(value => ApplySetting(MangoHudDefinition, value))"/>
                     }
                     else if (SelectedCategory is { } selected)
                     {
                         <h3 class="section-title">@selected.Title()</h3>
+
+                        @if (selected is SettingCategory.Cpu)
+                        {
+                            <CpuAffinityEditor Value="@Editing.CpuAffinity"
+                                               ValueChanged="ApplyCpuAffinity"/>
+
+                            <h4 class="section-subtitle">Scheduling</h4>
+
+                            <CommandToggle Label="Launch through GameMode"
+                                           Command="@GameModeCommand"
+                                           Description="Asks the system to favour the game while it runs."
+                                           IsOn="@Editing.HasWrapperCommand(GameModeCommand)"
+                                           IsOnChanged="@(on => ApplyWrapperCommand(GameModeCommand, on))"/>
+                        }
 
                         @foreach (var definition in DefinitionsIn(selected))
                         {

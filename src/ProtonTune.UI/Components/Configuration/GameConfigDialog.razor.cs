@@ -29,6 +29,11 @@ public partial class GameConfigDialog : ComponentBase
     private static readonly SettingDefinition MangoHudDefinition =
         SettingCatalog.Find(MangoHudVariable)!;
 
+    /// <summary>Commands ProtonTune can add to the launch chain on the user's behalf.</summary>
+    private const string MangoHudCommand = "mangohud";
+
+    private const string GameModeCommand = "gamemoderun";
+
     [Inject]
     private ISteamLaunchOptionsService LaunchOptionsService { get; set; } = null!;
 
@@ -146,6 +151,22 @@ public partial class GameConfigDialog : ComponentBase
             ? Editing.RemoveEnvironment(definition.Variable)
             : Editing.SetEnvironment(definition.Variable, value);
 
+        RawDraft = Editing.Format();
+        SaveMessage = null;
+    }
+
+    /// <summary>Adds or removes a command from the launch chain.</summary>
+    private void ApplyWrapperCommand(string command, bool present)
+    {
+        Editing = Editing.WithWrapperCommand(command, present);
+        RawDraft = Editing.Format();
+        SaveMessage = null;
+    }
+
+    /// <summary>Pins the game to a set of threads, or removes the pinning.</summary>
+    private void ApplyCpuAffinity(string? mask)
+    {
+        Editing = Editing.WithCpuAffinity(mask);
         RawDraft = Editing.Format();
         SaveMessage = null;
     }
