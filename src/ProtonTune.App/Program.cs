@@ -1,4 +1,5 @@
-﻿using Microsoft.Extensions.DependencyInjection;
+﻿using System.Drawing;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Photino.Blazor;
 using ProtonTune.Services.DependencyExtensions;
@@ -26,6 +27,7 @@ internal class Program
         var app = appBuilder.Build();
     
         app.MainWindow.SetTitle("ProtonTune");
+        app.MainWindow.Size = new Size(1280, 900);
 
         AppDomain.CurrentDomain.UnhandledException += (s, e) =>
         {

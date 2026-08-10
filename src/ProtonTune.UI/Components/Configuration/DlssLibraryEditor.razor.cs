@@ -46,7 +46,7 @@ public partial class DlssLibraryEditor : ComponentBase
 
     private static string StateLabel(DlssLinkState state) => state switch
     {
-        DlssLinkState.Managed => "ProtonTune",
+        DlssLinkState.Managed => "Tuned",
         DlssLinkState.Foreign => "Linked elsewhere",
         _ => "Game's own"
     };
