@@ -22,7 +22,7 @@
             <button type="button"
                     class="button button-primary"
                     disabled="@(!HasChanges || IsSaving)"
-                    @onclick="SaveAsync">
+                    @onclick="AskToSave">
                 @(IsSaving ? "Saving…" : WillRestartSteam ? "Save and restart Steam" : "Save")
             </button>
         </div>
@@ -49,8 +49,19 @@
         <div class="profile-editor">
             <LaunchOptionsEditor Options="@Editing"
                                  OptionsChanged="OnOptionsChanged"
-                                 Saved="@Saved"
                                  IsBusy="@IsSaving"/>
         </div>
     }
 </section>
+
+@if (IsConfirmingSave)
+{
+    <SaveConfirmation Options="@Editing"
+                      Saved="@Saved"
+                      Subject="the global profile"
+                      AlsoChanging="@PendingSideEffects"
+                      WillRestartSteam="@WillRestartSteam"
+                      IsBusy="@IsSaving"
+                      OnConfirm="SaveAsync"
+                      OnCancel="CancelSave"/>
+}

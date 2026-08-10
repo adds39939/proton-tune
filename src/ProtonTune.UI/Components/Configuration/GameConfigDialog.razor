@@ -47,7 +47,6 @@
 
             <LaunchOptionsEditor Options="@Editing"
                                  OptionsChanged="OnOptionsChanged"
-                                 Saved="@Saved"
                                  Entry="@Entry"
                                  CompatTool="@CompatTool"
                                  CompatToolChanged="OnCompatToolChanged"
@@ -97,7 +96,7 @@
                     <button type="button"
                             class="button button-primary"
                             disabled="@(!HasChanges || IsSaving || GameIsRunning)"
-                            @onclick="SaveAsync">
+                            @onclick="AskToSave">
                         @(IsSaving ? "Saving…" : WillRestartSteam ? "Save and restart Steam" : "Save")
                     </button>
                 </div>
@@ -105,3 +104,15 @@
         }
     </div>
 </div>
+
+@if (IsConfirmingSave)
+{
+    <SaveConfirmation Options="@Editing"
+                      Saved="@Saved"
+                      Subject="@Entry.Name"
+                      AlsoChanging="@PendingSideEffects"
+                      WillRestartSteam="@WillRestartSteam"
+                      IsBusy="@IsSaving"
+                      OnConfirm="SaveAsync"
+                      OnCancel="CancelSave"/>
+}

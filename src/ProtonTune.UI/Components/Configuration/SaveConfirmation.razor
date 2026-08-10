@@ -1,0 +1,41 @@
+@* Sits above the configuration dialog, which owns the screen below it. *@
+<div class="backdrop" @onclick="Cancel" @onkeydown="OnKeyDown">
+    @* Clicks inside the panel must not reach the backdrop, or picking text would dismiss it. *@
+    <div class="panel" role="dialog" aria-modal="true" aria-label="@Title" @onclick:stopPropagation="true">
+        <h2 class="title">@Title</h2>
+
+        <LaunchOptionsPreview Options="@Options" Saved="@Saved"/>
+
+        @if (AlsoChanging.Count > 0)
+        {
+            <div class="also">
+                <span class="also-label">And</span>
+                <ul class="also-list">
+                    @foreach (var change in AlsoChanging)
+                    {
+                        <li @key="change">@change</li>
+                    }
+                </ul>
+            </div>
+        }
+
+        @if (WillRestartSteam)
+        {
+            <p class="warning">
+                Steam is running and will be restarted to save the game's configuration.
+            </p>
+        }
+
+        <div class="actions">
+            <button type="button" class="button" disabled="@IsBusy" @onclick="Cancel">Cancel</button>
+
+            <button type="button"
+                    class="button button-primary"
+                    disabled="@IsBusy"
+                    autofocus
+                    @onclick="Confirm">
+                @(IsBusy ? "Saving…" : WillRestartSteam ? "Save and restart Steam" : "Save")
+            </button>
+        </div>
+    </div>
+</div>

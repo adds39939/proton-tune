@@ -108,6 +108,38 @@ public partial class GameConfigDialog : ComponentBase
         UsesGlobal != SavedUsesGlobal ||
         CompatToolChanged;
 
+    /// <summary>Whether the confirmation is open, waiting for the save to be agreed to.</summary>
+    private bool IsConfirmingSave { get; set; }
+
+    /// <summary>
+    /// What the save would do beyond writing the launch options, so the confirmation can account
+    /// for all of it. These land in other files, or in ProtonTune's own storage, and none of them
+    /// show up in the line being previewed.
+    /// </summary>
+    private IReadOnlyList<string> PendingSideEffects
+    {
+        get
+        {
+            var changes = new List<string>();
+
+            if (CompatToolChanged)
+            {
+                changes.Add(CompatTool.Length == 0
+                    ? "Let Steam choose the Proton build, rather than the one set now."
+                    : $"Run the game under {EffectiveBuild?.DisplayName ?? CompatTool}.");
+            }
+
+            if (UsesGlobal != SavedUsesGlobal)
+            {
+                changes.Add(UsesGlobal
+                    ? "Follow the global profile from now on."
+                    : "Stop following the global profile, keeping the settings it put here.");
+            }
+
+            return changes;
+        }
+    }
+
     /// <summary>Whether the reset button is waiting for a second click.</summary>
     private bool ResetPending { get; set; }
 
@@ -327,6 +359,19 @@ public partial class GameConfigDialog : ComponentBase
         WillRestartSteam = LaunchOptionsService.RequiresSteamRestart();
     }
 
+    /// <summary>
+    /// Opens the confirmation rather than saving. Saving closes Steam and writes to files it owns,
+    /// which is worth showing in full before it happens rather than explaining afterwards.
+    /// </summary>
+    private void AskToSave()
+    {
+        SaveMessage = null;
+        ResetPending = false;
+        IsConfirmingSave = true;
+    }
+
+    private void CancelSave() => IsConfirmingSave = false;
+
     private async Task SaveAsync()
     {
         IsSaving = true;
@@ -369,6 +414,7 @@ public partial class GameConfigDialog : ComponentBase
         finally
         {
             IsSaving = false;
+            IsConfirmingSave = false;
             RefreshSteamState();
         }
     }
@@ -377,8 +423,9 @@ public partial class GameConfigDialog : ComponentBase
 
     /// <summary>
     /// Dismisses on Escape, unless a save is in flight — Steam is mid-restart at that point and
-    /// closing the dialog would hide what is happening.
+    /// closing the dialog would hide what is happening — or the confirmation is open, which backs
+    /// out of itself rather than taking the dialog with it.
     /// </summary>
     private Task OnKeyDown(KeyboardEventArgs args) =>
-        args.Key == "Escape" && !IsSaving ? Close() : Task.CompletedTask;
+        args.Key == "Escape" && !IsSaving && !IsConfirmingSave ? Close() : Task.CompletedTask;
 }

@@ -44,10 +44,6 @@ public partial class LaunchOptionsEditor : ComponentBase
     [Parameter]
     public EventCallback<LaunchOptions> OptionsChanged { get; set; }
 
-    /// <summary>What is currently stored, so the preview can show what a save would change.</summary>
-    [Parameter]
-    public string Saved { get; set; } = string.Empty;
-
     /// <summary>
     /// The game being configured, or <see langword="null"/> when editing the global profile.
     /// Sections that only make sense for a real install — the DLSS libraries — are hidden without
@@ -121,18 +117,7 @@ public partial class LaunchOptionsEditor : ComponentBase
 
     private string NewVariableValue { get; set; } = string.Empty;
 
-    private string Preview => Options.Format();
-
-    private bool HasChanges => !string.Equals(Preview, Saved, StringComparison.Ordinal);
-
     private IReadOnlyList<string> Warnings => LaunchOptionsValidator.Validate(Options);
-
-    /// <summary>
-    /// The pending string broken into what is staying, arriving, and going, so the change can be
-    /// read at a glance rather than by comparing two long lines.
-    /// </summary>
-    private IReadOnlyList<LaunchDiffToken> PreviewDiff =>
-        LaunchOptionsDiff.Compare(LaunchOptions.Parse(Saved), Options);
 
     /// <summary>Assignments with no definition. Never dropped, just ungrouped.</summary>
     private IReadOnlyList<EnvironmentVariable> CustomVariables =>

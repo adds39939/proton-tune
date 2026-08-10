@@ -39,6 +39,17 @@ public partial class GlobalProfilePanel : ComponentBase
     /// <summary>How many installed games currently follow the profile.</summary>
     private int LinkedCount { get; set; }
 
+    /// <summary>Whether the confirmation is open, waiting for the save to be agreed to.</summary>
+    private bool IsConfirmingSave { get; set; }
+
+    /// <summary>
+    /// What saving does beyond storing the profile. Cascading is the part worth confirming: it
+    /// rewrites the launch options of games the user is not looking at.
+    /// </summary>
+    private IReadOnlyList<string> PendingSideEffects => LinkedCount == 0
+        ? []
+        : [$"Apply these settings to the {LinkedCount} {(LinkedCount == 1 ? "game" : "games")} following this profile."];
+
     /// <summary>Whether the reset button is waiting for a second click.</summary>
     private bool ResetPending { get; set; }
 
@@ -139,6 +150,19 @@ public partial class GlobalProfilePanel : ComponentBase
         }
     }
 
+    /// <summary>
+    /// Opens the confirmation rather than saving. A profile save can rewrite several games' launch
+    /// options at once, which is worth agreeing to rather than discovering.
+    /// </summary>
+    private void AskToSave()
+    {
+        SaveMessage = null;
+        ResetPending = false;
+        IsConfirmingSave = true;
+    }
+
+    private void CancelSave() => IsConfirmingSave = false;
+
     private async Task SaveAsync()
     {
         IsSaving = true;
@@ -172,6 +196,7 @@ public partial class GlobalProfilePanel : ComponentBase
         finally
         {
             IsSaving = false;
+            IsConfirmingSave = false;
         }
     }
 }
