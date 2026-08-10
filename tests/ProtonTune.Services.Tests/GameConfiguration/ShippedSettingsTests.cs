@@ -199,11 +199,53 @@ public class ShippedSettingsTests
         Assert.Empty(duplicates);
     }
 
-    [Fact]
-    public void DeclaresProtonsOwnDlssUpgradeAsAGeBuildFeature()
+    /// <summary>
+    /// Each of these was checked against the launch scripts of the builds installed here: the GE
+    /// family reads them and no Valve build mentions them at all. Restricting them is what keeps
+    /// a list of features that cannot be used off the screen.
+    /// </summary>
+    [Theory]
+    [InlineData("PROTON_DLSS_UPGRADE")]
+    [InlineData("PROTON_DLSS_INDICATOR")]
+    [InlineData("PROTON_ENABLE_HDR")]
+    [InlineData("PROTON_ENABLE_WAYLAND")]
+    public void RestrictsWhatOnlyTheGeFamilyReads(string variable)
     {
-        var definition = Catalog.Find("PROTON_DLSS_UPGRADE")!;
+        var definition = Catalog.Find(variable)!;
 
         Assert.Equal(["^GE-Proton"], definition.ProtonBuilds);
+        Assert.True(definition.RestrictToProtonBuild);
     }
+
+    /// <summary>
+    /// Read by every build installed here, so restricting them would hide settings that work.
+    /// </summary>
+    [Theory]
+    [InlineData("PROTON_LOG")]
+    [InlineData("PROTON_NO_ESYNC")]
+    [InlineData("PROTON_NO_FSYNC")]
+    [InlineData("PROTON_FORCE_LARGE_ADDRESS_AWARE")]
+    public void LeavesWhatEveryBuildReadsAlone(string variable) =>
+        Assert.Empty(Catalog.Find(variable)!.ProtonBuilds);
+
+    /// <summary>
+    /// No build installed here reads these, but both were real in older Proton. A restriction has
+    /// to name the builds a setting works on, and that cannot be checked against builds that are
+    /// not present — so they are shown greyed out rather than hidden on a guess.
+    /// </summary>
+    [Theory]
+    [InlineData("PROTON_ENABLE_NVAPI")]
+    [InlineData("PROTON_ENABLE_NGX_UPDATER")]
+    public void DoesNotGuessAtSettingsItCannotPlace(string variable) =>
+        Assert.False(Catalog.Find(variable)!.RestrictToProtonBuild);
+
+    /// <summary>
+    /// The renderer variables live in shipped libraries rather than in the build's launch script,
+    /// which is not something reading that script can settle. Restricting them would be a guess.
+    /// </summary>
+    [Fact]
+    public void RestrictsNothingItCannotCheck() =>
+        Assert.DoesNotContain(
+            Catalog.All.Where(definition => definition.RestrictToProtonBuild),
+            definition => !definition.Variable.StartsWith("PROTON_", StringComparison.Ordinal));
 }

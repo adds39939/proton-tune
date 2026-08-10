@@ -3,7 +3,11 @@ title: Display
 order: 3
 
 settings:
+  # Read by the GE family and by no Valve build installed here — their launch scripts do not
+  # mention Wayland at all — so this section disappears entirely on Valve's Proton.
   - variable: PROTON_ENABLE_WAYLAND
     label: Run natively on Wayland
     description: Skips XWayland. Required before HDR will do anything.
     kind: toggle
+    protonBuilds: ["^GE-Proton"]
+    restrictToProtonBuild: true

@@ -22,6 +22,10 @@ settings:
     protonBuilds: ["^GE-Proton"]
     restrictToProtonBuild: true
 
+  # Neither of the next two is read by any build installed here, but both were real in older
+  # Proton — NVAPI is on by default in recent ones. Left unrestricted rather than guessed at: a
+  # restriction has to name the builds a setting works on, and that cannot be checked against
+  # builds that are not present. They are shown greyed out instead, saying they do nothing.
   - variable: PROTON_ENABLE_NVAPI
     label: Enable NVAPI
     description: >-

@@ -3,10 +3,15 @@ title: HDR
 order: 2
 
 settings:
+  # Read by the GE family only: no Valve build installed here mentions HDR in its launch script.
+  # DXVK's own switch below is not restricted — it lives in the shipped renderer rather than in
+  # the build, which is not something reading the script can settle.
   - variable: PROTON_ENABLE_HDR
     label: Enable HDR in Proton
     description: Lets Proton advertise HDR support to the game. Needs a Wayland session.
     kind: toggle
+    protonBuilds: ["^GE-Proton"]
+    restrictToProtonBuild: true
 
   - variable: DXVK_HDR
     label: Enable HDR in DXVK
