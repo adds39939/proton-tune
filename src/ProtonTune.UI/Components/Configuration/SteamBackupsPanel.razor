@@ -1,0 +1,64 @@
+<section class="backups">
+    <div class="backups-heading">
+        <h2>Configuration backups</h2>
+        <p>
+            Every save copies the Steam file it changes before touching it, so a change that turns
+            out wrong can be undone. Restoring closes Steam and starts it again.
+        </p>
+    </div>
+
+    <div class="retention">
+        <label for="backups-to-keep">Keep the newest</label>
+
+        <input id="backups-to-keep"
+               class="retention-input"
+               type="number"
+               min="@AppSettings.MinimumBackupsToKeep"
+               max="@AppSettings.MaximumBackupsToKeep"
+               disabled="@IsBusy"
+               value="@Current.BackupsToKeep"
+               @onchange="OnRetentionChanged"/>
+
+        <span class="retention-note">of each file. Older copies are removed as new ones are made.</span>
+    </div>
+
+    @if (Message is not null)
+    {
+        <p class="message @(Failed ? "is-error" : "is-success")">@Message</p>
+    }
+
+    @if (IsLoading)
+    {
+        <p class="message">Looking for backups…</p>
+    }
+    else if (Available.Count == 0)
+    {
+        <p class="message">
+            No backups yet. One is kept each time ProtonTune saves a change to Steam.
+        </p>
+    }
+    else
+    {
+        <ul class="list">
+            @foreach (var backup in Available)
+            {
+                <li class="item" @key="backup.Path">
+                    <div class="item-detail">
+                        <span class="item-target">@backup.TargetName</span>
+                        <span class="item-when">@backup.CreatedAt.ToString("d MMM yyyy, HH:mm:ss")</span>
+                        <span class="item-path" title="@backup.Path">@PathDisplay.Abbreviate(backup.Path)</span>
+                    </div>
+
+                    <span class="item-size">@Size(backup.SizeBytes)</span>
+
+                    <button type="button"
+                            class="button @(PendingRestore == backup.Path ? "button-danger" : string.Empty)"
+                            disabled="@IsBusy"
+                            @onclick="() => RestoreAsync(backup)">
+                        @(PendingRestore == backup.Path ? "Confirm restore" : "Restore")
+                    </button>
+                </li>
+            }
+        </ul>
+    }
+</section>

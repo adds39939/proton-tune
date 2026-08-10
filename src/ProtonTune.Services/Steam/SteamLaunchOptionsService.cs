@@ -1,5 +1,6 @@
 using Microsoft.Extensions.Logging;
 using ProtonTune.Core.Launch;
+using ProtonTune.Services.Settings;
 
 namespace ProtonTune.Services.Steam;
 
@@ -12,6 +13,7 @@ namespace ProtonTune.Services.Steam;
 public sealed class SteamLaunchOptionsService(
     ISteamInstallLocator installLocator,
     ISteamClient steamClient,
+    IAppSettingsService settings,
     ILogger<SteamLaunchOptionsService> logger) : ISteamLaunchOptionsService
 {
     /// <summary>
@@ -165,14 +167,18 @@ public sealed class SteamLaunchOptionsService(
 
             // Both documents are prepared before either is written, so a file that turns out not
             // to be the document expected stops the save while everything is still untouched.
-            var backups = new List<string>();
+            var backupPaths = new List<string>();
 
             foreach (var edit in edits)
             {
-                backups.Add(await BackUpAsync(edit.Path, edit.Original, cancellationToken).ConfigureAwait(false));
+                backupPaths.Add(await BackUpAsync(edit.Path, edit.Original, cancellationToken).ConfigureAwait(false));
 
                 await WriteAtomicallyAsync(edit.Path, edit.Updated, cancellationToken).ConfigureAwait(false);
             }
+
+            // Every save leaves a copy behind, so without this the directory beside Steam's own
+            // configuration grows by a hundred and thirty kilobytes each time and never shrinks.
+            await PruneBackupsAsync(cancellationToken).ConfigureAwait(false);
 
             var mismatched = await FindMismatchesAsync(
                 userConfigPath,
@@ -186,9 +192,9 @@ public sealed class SteamLaunchOptionsService(
                 return Restart(new LaunchOptionsSaveResult(
                     LaunchOptionsSaveStatus.WriteFailed,
                     $"Written, but read back differently for {string.Join(", ", mismatched)}. " +
-                    $"The previous version is at {string.Join(" and ", backups)}.")
+                    $"The previous version is at {string.Join(" and ", backupPaths)}.")
                 {
-                    BackupPath = backups[0]
+                    BackupPath = backupPaths[0]
                 });
             }
 
@@ -197,9 +203,9 @@ public sealed class SteamLaunchOptionsService(
                 "previous configuration at {BackupPaths}.",
                 launchOptionsByApp.Count,
                 compatToolsByApp.Count,
-                string.Join(", ", backups));
+                string.Join(", ", backupPaths));
 
-            return Restart(new LaunchOptionsSaveResult(LaunchOptionsSaveStatus.Saved) { BackupPath = backups[0] });
+            return Restart(new LaunchOptionsSaveResult(LaunchOptionsSaveStatus.Saved) { BackupPath = backupPaths[0] });
         }
         catch (Exception e) when (e is IOException or UnauthorizedAccessException)
         {
@@ -267,6 +273,31 @@ public sealed class SteamLaunchOptionsService(
     private static readonly IReadOnlyDictionary<uint, string> NoCompatTools = new Dictionary<uint, string>();
 
     /// <summary>
+    /// Keeps the newest few backups and removes the rest, to the count the user has chosen.
+    /// </summary>
+    /// <remarks>
+    /// Never allowed to fail a save. The write has already happened by this point, and reporting
+    /// a successful change as a failure because some old copies could not be tidied away would be
+    /// worse than the untidiness.
+    /// </remarks>
+    private async Task PruneBackupsAsync(CancellationToken cancellationToken)
+    {
+        try
+        {
+            var keep = (await settings.GetAsync(cancellationToken).ConfigureAwait(false)).BackupsToKeep;
+
+            if (installLocator.Locate() is { } steamRoot)
+            {
+                SteamConfigBackupStore.Prune(steamRoot, keep, logger);
+            }
+        }
+        catch (Exception e) when (e is IOException or UnauthorizedAccessException)
+        {
+            logger.LogWarning(e, "Could not remove old configuration backups.");
+        }
+    }
+
+    /// <summary>
     /// Copies the configuration aside before it is changed, named so several backups can coexist.
     /// </summary>
     private static async Task<string> BackUpAsync(
@@ -274,7 +305,7 @@ public sealed class SteamLaunchOptionsService(
         string document,
         CancellationToken cancellationToken)
     {
-        var backupPath = $"{configPath}.protontune-{DateTime.Now:yyyyMMdd-HHmmss}.bak";
+        var backupPath = SteamConfigBackup.NameFor(configPath, DateTimeOffset.Now);
 
         await File.WriteAllTextAsync(backupPath, document, cancellationToken).ConfigureAwait(false);
 

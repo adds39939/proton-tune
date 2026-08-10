@@ -1,4 +1,7 @@
 using Microsoft.Extensions.Logging.Abstractions;
+using ProtonTune.Core.Launch;
+using ProtonTune.Core.Settings;
+using ProtonTune.Services.Settings;
 using ProtonTune.Services.Steam;
 
 namespace ProtonTune.Services.Tests.Steam;
@@ -69,8 +72,18 @@ public sealed class SteamLaunchOptionsServiceTests : IDisposable
 
     public void Dispose() => Directory.Delete(_root, recursive: true);
 
-    private SteamLaunchOptionsService CreateService(StubSteamClient client) =>
-        new(new StubInstallLocator(_root), client, NullLogger<SteamLaunchOptionsService>.Instance);
+    /// <summary>
+    /// Built with the real backup and settings services, so the pruning a save performs is
+    /// exercised rather than stubbed away.
+    /// </summary>
+    private SteamLaunchOptionsService CreateService(StubSteamClient client, int backupsToKeep = 10)
+    {
+        return new SteamLaunchOptionsService(
+            new StubInstallLocator(_root),
+            client,
+            new StubSettings(new AppSettings { BackupsToKeep = backupsToKeep }),
+            NullLogger<SteamLaunchOptionsService>.Instance);
+    }
 
     [Fact]
     public async Task ReadsWhatSteamHasStored()
@@ -166,6 +179,7 @@ public sealed class SteamLaunchOptionsServiceTests : IDisposable
         var service = new SteamLaunchOptionsService(
             new StubInstallLocator(null),
             new StubSteamClient(),
+            new StubSettings(new AppSettings()),
             NullLogger<SteamLaunchOptionsService>.Instance);
 
         var result = await service.SaveAsync(AppId, "DXVK_HDR=1 %command%");
@@ -288,6 +302,43 @@ public sealed class SteamLaunchOptionsServiceTests : IDisposable
 
         Assert.Equal(LaunchOptionsSaveStatus.ConfigUnrecognised, result.Status);
         Assert.Equal(Document, await File.ReadAllTextAsync(ConfigPath));
+    }
+
+    /// <summary>
+    /// Every save leaves a copy behind, so without pruning the directory beside Steam's own
+    /// configuration grows by a hundred and thirty kilobytes each time and never shrinks.
+    /// </summary>
+    [Fact]
+    public async Task SavingKeepsOnlyTheNewestBackups()
+    {
+        var service = CreateService(new StubSteamClient(), backupsToKeep: 1);
+
+        for (var i = 0; i < 3; i++)
+        {
+            // A backup is named to the second, so saves have to land in different ones to be
+            // separate files at all. Kept to the fewest that still shows old ones being removed.
+            if (i > 0)
+            {
+                await Task.Delay(1100);
+            }
+
+            await service.SaveAsync(AppId, $"DXVK_HDR={i} %command%");
+        }
+
+        var kept = Directory
+            .EnumerateFiles(Path.GetDirectoryName(ConfigPath)!, "localconfig.vdf.protontune-*.bak")
+            .ToList();
+
+        Assert.Single(kept);
+    }
+
+    private sealed class StubSettings(AppSettings settings) : IAppSettingsService
+    {
+        public Task<AppSettings> GetAsync(CancellationToken cancellationToken = default) =>
+            Task.FromResult(settings);
+
+        public Task SaveAsync(AppSettings updated, CancellationToken cancellationToken = default) =>
+            Task.CompletedTask;
     }
 
     private sealed class StubInstallLocator(string? root) : ISteamInstallLocator

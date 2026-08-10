@@ -6,6 +6,7 @@ using ProtonTune.Services.GameConfiguration;
 using ProtonTune.Services.Dlss;
 using ProtonTune.Services.Profiles;
 using ProtonTune.Services.Proton;
+using ProtonTune.Services.Settings;
 using ProtonTune.Services.Steam;
 
 namespace ProtonTune.Services.DependencyExtensions;
@@ -31,6 +32,8 @@ public static class ServiceCollectionExtensions
         services.AddSingleton<IDlssManagementService, DlssManagementService>();
         services.AddSingleton<IGlobalProfileService, GlobalProfileService>();
         services.AddSingleton<ISteamClient, SteamClient>();
+        services.AddSingleton<IAppSettingsService, AppSettingsService>();
+        services.AddSingleton<ISteamConfigBackupService, SteamConfigBackupService>();
         services.AddSingleton<ISteamLaunchOptionsService, SteamLaunchOptionsService>();
 
         return services;

@@ -107,6 +107,50 @@ public sealed class GlobalProfileService(
     public async Task ResetAsync(CancellationToken cancellationToken = default) =>
         await StoreAsync(new StoredProfile(), cancellationToken).ConfigureAwait(false);
 
+    /// <inheritdoc />
+    public async Task<int> ReconcileLinksAsync(CancellationToken cancellationToken = default)
+    {
+        var stored = await LoadAsync(cancellationToken).ConfigureAwait(false);
+
+        if (stored.LinkedApps.Count == 0)
+        {
+            return 0;
+        }
+
+        var expected = LaunchOptions.Parse(stored.LaunchOptions);
+        var stillFollowing = new List<uint>();
+
+        foreach (var appId in stored.LinkedApps)
+        {
+            var actual = await launchOptions.GetAsync(appId, cancellationToken).ConfigureAwait(false);
+
+            // A game's own DLSS script is added on top of the profile rather than coming from it,
+            // so it is set aside before comparing — otherwise every game using DLSS would look
+            // like it had drifted.
+            var withoutScript = actual.WithWrapperCommand(dlss.ScriptPathFor(appId), false);
+
+            if (string.Equals(withoutScript.Format(), expected.Format(), StringComparison.Ordinal))
+            {
+                stillFollowing.Add(appId);
+            }
+            else
+            {
+                logger.LogInformation(
+                    "{AppId} no longer matches the global profile, so it no longer follows it.",
+                    appId);
+            }
+        }
+
+        var dropped = stored.LinkedApps.Count - stillFollowing.Count;
+
+        if (dropped > 0)
+        {
+            await StoreAsync(stored with { LinkedApps = stillFollowing }, cancellationToken).ConfigureAwait(false);
+        }
+
+        return dropped;
+    }
+
     /// <summary>
     /// Reads the stored profile, treating anything unreadable as empty. A profile is a
     /// convenience rather than a record of the user's games — losing it costs a retype, so

@@ -44,4 +44,17 @@ public interface IGlobalProfileService
     /// exactly as they are.
     /// </summary>
     Task ResetAsync(CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Drops games whose stored launch options no longer match the profile.
+    /// </summary>
+    /// <remarks>
+    /// Which games follow the profile is ProtonTune's own belief, held separately from the launch
+    /// options themselves. Anything that changes those options behind ProtonTune's back — Steam
+    /// itself, an edit made elsewhere, a configuration file restored from a backup — can leave
+    /// that belief false, and a game shown as following a profile it does not match would be
+    /// rewritten the next time the profile is saved.
+    /// </remarks>
+    /// <returns>How many games stopped following the profile.</returns>
+    Task<int> ReconcileLinksAsync(CancellationToken cancellationToken = default);
 }

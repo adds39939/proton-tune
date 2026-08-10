@@ -220,8 +220,11 @@ public sealed class GlobalProfileServiceTests : IDisposable
 
         public LaunchOptionsSaveResult Result { get; set; } = new(LaunchOptionsSaveStatus.Saved);
 
+        /// <summary>What Steam is pretending to hold for each game, for reconciling against.</summary>
+        public Dictionary<uint, string> Stored { get; } = [];
+
         public Task<LaunchOptions> GetAsync(uint appId, CancellationToken cancellationToken = default) =>
-            Task.FromResult(new LaunchOptions());
+            Task.FromResult(LaunchOptions.Parse(Stored.GetValueOrDefault(appId, string.Empty)));
 
         public bool RequiresSteamRestart() => false;
 
@@ -251,6 +254,56 @@ public sealed class GlobalProfileServiceTests : IDisposable
     }
 
     /// <summary>Names scripts under the temporary root so none of this touches a real install.</summary>
+    // Keeping the profile honest about which games follow it --------------------
+
+    /// <summary>
+    /// Which games follow the profile is ProtonTune's own belief. Anything that changes launch
+    /// options behind its back — Steam, an edit elsewhere, a configuration restored from a backup
+    /// — can make that belief false, and a game shown as following a profile it does not match
+    /// would be rewritten the next time the profile is saved.
+    /// </summary>
+    [Fact]
+    public async Task DropsGamesThatNoLongerMatchTheProfile()
+    {
+        var service = CreateService();
+
+        await service.SaveAsync(LaunchOptions.Parse("DXVK_HDR=1 %command%"));
+        await service.SetLinkedAsync(2357570, true);
+        await service.SetLinkedAsync(2138720, true);
+
+        _steam.Stored[2357570] = "DXVK_HDR=1 %command%";
+        _steam.Stored[2138720] = "PROTON_LOG=1 %command%";
+
+        var dropped = await service.ReconcileLinksAsync();
+
+        Assert.Equal(1, dropped);
+        Assert.Equal([2357570u], await service.GetLinkedAppsAsync());
+    }
+
+    /// <summary>
+    /// A game's own DLSS script is added on top of the profile rather than coming from it, so a
+    /// game using DLSS must not look like it has drifted.
+    /// </summary>
+    [Fact]
+    public async Task KeepsAGameWhoseOnlyDifferenceIsItsOwnDlssScript()
+    {
+        var service = CreateService();
+        var scriptPath = Path.Combine(_root, "dlss-2138720.sh");
+
+        await File.WriteAllTextAsync(scriptPath, "#!/usr/bin/env bash\n");
+        await service.SaveAsync(LaunchOptions.Parse("DXVK_HDR=1 %command%"));
+        await service.SetLinkedAsync(2138720, true);
+
+        _steam.Stored[2138720] = $"DXVK_HDR=1 {scriptPath} %command%";
+
+        Assert.Equal(0, await service.ReconcileLinksAsync());
+        Assert.Equal([2138720u], await service.GetLinkedAppsAsync());
+    }
+
+    [Fact]
+    public async Task HasNothingToReconcileWhenNoGameFollowsIt() =>
+        Assert.Equal(0, await CreateService().ReconcileLinksAsync());
+
     private sealed class StubDlssService(string root) : IDlssManagementService
     {
         public string ScriptPathFor(uint appId) => Path.Combine(root, $"dlss-{appId}.sh");

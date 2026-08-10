@@ -45,6 +45,9 @@ public sealed class ProtonTuneStorage
     /// <summary>The global profile and the games following it.</summary>
     public string ProfileFile => Path.Combine(Root, "profile.json");
 
+    /// <summary>ProtonTune's own settings, as opposed to anything it does to a game.</summary>
+    public string SettingsFile => Path.Combine(Root, "settings.json");
+
     /// <summary>The store directory for one runtime version.</summary>
     public string StoreFor(string version) => Path.Combine(LibraryStore, version);
 

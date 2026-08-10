@@ -1,0 +1,148 @@
+.backups {
+    margin-top: 28px;
+}
+
+.backups-heading h2 {
+    margin: 0;
+    font-size: 15px;
+    font-weight: 600;
+}
+
+.backups-heading p {
+    margin: 4px 0 0;
+    max-width: 68ch;
+    color: var(--text-muted);
+    font-size: 12px;
+    line-height: 1.6;
+}
+
+/* How many are kept ------------------------------------------------------- */
+
+.retention {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-top: 14px;
+    font-size: 13px;
+}
+
+.retention-input {
+    width: 84px;
+    padding: 6px 8px;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    background: var(--surface-0);
+    color: var(--text);
+    font: inherit;
+    font-size: 13px;
+}
+
+.retention-input:focus {
+    outline: none;
+    border-color: var(--accent);
+}
+
+.retention-note {
+    color: var(--text-muted);
+    font-size: 12px;
+}
+
+.message {
+    margin: 12px 0 0;
+    color: var(--text-muted);
+    font-size: 12px;
+    line-height: 1.6;
+}
+
+.is-error {
+    color: var(--danger);
+}
+
+.is-success {
+    color: var(--accent);
+}
+
+/* The backups themselves --------------------------------------------------- */
+
+.list {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    margin: 14px 0 0;
+    padding: 0;
+    list-style: none;
+}
+
+.item {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    padding: 10px 14px;
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    background: var(--surface-1);
+}
+
+.item-detail {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    flex: 1;
+    min-width: 0;
+}
+
+.item-target {
+    font-size: 13px;
+    font-weight: 600;
+}
+
+.item-when {
+    color: var(--text-muted);
+    font-size: 12px;
+    font-variant-numeric: tabular-nums;
+}
+
+.item-path {
+    color: var(--text-muted);
+    font-family: "JetBrains Mono", ui-monospace, monospace;
+    font-size: 10px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.item-size {
+    flex: none;
+    color: var(--text-muted);
+    font-size: 12px;
+    font-variant-numeric: tabular-nums;
+}
+
+.button {
+    flex: none;
+    padding: 6px 14px;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    background: var(--surface-2);
+    color: var(--text);
+    font: inherit;
+    font-size: 13px;
+    cursor: pointer;
+    transition: border-color 120ms ease, background 120ms ease;
+}
+
+.button:hover:not(:disabled) {
+    border-color: var(--accent);
+    background: var(--accent-soft);
+}
+
+.button:disabled {
+    opacity: 0.5;
+    cursor: default;
+}
+
+.button-danger {
+    border-color: var(--danger);
+    background: var(--removed-soft);
+    color: var(--danger);
+}
