@@ -1,4 +1,6 @@
-<div class="setting @(IsIgnored ? "is-ignored" : string.Empty)">
+@* A compound variable needs the whole width for its options, so it stacks below the label
+   instead of sitting in the control column beside it. *@
+<div class="setting @(IsIgnored ? "is-ignored" : string.Empty) @(Definition.Compound is null ? string.Empty : "is-compound")">
     <div class="setting-label">
         <span class="setting-name">@Definition.Label</span>
         @if (Definition.Description is not null)
@@ -16,6 +18,14 @@
         }
     </div>
 
+    @if (Definition.Compound is { } compound)
+    {
+        <div class="setting-compound">
+            <CompoundEditor Schema="@compound" Value="@Value" ValueChanged="@ValueChanged"/>
+        </div>
+    }
+    else
+    {
     <div class="setting-control">
         @switch (Definition.Kind)
         {
@@ -58,4 +68,5 @@
                 break;
         }
     </div>
+    }
 </div>

@@ -43,5 +43,49 @@ internal sealed class SettingDefinitionFile
 
         /// <summary>Patterns naming the Proton builds this setting exists in.</summary>
         public List<string> ProtonBuilds { get; set; } = [];
+
+        /// <summary>
+        /// Present when the variable packs several settings into one string, in which case it is
+        /// edited option by option rather than as text.
+        /// </summary>
+        public CompoundBlock? Compound { get; set; }
+    }
+
+    /// <summary>How a compound variable is packed, and which options are offered as controls.</summary>
+    internal sealed class CompoundBlock
+    {
+        /// <summary>What sits between entries. Defaults to a comma.</summary>
+        public string? Separator { get; set; }
+
+        /// <summary>What joins a key to its value. Defaults to an equals sign.</summary>
+        public string? Assignment { get; set; }
+
+        public List<OptionGroup> Groups { get; set; } = [];
+    }
+
+    /// <summary>A set of options shown together under a heading.</summary>
+    internal sealed class OptionGroup
+    {
+        /// <summary>The heading, which a group with no natural divisions can leave out.</summary>
+        public string? Name { get; set; }
+
+        public List<OptionEntry> Options { get; set; } = [];
+    }
+
+    /// <summary>One option within a compound variable.</summary>
+    internal sealed class OptionEntry
+    {
+        public string? Key { get; set; }
+
+        public string? Label { get; set; }
+
+        public string? Description { get; set; }
+
+        /// <summary>Defaults to a toggle, which writes the bare key as a flag.</summary>
+        public string? Kind { get; set; }
+
+        public List<string> Choices { get; set; } = [];
+
+        public string? Placeholder { get; set; }
     }
 }

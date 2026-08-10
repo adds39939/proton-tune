@@ -65,26 +65,21 @@
             </ul>
         }
 
-        @if (SelectedCategory is { } mangoHud && mangoHud.Is(SettingCategoryIds.MangoHud) && MangoHudDefinition is { } mangoHudDefinition)
-        {
-            <h3 class="section-title">@mangoHud.Title</h3>
-            <p class="section-note">
-                The overlay's own options, written into a single MANGOHUD_CONFIG variable.
-                They only apply when the game is launched through mangohud.
-            </p>
-
-            <CommandToggle Label="Launch through MangoHud"
-                           Command="@MangoHudCommand"
-                           Description="Adds mangohud to the launch chain. Without it none of these options apply."
-                           IsOn="@Options.HasWrapperCommand(MangoHudCommand)"
-                           IsOnChanged="@(on => ApplyWrapperCommand(MangoHudCommand, on))"/>
-
-            <MangoHudEditor Value="@Options.FindEnvironment(MangoHudVariable)?.Value"
-                            ValueChanged="@(value => ApplySetting(mangoHudDefinition, value))"/>
-        }
-        else if (SelectedCategory is { } selected)
+        @if (SelectedCategory is { } selected)
         {
             <h3 class="section-title">@selected.Title</h3>
+
+            @* The overlay's options are a compound variable, so they render themselves from the
+               definition files. Only the launch chain needs saying here: without mangohud in it,
+               none of them apply. *@
+            @if (selected.Is(SettingCategoryIds.MangoHud))
+            {
+                <CommandToggle Label="Launch through MangoHud"
+                               Command="@MangoHudCommand"
+                               Description="Adds mangohud to the launch chain. Without it none of these options apply."
+                               IsOn="@Options.HasWrapperCommand(MangoHudCommand)"
+                               IsOnChanged="@(on => ApplyWrapperCommand(MangoHudCommand, on))"/>
+            }
 
             @if (selected.Is(SettingCategoryIds.Cpu))
             {

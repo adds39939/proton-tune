@@ -147,6 +147,58 @@ public class ShippedSettingsTests
         Assert.Equal("DLSSIndicator=1024", definition.OnValue);
     }
 
+    // Variables that pack several settings into one string ---------------------
+
+    /// <summary>
+    /// MangoHud's options used to be a list in code. Losing one in the move to a file would be
+    /// silent — the option simply would not appear.
+    /// </summary>
+    [Fact]
+    public void ReadsMangoHudsOptionsFromItsFile()
+    {
+        var compound = Catalog.Find("MANGOHUD_CONFIG")!.Compound;
+
+        Assert.NotNull(compound);
+        Assert.Equal([",", "="], new[] { compound.Separator, compound.Assignment });
+        Assert.Equal(["Frame limiting", "Metrics", "Appearance"], compound.Groups.Select(group => group.Name));
+
+        // A flag, a text field and a choice: one of each shape the editor renders.
+        Assert.Equal(SettingKind.Toggle, compound.Find("fps")!.Kind);
+        Assert.Equal(SettingKind.Text, compound.Find("fps_limit")!.Kind);
+        Assert.Equal(["early", "late"], compound.Find("fps_limit_method")!.Choices);
+    }
+
+    /// <summary>
+    /// A second variable using the same mechanism, which is what makes it a mechanism rather than
+    /// MangoHud's own arrangement wearing a different name.
+    /// </summary>
+    [Fact]
+    public void ReadsTheDxvkOverlayTheSameWay()
+    {
+        var compound = Catalog.Find("DXVK_HUD")!.Compound;
+
+        Assert.NotNull(compound);
+        Assert.NotNull(compound.Find("fps"));
+        Assert.Equal(SettingKind.Text, compound.Find("scale")!.Kind);
+    }
+
+    /// <summary>
+    /// No option may be declared twice inside one variable, or setting it would depend on which
+    /// group happened to be read first.
+    /// </summary>
+    [Fact]
+    public void NoCompoundDeclaresAnOptionTwice()
+    {
+        var duplicates = Catalog.All
+            .Where(definition => definition.Compound is not null)
+            .SelectMany(definition => definition.Compound!.AllOptions
+                .GroupBy(option => option.Key, StringComparer.Ordinal)
+                .Where(group => group.Count() > 1)
+                .Select(group => $"{definition.Variable}.{group.Key}"));
+
+        Assert.Empty(duplicates);
+    }
+
     [Fact]
     public void DeclaresProtonsOwnDlssUpgradeAsAGeBuildFeature()
     {

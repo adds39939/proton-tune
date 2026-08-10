@@ -21,6 +21,38 @@ settings:
 
 Only `variable` and `label` are required. `kind` defaults to `text`, and `on` to `1`.
 
+## Variables that hold several settings at once
+
+Some variables are really lists — `MANGOHUD_CONFIG`, `DXVK_HUD`. Give one a `compound` block and
+it is edited option by option instead of as a line of text, whatever its `kind` says.
+
+```yaml
+  - variable: MANGOHUD_CONFIG
+    label: MangoHud options
+    compound:
+      separator: ","          # between entries. Defaults to a comma.
+      assignment: "="         # between a key and its value. Defaults to an equals sign.
+      groups:
+        - name: Frame limiting    # optional: a group with no name shows no heading.
+          options:
+            - key: fps_limit
+              label: Frame rate limit
+              kind: text          # toggle | choice | text | number
+              placeholder: "224"
+              description: One limit, or several separated by commas to cycle between them.
+
+            - key: fps            # no kind, so a flag: written as the bare key, with no value.
+              label: Frame rate
+```
+
+Two differences from an ordinary setting are worth knowing. An option's `kind` defaults to
+`toggle`, not `text`, because these formats are mostly flags. And a toggle here writes the bare
+key rather than a value, which is what a flag means.
+
+These lists are always partial — MangoHud alone has well over a hundred options. Whatever is not
+listed stays editable in the free-text field beneath the controls and is carried through
+untouched, so nothing is out of reach and nothing is lost by ProtonTune not knowing about it.
+
 ## `protonBuilds`
 
 A list of regular expressions matched against a build's name and its version string. If any

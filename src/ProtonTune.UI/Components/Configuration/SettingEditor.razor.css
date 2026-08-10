@@ -55,6 +55,20 @@
     justify-content: flex-end;
 }
 
+/*
+ * A compound variable brings a control per option, which needs the whole width. It stacks under
+ * the label rather than being squeezed into the column a single control sits in.
+ */
+.is-compound {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 0;
+}
+
+.setting-compound {
+    margin-top: 12px;
+}
+
 .control {
     width: 100%;
     padding: 7px 10px;

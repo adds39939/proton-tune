@@ -162,6 +162,148 @@ public sealed class YamlSettingCatalogReaderTests : IDisposable
         Assert.Equal(catalog.Find("FIRST")!.Choices, catalog.Find("SECOND")!.Choices);
     }
 
+    // Variables that pack several settings into one string ---------------------
+
+    [Fact]
+    public void ReadsACompoundVariable()
+    {
+        Write("a.yaml", """
+            id: a
+            settings:
+              - variable: MANGOHUD_CONFIG
+                label: MangoHud options
+                compound:
+                  separator: ","
+                  assignment: "="
+                  groups:
+                    - name: Frame limiting
+                      options:
+                        - key: fps_limit
+                          label: Frame rate limit
+                          kind: text
+                          placeholder: "224"
+                        - key: fps
+                          label: Frame rate
+            """);
+
+        var compound = Assert.Single(Read().All).Compound;
+
+        Assert.NotNull(compound);
+        Assert.Equal("Frame limiting", Assert.Single(compound.Groups).Name);
+        Assert.Equal(SettingKind.Text, compound.Find("fps_limit")!.Kind);
+        Assert.Equal("224", compound.Find("fps_limit")!.Placeholder);
+    }
+
+    /// <summary>
+    /// An option with no kind is a flag, written as the bare key. That differs from a setting,
+    /// which defaults to a text box — these formats are mostly flags.
+    /// </summary>
+    [Fact]
+    public void TreatsAnOptionWithNoKindAsAFlag()
+    {
+        Write("a.yaml", """
+            id: a
+            settings:
+              - variable: DXVK_HUD
+                label: HUD
+                compound:
+                  groups:
+                    - options:
+                        - key: fps
+                          label: Frame rate
+            """);
+
+        Assert.Equal(SettingKind.Toggle, Assert.Single(Read().All).Compound!.Find("fps")!.Kind);
+    }
+
+    /// <summary>Most of these formats are comma separated with an equals sign, so neither is required.</summary>
+    [Fact]
+    public void FallsBackToTheUsualSeparatorAndAssignment()
+    {
+        Write("a.yaml", """
+            id: a
+            settings:
+              - variable: DXVK_HUD
+                label: HUD
+                compound:
+                  groups:
+                    - options:
+                        - key: fps
+                          label: Frame rate
+            """);
+
+        var compound = Assert.Single(Read().All).Compound!;
+
+        Assert.Equal(",", compound.Separator);
+        Assert.Equal("=", compound.Assignment);
+    }
+
+    [Fact]
+    public void ReadsAFormatThatPacksItselfDifferently()
+    {
+        Write("a.yaml", """
+            id: a
+            settings:
+              - variable: WINEDLLOVERRIDES
+                label: DLL overrides
+                compound:
+                  separator: ";"
+                  assignment: "="
+                  groups:
+                    - options:
+                        - key: dxgi
+                          label: DXGI
+                          kind: text
+            """);
+
+        var compound = Assert.Single(Read().All).Compound!;
+
+        Assert.Equal(";", compound.Separator);
+        Assert.Null(Assert.Single(compound.Groups).Name);
+    }
+
+    /// <summary>
+    /// An editor offering nothing is worse than the text box it replaced, so a compound with no
+    /// usable options is left as an ordinary setting.
+    /// </summary>
+    [Fact]
+    public void IgnoresACompoundWithNoOptions()
+    {
+        Write("a.yaml", """
+            id: a
+            settings:
+              - variable: DXVK_HUD
+                label: HUD
+                compound:
+                  groups:
+                    - name: Empty
+                      options: []
+            """);
+
+        Assert.Null(Assert.Single(Read().All).Compound);
+    }
+
+    [Fact]
+    public void SkipsAnOptionThatNamesNoKey()
+    {
+        Write("a.yaml", """
+            id: a
+            settings:
+              - variable: DXVK_HUD
+                label: HUD
+                compound:
+                  groups:
+                    - options:
+                        - label: Nothing to set
+                        - key: fps
+                          label: Frame rate
+            """);
+
+        var compound = Assert.Single(Read().All).Compound!;
+
+        Assert.Equal(["fps"], compound.AllOptions.Select(option => option.Key));
+    }
+
     // Files a person got wrong -----------------------------------------------
 
     [Fact]

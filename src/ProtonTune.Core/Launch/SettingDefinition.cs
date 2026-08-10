@@ -58,6 +58,16 @@ public sealed record SettingDefinition(string Variable, SettingCategory Category
     public string? Placeholder { get; init; }
 
     /// <summary>
+    /// How the value is packed, for a variable that holds several settings in one string. Null for
+    /// the ordinary case of a variable holding one value.
+    /// </summary>
+    /// <remarks>
+    /// Where this is set the setting is edited option by option rather than as text, whatever
+    /// <see cref="Kind" /> says.
+    /// </remarks>
+    public CompoundSchema? Compound { get; init; }
+
+    /// <summary>
     /// Patterns naming the Proton builds this setting exists in, matched against a build's name
     /// and version. Empty means it is offered for every build.
     /// </summary>

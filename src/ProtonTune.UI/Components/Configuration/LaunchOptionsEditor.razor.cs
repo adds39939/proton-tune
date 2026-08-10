@@ -23,12 +23,6 @@ public partial class LaunchOptionsEditor : ComponentBase
     private const string CustomSection = "Custom variables";
     private const string RawSection = "Raw";
 
-    /// <summary>
-    /// MangoHud's options all live in one variable, edited option by option rather than through
-    /// the generic per-variable control.
-    /// </summary>
-    private const string MangoHudVariable = "MANGOHUD_CONFIG";
-
     /// <summary>Commands ProtonTune can add to the launch chain on the user's behalf.</summary>
     private const string MangoHudCommand = "mangohud";
 
@@ -40,12 +34,6 @@ public partial class LaunchOptionsEditor : ComponentBase
     /// <summary>The settings on offer, read from the definition files at startup.</summary>
     [Inject]
     private SettingCatalog Catalog { get; set; } = null!;
-
-    /// <summary>
-    /// MangoHud's definition, or <see langword="null"/> when the definition files do not carry
-    /// one. The section is only offered when they do.
-    /// </summary>
-    private SettingDefinition? MangoHudDefinition => Catalog.Find(MangoHudVariable);
 
     /// <summary>The options being edited.</summary>
     [Parameter]

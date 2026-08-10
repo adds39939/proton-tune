@@ -113,7 +113,67 @@ public sealed class YamlSettingCatalogReader(string directory, ILogger<YamlSetti
             OnValue = entry.On is { Length: > 0 } on ? on : "1",
             Choices = entry.Choices,
             Placeholder = entry.Placeholder,
-            ProtonBuilds = entry.ProtonBuilds
+            ProtonBuilds = entry.ProtonBuilds,
+            Compound = Convert(entry.Compound, variable, path)
+        };
+    }
+
+    /// <summary>
+    /// Reads the shape of a variable that packs several settings into one string.
+    /// </summary>
+    /// <returns>
+    /// <see langword="null"/> where none is declared, and also where one is declared with no
+    /// options at all — an empty compound would replace the text box with an editor offering
+    /// nothing, which is worse than the text box.
+    /// </returns>
+    private CompoundSchema? Convert(SettingDefinitionFile.CompoundBlock? block, string variable, string path)
+    {
+        if (block is null)
+        {
+            return null;
+        }
+
+        var groups = block.Groups
+            .Select(group => new CompoundOptionGroup(
+                group.Name,
+                group.Options
+                    .Select(option => Convert(option, variable, path))
+                    .OfType<CompoundOptionDefinition>()
+                    .ToList()))
+            .Where(group => group.Options.Count > 0)
+            .ToList();
+
+        if (groups.Count == 0)
+        {
+            logger.LogWarning("{Variable} in {Path} declares a compound with no options.", variable, path);
+
+            return null;
+        }
+
+        return new CompoundSchema(
+            block.Separator is { Length: > 0 } separator ? separator : CompoundSchema.DefaultSeparator,
+            block.Assignment is { Length: > 0 } assignment ? assignment : CompoundSchema.DefaultAssignment,
+            groups);
+    }
+
+    private CompoundOptionDefinition? Convert(SettingDefinitionFile.OptionEntry option, string variable, string path)
+    {
+        if (option.Key is not { Length: > 0 } key)
+        {
+            logger.LogWarning("Skipped an option of {Variable} in {Path}; it names no key.", variable, path);
+
+            return null;
+        }
+
+        return new CompoundOptionDefinition(key, option.Label ?? key)
+        {
+            // Unlike a setting, an option with no kind is a flag: these formats write the bare key.
+            Kind = option.Kind is { Length: > 0 }
+                ? ParseKind(option.Kind, $"{variable}.{key}", path)
+                : SettingKind.Toggle,
+            Choices = option.Choices,
+            Placeholder = option.Placeholder,
+            Description = option.Description
         };
     }
 

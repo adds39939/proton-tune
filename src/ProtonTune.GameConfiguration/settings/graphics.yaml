@@ -19,10 +19,55 @@ settings:
     description: Comma-separated VKD3D toggles, such as dxr for ray tracing.
     placeholder: dxr
 
+  # Another comma-separated list, described the same way MANGOHUD_CONFIG is. Partial, as those
+  # always are: anything DXVK accepts that is not listed stays editable as text.
   - variable: DXVK_HUD
     label: DXVK HUD
     description: DXVK's own overlay, separate from MangoHud.
     placeholder: fps,frametimes
+    compound:
+      groups:
+        - name: Metrics
+          options:
+            - key: fps
+              label: Frame rate
+            - key: frametimes
+              label: Frame time graph
+            - key: gpuload
+              label: GPU load
+            - key: memory
+              label: Memory use
+            - key: devinfo
+              label: Device and driver
+            - key: version
+              label: DXVK version
+            - key: api
+              label: Direct3D feature level
+            - key: submissions
+              label: Command submissions
+            - key: drawcalls
+              label: Draw calls
+            - key: pipelines
+              label: Pipelines compiled
+            - key: descriptors
+              label: Descriptor pools
+            - key: compiler
+              label: Shader compiler activity
+
+        - name: Appearance
+          options:
+            - key: full
+              label: Show everything
+              description: Every element at once, in place of picking them individually.
+            - key: scale
+              label: Scale
+              kind: text
+              placeholder: "1.5"
+            - key: opacity
+              label: Opacity
+              kind: text
+              placeholder: "0.8"
+              description: Between 0 and 1.
 
   - variable: VKD3D_FEATURE_LEVEL
     label: VKD3D feature level
