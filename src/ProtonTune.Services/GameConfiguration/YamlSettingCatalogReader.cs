@@ -114,6 +114,7 @@ public sealed class YamlSettingCatalogReader(string directory, ILogger<YamlSetti
             Choices = entry.Choices,
             Placeholder = entry.Placeholder,
             ProtonBuilds = entry.ProtonBuilds,
+            RestrictToProtonBuild = entry.RestrictToProtonBuild,
             Compound = Convert(entry.Compound, variable, path)
         };
     }

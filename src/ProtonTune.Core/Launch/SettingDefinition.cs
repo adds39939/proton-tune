@@ -80,6 +80,18 @@ public sealed record SettingDefinition(string Variable, SettingCategory Category
     /// </remarks>
     public IReadOnlyList<string> ProtonBuilds { get; init; } = [];
 
+    /// <summary>
+    /// Whether to hide the setting outright on a build it does not apply to, rather than showing
+    /// it greyed out.
+    /// </summary>
+    /// <remarks>
+    /// For settings that exist in one family of builds and nowhere else. A GE-Proton feature shown
+    /// against Valve's Proton is not a setting the user might reconsider — it is noise in a list
+    /// they are trying to read. Left off, the setting stays visible and says why it does nothing,
+    /// which is the better answer where the build might plausibly gain it.
+    /// </remarks>
+    public bool RestrictToProtonBuild { get; init; }
+
     /// <summary>Whether a stored value counts as this setting being on.</summary>
     public bool IsOn(string? value) =>
         value is not null && !string.Equals(value, "0", StringComparison.Ordinal) && value.Length > 0;

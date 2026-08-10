@@ -12,6 +12,7 @@ settings:
       the install.
     kind: toggle
     protonBuilds: ["^GE-Proton"]
+    restrictToProtonBuild: true
 
   - variable: PROTON_DLSS_INDICATOR
     label: Show the DLSS indicator
@@ -19,6 +20,7 @@ settings:
       Draws NVIDIA's own on-screen marker showing DLSS is running and which preset it picked.
     kind: toggle
     protonBuilds: ["^GE-Proton"]
+    restrictToProtonBuild: true
 
   - variable: PROTON_ENABLE_NVAPI
     label: Enable NVAPI

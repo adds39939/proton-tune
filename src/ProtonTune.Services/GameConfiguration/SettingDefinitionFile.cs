@@ -44,6 +44,9 @@ internal sealed class SettingDefinitionFile
         /// <summary>Patterns naming the Proton builds this setting exists in.</summary>
         public List<string> ProtonBuilds { get; set; } = [];
 
+        /// <summary>Hide the setting on other builds, rather than showing it greyed out.</summary>
+        public bool RestrictToProtonBuild { get; set; }
+
         /// <summary>
         /// Present when the variable packs several settings into one string, in which case it is
         /// edited option by option rather than as text.

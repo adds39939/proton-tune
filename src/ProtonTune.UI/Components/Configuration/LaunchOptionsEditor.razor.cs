@@ -155,12 +155,27 @@ public partial class LaunchOptionsEditor : ComponentBase
     /// them here rather than losing them.
     /// </summary>
     private IEnumerable<SettingDefinition> ListedSettingsIn(SettingCategory category) =>
-        category.Is(SettingCategoryIds.Dlss) && Entry is not null
+        (category.Is(SettingCategoryIds.Dlss) && Entry is not null
             ? DefinitionsIn(category).Where(definition => !IsProtonDlss(definition))
-            : DefinitionsIn(category);
+            : DefinitionsIn(category))
+        .Where(IsVisible);
 
     private IReadOnlyList<SettingDefinition> ProtonDlssSettings =>
-        Catalog.All.Where(IsProtonDlss).ToList();
+        Catalog.All.Where(IsProtonDlss).Where(IsVisible).ToList();
+
+    /// <summary>
+    /// Whether a setting is worth showing at all on the build in force.
+    /// </summary>
+    /// <remarks>
+    /// A setting the definition files restrict to a family of builds is hidden elsewhere, so the
+    /// GE-only features do not fill a list against a build that will never read them. Never when
+    /// it already has a value, though: hiding one that is set would leave it invisible and
+    /// unremovable except by editing the raw text.
+    /// </remarks>
+    private bool IsVisible(SettingDefinition definition) =>
+        !definition.RestrictToProtonBuild ||
+        definition.AppliesTo(Build) ||
+        Options.FindEnvironment(definition.Variable) is not null;
 
     private static bool IsProtonDlss(SettingDefinition definition) =>
         definition.Variable.StartsWith("PROTON_DLSS_", StringComparison.Ordinal);
@@ -182,7 +197,9 @@ public partial class LaunchOptionsEditor : ComponentBase
 
     /// <summary>How many of a category's settings are set.</summary>
     private int SetCountIn(SettingCategory category) =>
-        DefinitionsIn(category).Count(definition => Options.FindEnvironment(definition.Variable) is not null);
+        DefinitionsIn(category)
+            .Where(IsVisible)
+            .Count(definition => Options.FindEnvironment(definition.Variable) is not null);
 
     /// <summary>Opens on the first category with something set, so a configured game shows it.</summary>
     public void SelectFirstConfiguredCategory()

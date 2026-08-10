@@ -17,6 +17,7 @@ settings:
     choices: [a, b]                 # choice only: the values offered.
     placeholder: "144"              # text and number only: an example value.
     protonBuilds: ["^GE-Proton"]    # optional: builds this applies to, as regular expressions.
+    restrictToProtonBuild: true     # optional: hide it elsewhere, rather than greying it out.
 ```
 
 Only `variable` and `label` are required. `kind` defaults to `text`, and `on` to `1`.
@@ -62,6 +63,13 @@ Use it for a setting that only ever exists in one family of builds. It is a decl
 guess — separately from this, ProtonTune reads each installed build's own launch script and dims
 anything that build does not consult. The two agree in the usual case, and where a variable is
 implemented somewhere ProtonTune cannot read, this list is the only thing that can speak for it.
+
+By default a setting that does not apply is still shown, greyed out, saying why it does nothing.
+Add `restrictToProtonBuild: true` to hide it instead. Use that where the setting exists in one
+family of builds and nowhere else: a list of GE-Proton features shown against Valve's Proton is
+not a set of choices to reconsider, it is noise in a list someone is trying to read. A setting
+that already has a value stays visible whatever this says, or it could neither be seen nor
+removed.
 
 ## Three ids the application knows by name
 
