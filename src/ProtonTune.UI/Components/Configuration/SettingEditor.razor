@@ -1,0 +1,44 @@
+<div class="setting">
+    <div class="setting-label">
+        <span class="setting-name">@Definition.Label</span>
+        @if (Definition.Description is not null)
+        {
+            <span class="setting-description">@Definition.Description</span>
+        }
+        <code class="setting-variable">@Definition.Variable</code>
+    </div>
+
+    <div class="setting-control">
+        @switch (Definition.Kind)
+        {
+            case SettingKind.Toggle:
+                <label class="switch">
+                    <input type="checkbox" checked="@IsOn" @onchange="OnToggled"/>
+                    <span>@(IsOn ? "On" : "Off")</span>
+                </label>
+
+                break;
+
+            case SettingKind.Choice:
+                <select class="control" value="@(Value ?? string.Empty)" @onchange="OnChoicePicked">
+                    <option value="">Not set</option>
+                    @foreach (var choice in Choices)
+                    {
+                        <option value="@choice" @key="choice">@choice</option>
+                    }
+                </select>
+
+                break;
+
+            default:
+                <input class="control"
+                       type="text"
+                       spellcheck="false"
+                       placeholder="@Definition.Placeholder"
+                       value="@(Value ?? string.Empty)"
+                       @onchange="OnTextChanged"/>
+
+                break;
+        }
+    </div>
+</div>

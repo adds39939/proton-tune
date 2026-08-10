@@ -131,6 +131,39 @@ public sealed partial record LaunchOptions
             : $"{variable.Name}={ShellTokenizer.Quote(variable.Value)}";
     }
 
+    /// <summary>
+    /// Returns a copy with a variable set, replacing an existing assignment where it stands so
+    /// the order the user wrote is preserved, and appending when it is new.
+    /// </summary>
+    public LaunchOptions SetEnvironment(string name, string value)
+    {
+        var environment = Environment.ToList();
+        var index = environment.FindIndex(variable => string.Equals(variable.Name, name, StringComparison.Ordinal));
+
+        if (index >= 0)
+        {
+            environment[index] = environment[index] with { Value = value };
+        }
+        else
+        {
+            environment.Add(new EnvironmentVariable(name, value));
+        }
+
+        return this with { Environment = environment };
+    }
+
+    /// <summary>
+    /// Returns a copy without a variable. Switching a setting off removes it rather than writing
+    /// a zero, which is what these variables mean by absent and keeps the string short.
+    /// </summary>
+    public LaunchOptions RemoveEnvironment(string name) =>
+        this with
+        {
+            Environment = Environment
+                .Where(variable => !string.Equals(variable.Name, name, StringComparison.Ordinal))
+                .ToList()
+        };
+
     /// <summary>Finds an assignment by name, or returns null when it is not set.</summary>
     public EnvironmentVariable? FindEnvironment(string name) =>
         Environment.FirstOrDefault(variable => string.Equals(variable.Name, name, StringComparison.Ordinal));

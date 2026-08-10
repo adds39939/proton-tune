@@ -7,20 +7,27 @@ using ProtonTune.Services.Steam;
 namespace ProtonTune.UI.Components.Configuration;
 
 /// <summary>
-/// Per-game configuration, read from and written back to the launch options Steam has stored.
+/// Per-game configuration: recognised settings as typed controls, everything else as raw text.
 /// </summary>
 /// <remarks>
-/// Only the raw string is editable for now. The typed controls come later; being able to edit the
-/// string directly is what exercises the whole write path, and it is the escape hatch when
-/// ProtonTune does not understand a setting.
+/// The parsed options are the single source of truth. Typed controls edit them and the raw text
+/// is regenerated; editing the raw text parses straight back. Both routes end at the same string,
+/// which is the one shown in the preview and the one written to Steam.
 /// </remarks>
 public partial class GameConfigDialog : ComponentBase
 {
-    /// <summary>Sections that always appear, after the setting categories.</summary>
     private const string LaunchChainSection = "Launch chain";
-
     private const string CustomSection = "Custom variables";
     private const string RawSection = "Raw";
+
+    /// <summary>
+    /// MangoHud's options all live in one variable, edited option by option rather than through
+    /// the generic per-variable control.
+    /// </summary>
+    private const string MangoHudVariable = "MANGOHUD_CONFIG";
+
+    private static readonly SettingDefinition MangoHudDefinition =
+        SettingCatalog.Find(MangoHudVariable)!;
 
     [Inject]
     private ISteamLaunchOptionsService LaunchOptionsService { get; set; } = null!;
@@ -34,21 +41,22 @@ public partial class GameConfigDialog : ComponentBase
     [Parameter]
     public EventCallback OnClose { get; set; }
 
-    private LaunchOptions Options { get; set; } = new();
+    /// <summary>The configuration as it currently stands in the dialog.</summary>
+    private LaunchOptions Editing { get; set; } = new();
+
+    /// <summary>What Steam has stored, to compare against.</summary>
+    private string Saved { get; set; } = string.Empty;
+
+    /// <summary>The literal text in the raw editor, which may not yet be well formed.</summary>
+    private string RawDraft { get; set; } = string.Empty;
 
     private bool IsLoading { get; set; } = true;
 
     private string? LoadError { get; set; }
 
-    private string SelectedSection { get; set; } = RawSection;
+    private SettingCategory? SelectedCategory { get; set; } = SettingCategory.Dlss;
 
-    private IReadOnlyList<SettingSection> Sections { get; set; } = [];
-
-    /// <summary>What is in the editor, which may differ from what Steam has stored.</summary>
-    private string Draft { get; set; } = string.Empty;
-
-    /// <summary>What Steam has stored, to compare the draft against.</summary>
-    private string Saved { get; set; } = string.Empty;
+    private string? SelectedSpecial { get; set; }
 
     private bool IsSaving { get; set; }
 
@@ -56,24 +64,25 @@ public partial class GameConfigDialog : ComponentBase
 
     private bool SaveFailed { get; set; }
 
-    /// <summary>Whether the draft differs from what is stored.</summary>
-    private bool HasChanges => !string.Equals(Draft.Trim(), Saved, StringComparison.Ordinal);
-
-    /// <summary>
-    /// What would actually be written: the draft after a parse and format, which is what any
-    /// later typed editing would produce too. Showing this rather than the raw text means the
-    /// user approves the exact string, not an approximation of it.
-    /// </summary>
-    private string Preview => LaunchOptions.Parse(Draft).Format();
-
-    /// <summary>Whether saving now would close and reopen Steam.</summary>
     private bool WillRestartSteam { get; set; }
 
-    /// <summary>Whether a game is running, which blocks saving entirely.</summary>
     private bool GameIsRunning { get; set; }
 
+    /// <summary>New variable being added under custom variables.</summary>
+    private string NewVariableName { get; set; } = string.Empty;
+
+    private string NewVariableValue { get; set; } = string.Empty;
+
+    /// <summary>Exactly what would be written.</summary>
+    private string Preview => Editing.Format();
+
+    private bool HasChanges => !string.Equals(Preview, Saved, StringComparison.Ordinal);
+
+    private IReadOnlyList<string> Warnings => LaunchOptionsValidator.Validate(Editing);
+
+    /// <summary>Assignments with no definition. Never dropped, just ungrouped.</summary>
     private IReadOnlyList<EnvironmentVariable> CustomVariables =>
-        Options.Environment.Where(variable => SettingCatalog.Find(variable.Name) is null).ToList();
+        Editing.Environment.Where(variable => SettingCatalog.Find(variable.Name) is null).ToList();
 
     /// <inheritdoc />
     protected override async Task OnParametersSetAsync()
@@ -84,18 +93,20 @@ public partial class GameConfigDialog : ComponentBase
 
         try
         {
-            Options = await LaunchOptionsService.GetAsync(Entry.AppId);
-            Saved = Options.Format();
-            Draft = Saved;
-            Sections = BuildSections(Options);
-            SelectedSection = Sections.Count > 0 ? Sections[0].Title : RawSection;
+            Editing = await LaunchOptionsService.GetAsync(Entry.AppId);
+            Saved = Editing.Format();
+            RawDraft = Saved;
+
+            // Open on the first category that has something set, so a configured game shows its
+            // configuration rather than an empty section.
+            SelectedCategory = SettingCategories.InDisplayOrder.FirstOrDefault(HasAnySet, SettingCategory.Dlss);
+            SelectedSpecial = null;
 
             RefreshSteamState();
         }
         catch (Exception e)
         {
-            Options = new LaunchOptions();
-            Sections = [];
+            Editing = new LaunchOptions();
             LoadError = $"Could not read launch options: {e.Message}";
         }
         finally
@@ -104,35 +115,89 @@ public partial class GameConfigDialog : ComponentBase
         }
     }
 
-    private static IReadOnlyList<SettingSection> BuildSections(LaunchOptions options)
-    {
-        var known = options.Environment
-            .Select(variable => (Variable: variable, Definition: SettingCatalog.Find(variable.Name)))
-            .Where(pair => pair.Definition is not null)
-            .ToList();
+    /// <summary>The recognised settings belonging to a category.</summary>
+    private static IReadOnlyList<SettingDefinition> DefinitionsIn(SettingCategory category) =>
+        SettingCatalog.All.Where(definition => definition.Category == category).ToList();
 
-        return SettingCategories.InDisplayOrder
-            .Select(category => new SettingSection(
-                category.Title(),
-                known.Where(pair => pair.Definition!.Category == category)
-                    .Select(pair => new SettingValue(pair.Definition!, pair.Variable.Value))
-                    .ToList()))
-            .Where(section => section.Settings.Count > 0)
-            .ToList();
+    /// <summary>How many of a category's settings this game has set.</summary>
+    private int SetCountIn(SettingCategory category) =>
+        DefinitionsIn(category).Count(definition => Editing.FindEnvironment(definition.Variable) is not null);
+
+    private bool HasAnySet(SettingCategory category) => SetCountIn(category) > 0;
+
+    private void SelectCategory(SettingCategory category)
+    {
+        SelectedCategory = category;
+        SelectedSpecial = null;
     }
 
-    private void SelectSection(string section) => SelectedSection = section;
-
-    private void OnDraftChanged(ChangeEventArgs args)
+    private void SelectSpecial(string section)
     {
-        Draft = args.Value?.ToString() ?? string.Empty;
+        SelectedSpecial = section;
+        SelectedCategory = null;
+    }
+
+    /// <summary>
+    /// Applies a change from a typed control and regenerates the raw text so both views agree.
+    /// </summary>
+    private void ApplySetting(SettingDefinition definition, string? value)
+    {
+        Editing = value is null
+            ? Editing.RemoveEnvironment(definition.Variable)
+            : Editing.SetEnvironment(definition.Variable, value);
+
+        RawDraft = Editing.Format();
         SaveMessage = null;
     }
 
-    private void RevertDraft()
+    private void RemoveCustomVariable(string name)
     {
-        Draft = Saved;
+        Editing = Editing.RemoveEnvironment(name);
+        RawDraft = Editing.Format();
         SaveMessage = null;
+    }
+
+    private void SetCustomVariable(string name, string? value)
+    {
+        Editing = Editing.SetEnvironment(name, value ?? string.Empty);
+        RawDraft = Editing.Format();
+        SaveMessage = null;
+    }
+
+    private void AddCustomVariable()
+    {
+        var name = NewVariableName.Trim();
+
+        if (name.Length == 0)
+        {
+            return;
+        }
+
+        Editing = Editing.SetEnvironment(name, NewVariableValue.Trim());
+        RawDraft = Editing.Format();
+        NewVariableName = string.Empty;
+        NewVariableValue = string.Empty;
+        SaveMessage = null;
+    }
+
+    /// <summary>
+    /// Parses the raw editor back into the model. The editor keeps the user's literal text so
+    /// their cursor is not thrown around mid-word by reformatting.
+    /// </summary>
+    private void OnRawInput(ChangeEventArgs args)
+    {
+        RawDraft = args.Value?.ToString() ?? string.Empty;
+        Editing = LaunchOptions.Parse(RawDraft);
+        SaveMessage = null;
+    }
+
+    private async Task RevertAsync()
+    {
+        Editing = LaunchOptions.Parse(Saved);
+        RawDraft = Saved;
+        SaveMessage = null;
+
+        await Task.CompletedTask;
     }
 
     /// <summary>Re-checks Steam's state, which can change while the dialog is open.</summary>
@@ -156,9 +221,8 @@ public partial class GameConfigDialog : ComponentBase
             if (result.IsSuccess)
             {
                 Saved = Preview;
-                Draft = Preview;
-                Options = LaunchOptions.Parse(Saved);
-                Sections = BuildSections(Options);
+                RawDraft = Saved;
+                Editing = LaunchOptions.Parse(Saved);
 
                 SaveMessage = result.SteamWasRestarted
                     ? "Saved. Steam was closed and started again so the change would stick."
@@ -189,10 +253,4 @@ public partial class GameConfigDialog : ComponentBase
     /// </summary>
     private Task OnKeyDown(KeyboardEventArgs args) =>
         args.Key == "Escape" && !IsSaving ? Close() : Task.CompletedTask;
-
-    /// <summary>One named group of settings in the sidebar.</summary>
-    private sealed record SettingSection(string Title, IReadOnlyList<SettingValue> Settings);
-
-    /// <summary>A recognised setting together with the value this game has for it.</summary>
-    private sealed record SettingValue(SettingDefinition Definition, string Value);
 }

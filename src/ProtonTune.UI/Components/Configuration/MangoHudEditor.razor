@@ -1,0 +1,70 @@
+@foreach (var group in MangoHudCatalog.Groups)
+{
+    <h4 class="group" @key="group">@group</h4>
+
+    @foreach (var definition in MangoHudCatalog.InGroup(group))
+    {
+        <div class="option" @key="definition.Key">
+            <div class="option-label">
+                <span class="option-name">@definition.Label</span>
+                @if (definition.Description is not null)
+                {
+                    <span class="option-description">@definition.Description</span>
+                }
+                <code class="option-key">@definition.Key</code>
+            </div>
+
+            <div class="option-control">
+                @switch (definition.Kind)
+                {
+                    case SettingKind.Toggle:
+                        <label class="switch">
+                            <input type="checkbox"
+                                   checked="@Config.Contains(definition.Key)"
+                                   @onchange="@(args => ToggleOption(definition.Key, args.Value is true))"/>
+                            <span>@(Config.Contains(definition.Key) ? "On" : "Off")</span>
+                        </label>
+
+                        break;
+
+                    case SettingKind.Choice:
+                        <select class="control"
+                                value="@(Config.GetValue(definition.Key) ?? string.Empty)"
+                                @onchange="@(args => SetOption(definition.Key, args.Value?.ToString()))">
+                            <option value="">Not set</option>
+                            @foreach (var choice in ChoicesFor(definition))
+                            {
+                                <option value="@choice" @key="choice">@choice</option>
+                            }
+                        </select>
+
+                        break;
+
+                    default:
+                        <input class="control"
+                               type="text"
+                               spellcheck="false"
+                               placeholder="@definition.Placeholder"
+                               value="@(Config.GetValue(definition.Key) ?? string.Empty)"
+                               @onchange="@(args => SetOption(definition.Key, args.Value?.ToString()))"/>
+
+                        break;
+                }
+            </div>
+        </div>
+    }
+}
+
+<h4 class="group">Additional options</h4>
+
+<p class="group-note">
+    Appended to everything above, comma separated. Anything MangoHud accepts that ProtonTune does
+    not list can go here, and whatever was already set is kept.
+</p>
+
+<input class="control control-wide"
+       type="text"
+       spellcheck="false"
+       placeholder="round_corners=5,engine_version"
+       value="@AdditionalOptions"
+       @onchange="OnAdditionalChanged"/>

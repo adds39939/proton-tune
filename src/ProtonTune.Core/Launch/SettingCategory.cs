@@ -18,8 +18,8 @@ public enum SettingCategory
     /// <summary>Processor scheduling: affinity, and the sync primitives Proton uses.</summary>
     Cpu,
 
-    /// <summary>On-screen overlays and frame counters.</summary>
-    Overlay,
+    /// <summary>The MangoHud overlay and its frame limiting.</summary>
+    MangoHud,
 
     /// <summary>Renderer behaviour in DXVK and VKD3D.</summary>
     Graphics,
@@ -39,7 +39,7 @@ public static class SettingCategories
         SettingCategory.Display,
         SettingCategory.Graphics,
         SettingCategory.Cpu,
-        SettingCategory.Overlay,
+        SettingCategory.MangoHud,
         SettingCategory.Compatibility
     ];
 
@@ -50,7 +50,7 @@ public static class SettingCategories
         SettingCategory.Display => "Display",
         SettingCategory.Dlss => "DLSS",
         SettingCategory.Cpu => "CPU",
-        SettingCategory.Overlay => "Overlay",
+        SettingCategory.MangoHud => "MangoHud",
         SettingCategory.Graphics => "Graphics",
         SettingCategory.Compatibility => "Compatibility",
         _ => category.ToString()

@@ -23,57 +23,95 @@
         {
             <div class="panel-body">
                 <nav class="sections" aria-label="Setting sections">
-                    @foreach (var item in Sections)
+                    @foreach (var category in SettingCategories.InDisplayOrder)
                     {
+                        var count = SetCountIn(category);
+
                         <button type="button"
-                                class="section-tab @(SelectedSection == item.Title ? "is-active" : string.Empty)"
-                                @key="item.Title"
-                                @onclick="() => SelectSection(item.Title)">
-                            <span>@item.Title</span>
-                            <span class="section-count">@item.Settings.Count</span>
+                                class="section-tab @(SelectedCategory == category ? "is-active" : string.Empty)"
+                                @key="category"
+                                @onclick="() => SelectCategory(category)">
+                            <span>@category.Title()</span>
+                            @if (count > 0)
+                            {
+                                <span class="section-count">@count</span>
+                            }
                         </button>
                     }
 
                     <hr class="section-divider"/>
 
                     <button type="button"
-                            class="section-tab @(SelectedSection == LaunchChainSection ? "is-active" : string.Empty)"
-                            @onclick="() => SelectSection(LaunchChainSection)">
+                            class="section-tab @(SelectedSpecial == LaunchChainSection ? "is-active" : string.Empty)"
+                            @onclick="() => SelectSpecial(LaunchChainSection)">
                         <span>@LaunchChainSection</span>
-                        <span class="section-count">@Options.Wrapper.Count</span>
+                        <span class="section-count">@Editing.Wrapper.Count</span>
                     </button>
 
                     <button type="button"
-                            class="section-tab @(SelectedSection == CustomSection ? "is-active" : string.Empty)"
-                            @onclick="() => SelectSection(CustomSection)">
+                            class="section-tab @(SelectedSpecial == CustomSection ? "is-active" : string.Empty)"
+                            @onclick="() => SelectSpecial(CustomSection)">
                         <span>@CustomSection</span>
                         <span class="section-count">@CustomVariables.Count</span>
                     </button>
 
                     <button type="button"
-                            class="section-tab @(SelectedSection == RawSection ? "is-active" : string.Empty)"
-                            @onclick="() => SelectSection(RawSection)">
+                            class="section-tab @(SelectedSpecial == RawSection ? "is-active" : string.Empty)"
+                            @onclick="() => SelectSpecial(RawSection)">
                         <span>@RawSection</span>
                     </button>
                 </nav>
 
                 <div class="section-content">
-                    @if (SelectedSection == LaunchChainSection)
+                    @if (Warnings.Count > 0)
+                    {
+                        <ul class="warnings">
+                            @foreach (var warning in Warnings)
+                            {
+                                <li @key="warning">@warning</li>
+                            }
+                        </ul>
+                    }
+
+                    @if (SelectedCategory is SettingCategory.MangoHud)
+                    {
+                        <h3 class="section-title">MangoHud</h3>
+                        <p class="section-note">
+                            The overlay's own options, written into a single MANGOHUD_CONFIG variable.
+                            They only apply when the game is launched through mangohud.
+                        </p>
+
+                        <MangoHudEditor Value="@Editing.FindEnvironment(MangoHudVariable)?.Value"
+                                        ValueChanged="@(value => ApplySetting(MangoHudDefinition, value))"/>
+                    }
+                    else if (SelectedCategory is { } selected)
+                    {
+                        <h3 class="section-title">@selected.Title()</h3>
+
+                        @foreach (var definition in DefinitionsIn(selected))
+                        {
+                            <SettingEditor Definition="@definition"
+                                           Value="@Editing.FindEnvironment(definition.Variable)?.Value"
+                                           ValueChanged="@(value => ApplySetting(definition, value))"
+                                           @key="definition.Variable"/>
+                        }
+                    }
+                    else if (SelectedSpecial == LaunchChainSection)
                     {
                         <h3 class="section-title">Launch chain</h3>
                         <p class="section-note">
-                            Commands the game is launched through, in order. ProtonTune keeps unknown
-                            entries exactly where they are.
+                            Commands the game is launched through, in order. Not editable here yet —
+                            change it in the raw options for now.
                         </p>
 
-                        @if (Options.Wrapper.Count == 0)
+                        @if (Editing.Wrapper.Count == 0)
                         {
                             <p class="section-empty">The game is launched directly.</p>
                         }
                         else
                         {
                             <ol class="chain">
-                                @foreach (var token in Options.Wrapper)
+                                @foreach (var token in Editing.Wrapper)
                                 {
                                     <li><code>@token</code></li>
                                 }
@@ -82,41 +120,62 @@
 
                         <SettingRow Label="Command placeholder"
                                     Variable="%command%"
-                                    Value="@(Options.HasCommandPlaceholder ? "present" : "absent — options are appended")"
+                                    Value="@(Editing.HasCommandPlaceholder ? "present" : "absent — options are appended")"
                                     Description="Where Steam substitutes the game's own command line."/>
 
-                        @if (Options.Arguments.Count > 0)
+                        @if (Editing.Arguments.Count > 0)
                         {
                             <SettingRow Label="Game arguments"
                                         Variable="after %command%"
-                                        Value="@string.Join(' ', Options.Arguments)"
+                                        Value="@string.Join(' ', Editing.Arguments)"
                                         Description="Passed to the game itself."/>
                         }
                     }
-                    else if (SelectedSection == CustomSection)
+                    else if (SelectedSpecial == CustomSection)
                     {
                         <h3 class="section-title">Custom variables</h3>
                         <p class="section-note">
-                            Environment variables ProtonTune has no definition for. They are preserved
-                            untouched.
+                            Anything ProtonTune has no definition for, plus whatever you want to add.
                         </p>
 
-                        @if (CustomVariables.Count == 0)
+                        @foreach (var variable in CustomVariables)
                         {
-                            <p class="section-empty">Every variable set on this game is recognised.</p>
+                            <div class="custom" @key="variable.Name">
+                                <code class="custom-name">@variable.Name</code>
+
+                                <input class="custom-value"
+                                       type="text"
+                                       spellcheck="false"
+                                       value="@variable.Value"
+                                       @onchange="@(args => SetCustomVariable(variable.Name, args.Value?.ToString()))"/>
+
+                                <button type="button"
+                                        class="button button-quiet"
+                                        @onclick="() => RemoveCustomVariable(variable.Name)">
+                                    Remove
+                                </button>
+                            </div>
                         }
-                        else
-                        {
-                            @foreach (var variable in CustomVariables)
-                            {
-                                <SettingRow Label="@variable.Name"
-                                            Variable="@variable.Name"
-                                            Value="@variable.Value"
-                                            @key="variable.Name"/>
-                            }
-                        }
+
+                        <div class="custom custom-new">
+                            <input class="custom-name-input"
+                                   type="text"
+                                   spellcheck="false"
+                                   placeholder="VARIABLE_NAME"
+                                   value="@NewVariableName"
+                                   @onchange="@(args => NewVariableName = args.Value?.ToString() ?? string.Empty)"/>
+
+                            <input class="custom-value"
+                                   type="text"
+                                   spellcheck="false"
+                                   placeholder="value"
+                                   value="@NewVariableValue"
+                                   @onchange="@(args => NewVariableValue = args.Value?.ToString() ?? string.Empty)"/>
+
+                            <button type="button" class="button" @onclick="AddCustomVariable">Add</button>
+                        </div>
                     }
-                    else if (SelectedSection == RawSection)
+                    else
                     {
                         <h3 class="section-title">Raw launch options</h3>
                         <p class="section-note">
@@ -129,32 +188,16 @@
                                   spellcheck="false"
                                   placeholder="No launch options are set."
                                   disabled="@IsSaving"
-                                  value="@Draft"
-                                  @oninput="OnDraftChanged"></textarea>
-
-                        @if (HasChanges)
-                        {
-                            <div class="preview">
-                                <span class="preview-label">Will be written as</span>
-                                <pre class="raw">@Preview</pre>
-                            </div>
-                        }
+                                  value="@RawDraft"
+                                  @oninput="OnRawInput"></textarea>
                     }
-                    else
-                    {
-                        @foreach (var item in Sections.Where(s => s.Title == SelectedSection))
-                        {
-                            <h3 class="section-title">@item.Title</h3>
 
-                            @foreach (var setting in item.Settings)
-                            {
-                                <SettingRow Label="@setting.Definition.Label"
-                                            Variable="@setting.Definition.Variable"
-                                            Value="@setting.Value"
-                                            Description="@setting.Definition.Description"
-                                            @key="setting.Definition.Variable"/>
-                            }
-                        }
+                    @if (HasChanges)
+                    {
+                        <div class="preview">
+                            <span class="preview-label">Will be written as</span>
+                            <pre class="raw">@Preview</pre>
+                        </div>
                     }
                 </div>
             </div>
@@ -188,7 +231,7 @@
                     <button type="button"
                             class="button"
                             disabled="@(!HasChanges || IsSaving)"
-                            @onclick="RevertDraft">
+                            @onclick="RevertAsync">
                         Revert
                     </button>
 
