@@ -4,9 +4,8 @@ using ProtonTune.Core.Steam;
 namespace ProtonTune.UI.Components.Game;
 
 /// <summary>
-/// The badges that qualify a library entry — whether it is a compatibility tool rather than a
-/// game, and whether its install actually finished. Renders nothing when neither applies, which
-/// is the common case.
+/// The badges that qualify a library entry. Only one for now — whether the install actually
+/// finished — so it renders nothing at all in the common case.
 /// </summary>
 public partial class GameTags : ComponentBase
 {

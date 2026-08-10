@@ -17,8 +17,6 @@ public partial class GameLibrary : ComponentBase
 
     private string SearchTerm { get; set; } = string.Empty;
 
-    private bool ShowTools { get; set; }
-
     /// <summary>The available view modes, in the order their buttons appear.</summary>
     private static readonly LibraryViewMode[] ViewModes = Enum.GetValues<LibraryViewMode>();
 
@@ -31,9 +29,16 @@ public partial class GameLibrary : ComponentBase
 
     private string? LoadError { get; set; }
 
-    /// <summary>The apps matching the current search term and tool filter.</summary>
+    /// <summary>
+    /// The games matching the current search.
+    /// </summary>
+    /// <remarks>
+    /// Compatibility tools are never listed. Proton and the Steam runtimes are installed as apps
+    /// and share the library, but they are not launched and have nothing to configure, so showing
+    /// them is only ever noise.
+    /// </remarks>
     private IReadOnlyList<SteamLibraryEntry> VisibleApps => Apps
-        .Where(app => ShowTools || app.Kind == SteamAppKind.Game)
+        .Where(app => app.Kind == SteamAppKind.Game)
         .Where(MatchesSearch)
         .ToList();
 
@@ -47,16 +52,14 @@ public partial class GameLibrary : ComponentBase
             }
 
             var gameCount = Apps.Count(app => app.Kind == SteamAppKind.Game);
-            var toolCount = Apps.Count - gameCount;
 
-            return $"{gameCount} {Pluralise(gameCount, "game", "games")}, " +
-                   $"{toolCount} compatibility {Pluralise(toolCount, "tool", "tools")}";
+            return $"{gameCount} {Pluralise(gameCount, "game", "games")} installed";
         }
     }
 
     private string EmptyMessage => Apps.Count == 0
         ? "No installed Steam apps were found. Is Steam installed for this user?"
-        : "No games match the current filters.";
+        : "No games match that search.";
 
     /// <inheritdoc />
     protected override Task OnInitializedAsync() => LoadAsync();
@@ -82,8 +85,6 @@ public partial class GameLibrary : ComponentBase
     }
 
     private void OnSearchChanged(ChangeEventArgs args) => SearchTerm = args.Value?.ToString() ?? string.Empty;
-
-    private void OnShowToolsChanged(ChangeEventArgs args) => ShowTools = args.Value is true;
 
     private void SetViewMode(LibraryViewMode mode) => ViewMode = mode;
 

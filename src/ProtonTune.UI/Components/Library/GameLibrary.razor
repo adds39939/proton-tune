@@ -17,11 +17,6 @@
                value="@SearchTerm"
                @oninput="OnSearchChanged"/>
 
-        <label class="toggle">
-            <input type="checkbox" checked="@ShowTools" @onchange="OnShowToolsChanged"/>
-            <span>Show compatibility tools</span>
-        </label>
-
         <div class="view-toggle" role="group" aria-label="View mode">
             @foreach (var mode in ViewModes)
             {

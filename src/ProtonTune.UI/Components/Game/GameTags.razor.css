@@ -8,11 +8,6 @@
     text-transform: uppercase;
 }
 
-.tag-tool {
-    background: var(--accent-soft);
-    color: var(--accent);
-}
-
 .tag-warning {
     background: var(--warning-soft);
     color: var(--warning);
