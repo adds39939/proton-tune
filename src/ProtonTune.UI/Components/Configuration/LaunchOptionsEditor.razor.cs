@@ -128,7 +128,7 @@ public partial class LaunchOptionsEditor : ComponentBase
     /// files, so there is nothing to pick until they have been read — and without this the editor
     /// renders with no section selected, which falls through to the raw text box.
     /// </summary>
-    protected override void OnInitialized() => SelectedCategory = Catalog.Categories.FirstOrDefault();
+    protected override void OnInitialized() => SelectedCategory = VisibleCategories.FirstOrDefault();
 
     /// <inheritdoc />
     protected override void OnParametersSet()
@@ -142,6 +142,42 @@ public partial class LaunchOptionsEditor : ComponentBase
             RawDraft = formatted;
             _lastRendered = formatted;
         }
+
+        // Changing the Proton build can empty the section on show. Leaving it selected would
+        // leave the screen blank with no way of telling why.
+        if (SelectedCategory is { } selected && !HasAnythingToShow(selected))
+        {
+            SelectedCategory = VisibleCategories.FirstOrDefault();
+        }
+    }
+
+    /// <summary>
+    /// The sections worth listing. One whose every setting belongs to a build the game does not
+    /// run is not a section with nothing chosen in it — it cannot be used at all, and a tab that
+    /// opens onto nothing is worse than no tab.
+    /// </summary>
+    private IReadOnlyList<SettingCategory> VisibleCategories =>
+        Catalog.Categories.Where(HasAnythingToShow).ToList();
+
+    /// <summary>Whether a section would show anything if it were opened.</summary>
+    private bool HasAnythingToShow(SettingCategory category)
+    {
+        // Three sections carry a control that is more than a list of variables — the DLSS
+        // libraries, the CPU affinity picker, MangoHud's launch-chain toggle — so they stand up
+        // whether or not any of their settings apply.
+        if (category.Is(SettingCategoryIds.Cpu) || category.Is(SettingCategoryIds.MangoHud))
+        {
+            return true;
+        }
+
+        if (category.Is(SettingCategoryIds.Dlss) && Entry is not null)
+        {
+            return true;
+        }
+
+        // A setting that is already set counts as something to show, which is what keeps a value
+        // reachable on a build that would otherwise hide it.
+        return DefinitionsIn(category).Any(IsVisible);
     }
 
     /// <summary>The recognised settings belonging to a category.</summary>
@@ -204,9 +240,11 @@ public partial class LaunchOptionsEditor : ComponentBase
     /// <summary>Opens on the first category with something set, so a configured game shows it.</summary>
     public void SelectFirstConfiguredCategory()
     {
+        var visible = VisibleCategories;
+
         SelectedCategory =
-            Catalog.Categories.FirstOrDefault(category => SetCountIn(category) > 0) ??
-            Catalog.Categories.FirstOrDefault();
+            visible.FirstOrDefault(category => SetCountIn(category) > 0) ??
+            visible.FirstOrDefault();
 
         SelectedSpecial = null;
     }
