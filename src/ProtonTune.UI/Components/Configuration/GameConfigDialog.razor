@@ -224,8 +224,18 @@
                     @if (HasChanges)
                     {
                         <div class="preview">
-                            <span class="preview-label">Will be written as</span>
-                            <pre class="raw">@Preview</pre>
+                            <div class="preview-heading">
+                                <span class="preview-label">Will be written as</span>
+                                <span class="legend">
+                                    <span class="legend-item legend-added">added</span>
+                                    <span class="legend-item legend-removed">removed</span>
+                                </span>
+                            </div>
+
+                            @* The separator is an explicit expression: a whitespace-only literal
+                               gets trimmed away, and the tokens then run together unreadably. *@
+                            <pre class="raw">@foreach (var token in PreviewDiff)
+{<span class="token token-@token.Kind.ToString().ToLowerInvariant()">@token.Text</span>@(" ")}</pre>
                         </div>
                     }
                 </div>

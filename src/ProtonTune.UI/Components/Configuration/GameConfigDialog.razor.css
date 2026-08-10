@@ -372,3 +372,47 @@
     letter-spacing: 0.06em;
     text-transform: uppercase;
 }
+
+/* Change preview --------------------------------------------------------- */
+
+.preview-heading {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 16px;
+}
+
+.legend {
+    display: flex;
+    gap: 10px;
+}
+
+.legend-item {
+    font-size: 10px;
+    font-weight: 600;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+}
+
+.legend-added {
+    color: var(--added);
+}
+
+.legend-removed {
+    color: var(--danger);
+}
+
+.token {
+    border-radius: 3px;
+}
+
+.token-added {
+    background: var(--added-soft);
+    color: var(--added);
+}
+
+.token-removed {
+    background: var(--removed-soft);
+    color: var(--danger);
+    text-decoration: line-through;
+}

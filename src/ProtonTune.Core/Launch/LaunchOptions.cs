@@ -95,7 +95,17 @@ public sealed partial record LaunchOptions
     /// Renders back to the string Steam stores. Parsing and formatting a conventionally spaced
     /// string returns it unchanged.
     /// </summary>
-    public string Format()
+    public string Format() => string.Join(' ', FormatTokens());
+
+    /// <summary>
+    /// Renders to the individual tokens <see cref="Format" /> joins with spaces.
+    /// </summary>
+    /// <remarks>
+    /// Exposed separately so a change can be compared token by token. Splitting the formatted
+    /// string back apart would not do: a quoted value containing a space is one token, and naive
+    /// splitting would tear it in half.
+    /// </remarks>
+    public IReadOnlyList<string> FormatTokens()
     {
         var parts = new List<string>(Environment.Count + Wrapper.Count + Arguments.Count + 1);
 
@@ -110,7 +120,7 @@ public sealed partial record LaunchOptions
 
         parts.AddRange(Arguments.Select(ShellTokenizer.Quote));
 
-        return string.Join(' ', parts);
+        return parts;
     }
 
     /// <summary>

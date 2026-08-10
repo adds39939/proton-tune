@@ -85,6 +85,13 @@ public partial class GameConfigDialog : ComponentBase
 
     private IReadOnlyList<string> Warnings => LaunchOptionsValidator.Validate(Editing);
 
+    /// <summary>
+    /// The pending string broken into what is staying, arriving, and going, so the change can be
+    /// read at a glance rather than by comparing two long lines.
+    /// </summary>
+    private IReadOnlyList<LaunchDiffToken> PreviewDiff =>
+        LaunchOptionsDiff.Compare(LaunchOptions.Parse(Saved), Editing);
+
     /// <summary>Assignments with no definition. Never dropped, just ungrouped.</summary>
     private IReadOnlyList<EnvironmentVariable> CustomVariables =>
         Editing.Environment.Where(variable => SettingCatalog.Find(variable.Name) is null).ToList();
