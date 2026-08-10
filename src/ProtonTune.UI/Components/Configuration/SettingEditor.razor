@@ -38,6 +38,15 @@
 
                 break;
 
+            case SettingKind.Number:
+                <input class="control"
+                       type="number"
+                       placeholder="@Definition.Placeholder"
+                       value="@(Value ?? string.Empty)"
+                       @onchange="OnTextChanged"/>
+
+                break;
+
             default:
                 <input class="control"
                        type="text"

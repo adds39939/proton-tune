@@ -12,17 +12,11 @@
       <PackageReference Include="PhotinoX.Blazor" Version="4.3.2" />
     </ItemGroup>
 
-    <!--
-      The DLSS libraries ship with the application, in versioned directories so several can be
-      offered at once. They are large, so they are copied only when they change.
-    -->
     <ItemGroup>
-      <Content Include="..\..\lib\dlss\**\*.dll"
-               Link="lib\dlss\%(RecursiveDir)%(Filename)%(Extension)"
-               CopyToOutputDirectory="PreserveNewest" />
-    </ItemGroup>
-
-    <ItemGroup>
+      <!-- These two carry data rather than code: the DLSS libraries and the setting definitions,
+           each laid out beside the application by being referenced. -->
+      <ProjectReference Include="..\ProtonTune.Lib.DLSS\ProtonTune.Lib.DLSS.csproj" />
+      <ProjectReference Include="..\ProtonTune.GameConfiguration\ProtonTune.GameConfiguration.csproj" />
       <ProjectReference Include="..\ProtonTune.Services\ProtonTune.Services.csproj" />
       <ProjectReference Include="..\ProtonTune.UI\ProtonTune.UI.csproj" />
     </ItemGroup>

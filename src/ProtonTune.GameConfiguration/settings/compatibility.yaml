@@ -1,0 +1,19 @@
+id: compatibility
+title: Compatibility
+order: 7
+
+settings:
+  - variable: WINEDLLOVERRIDES
+    label: DLL overrides
+    description: Chooses between Wine's built-in DLLs and the game's own.
+    placeholder: dxgi=n,b
+
+  - variable: PROTON_FORCE_LARGE_ADDRESS_AWARE
+    label: Large address aware
+    description: Gives 32-bit games access to more than 2 GB of address space.
+    kind: toggle
+
+  - variable: PROTON_LOG
+    label: Proton logging
+    description: Writes a debug log to the home directory. Slows the game down.
+    kind: toggle

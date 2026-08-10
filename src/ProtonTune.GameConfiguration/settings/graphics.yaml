@@ -1,0 +1,30 @@
+id: graphics
+title: Graphics
+order: 4
+
+settings:
+  - variable: DXVK_FRAME_RATE
+    label: Frame rate cap
+    description: Limits frames per second inside DXVK. 0 leaves it uncapped.
+    kind: number
+    placeholder: "144"
+
+  - variable: DXVK_CONFIG_FILE
+    label: DXVK config file
+    description: Path to a dxvk.conf holding per-game renderer tweaks.
+    placeholder: /home/you/dxvk.conf
+
+  - variable: VKD3D_CONFIG
+    label: VKD3D features
+    description: Comma-separated VKD3D toggles, such as dxr for ray tracing.
+    placeholder: dxr
+
+  - variable: DXVK_HUD
+    label: DXVK HUD
+    description: DXVK's own overlay, separate from MangoHud.
+    placeholder: fps,frametimes
+
+  - variable: VKD3D_FEATURE_LEVEL
+    label: VKD3D feature level
+    description: Caps the Direct3D 12 feature level reported to the game.
+    placeholder: "12_1"

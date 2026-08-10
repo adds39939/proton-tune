@@ -1,0 +1,96 @@
+id: dlss
+title: DLSS
+order: 1
+
+settings:
+  # Proton's own DLSS handling. Only the GE family reads these; Valve's builds have no equivalent,
+  # which is why ProtonTune falls back to swapping the libraries itself on those.
+  - variable: PROTON_DLSS_UPGRADE
+    label: Upgrade DLSS libraries
+    description: >-
+      Runs the game against the build's own newer DLSS libraries, without touching the files in
+      the install.
+    kind: toggle
+    protonBuilds: ["^GE-Proton"]
+
+  - variable: PROTON_DLSS_INDICATOR
+    label: Show the DLSS indicator
+    description: >-
+      Draws NVIDIA's own on-screen marker showing DLSS is running and which preset it picked.
+    kind: toggle
+    protonBuilds: ["^GE-Proton"]
+
+  - variable: PROTON_ENABLE_NVAPI
+    label: Enable NVAPI
+    description: >-
+      Exposes NVIDIA's NVAPI to the game. Recent Proton enables it by default, so this is only
+      needed on older versions.
+    kind: toggle
+
+  - variable: PROTON_ENABLE_NGX_UPDATER
+    label: Allow NGX updates
+    description: Lets Proton keep NVIDIA's NGX runtime current.
+    kind: toggle
+
+  # The render preset overrides all accept the same values, so the list is written once and
+  # referred to. Taken from the value table inside nvapi64.dll, which spells them exactly like
+  # this: twenty-six single-letter presets, then Default and Latest in mixed case rather than the
+  # shouting case of the rest. The casing is reproduced verbatim because the name has to match the
+  # table for the override to take effect, and a value that does not match fails silently — the
+  # game simply runs with whatever preset it chose for itself.
+  - variable: DXVK_NVAPI_DRS_NGX_DLSS_SR_OVERRIDE_RENDER_PRESET_SELECTION
+    label: SR override preset
+    description: Forces a super-resolution render preset regardless of what the game asks for.
+    kind: choice
+    choices: &renderPresets
+      - RENDER_PRESET_Default
+      - RENDER_PRESET_Latest
+      - RENDER_PRESET_A
+      - RENDER_PRESET_B
+      - RENDER_PRESET_C
+      - RENDER_PRESET_D
+      - RENDER_PRESET_E
+      - RENDER_PRESET_F
+      - RENDER_PRESET_G
+      - RENDER_PRESET_H
+      - RENDER_PRESET_I
+      - RENDER_PRESET_J
+      - RENDER_PRESET_K
+      - RENDER_PRESET_L
+      - RENDER_PRESET_M
+      - RENDER_PRESET_N
+      - RENDER_PRESET_O
+      - RENDER_PRESET_P
+      - RENDER_PRESET_Q
+      - RENDER_PRESET_R
+      - RENDER_PRESET_S
+      - RENDER_PRESET_T
+      - RENDER_PRESET_U
+      - RENDER_PRESET_V
+      - RENDER_PRESET_W
+      - RENDER_PRESET_X
+      - RENDER_PRESET_Y
+      - RENDER_PRESET_Z
+
+  - variable: DXVK_NVAPI_DRS_NGX_DLSS_RR_OVERRIDE_RENDER_PRESET_SELECTION
+    label: RR override preset
+    description: The same override, applied to ray reconstruction's denoiser.
+    kind: choice
+    choices: *renderPresets
+
+  - variable: DXVK_NVAPI_DRS_NGX_DLSS_FG_OVERRIDE_RENDER_PRESET_SELECTION
+    label: FG override preset
+    description: The same override, applied to frame generation.
+    kind: choice
+    choices: *renderPresets
+
+  - variable: DXVK_NVAPI_SET_NGX_DEBUG_OPTIONS
+    label: Display SR debug info
+    description: Overlays DLSS's own debug readout, including which preset is live.
+    kind: toggle
+    on: DLSSIndicator=1024
+
+  - variable: DXVK_NVAPI_ALLOW_OTHER_DRIVERS
+    label: Allow non-NVIDIA drivers
+    description: Lets DXVK-NVAPI load on drivers it would otherwise refuse.
+    kind: toggle

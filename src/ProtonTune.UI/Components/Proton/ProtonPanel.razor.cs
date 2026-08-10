@@ -21,6 +21,10 @@ public partial class ProtonPanel : ComponentBase
     [Inject]
     private ISteamLibraryService Library { get; set; } = null!;
 
+    /// <summary>The settings on offer, so a build can be described by what it ignores.</summary>
+    [Inject]
+    private SettingCatalog Catalog { get; set; } = null!;
+
     private ProtonCatalogue Catalogue { get; set; } = ProtonCatalogue.Empty;
 
     /// <summary>
@@ -95,14 +99,14 @@ public partial class ProtonPanel : ComponentBase
     /// between one build and another — Valve's Experimental reads no HDR or Wayland variable at
     /// all, and none of the upgrade toggles.
     /// </summary>
-    private static string SupportSummary(ProtonBuild build)
+    private string SupportSummary(ProtonBuild build)
     {
         if (!build.Capabilities.IsKnown)
         {
             return "Which settings it reads could not be checked.";
         }
 
-        var ignored = SettingCatalog.All
+        var ignored = Catalog.All
             .Where(definition => build.Capabilities.Ignores(definition.Variable))
             .Select(definition => definition.Label)
             .ToList();

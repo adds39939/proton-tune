@@ -1,0 +1,14 @@
+id: cpu
+title: CPU
+order: 5
+
+settings:
+  - variable: PROTON_NO_ESYNC
+    label: Disable esync
+    description: Turns off eventfd synchronisation. Costs performance; fixes some games.
+    kind: toggle
+
+  - variable: PROTON_NO_FSYNC
+    label: Disable fsync
+    description: Turns off futex synchronisation, the faster successor to esync.
+    kind: toggle

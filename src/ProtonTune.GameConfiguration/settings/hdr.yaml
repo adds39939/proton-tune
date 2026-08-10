@@ -1,0 +1,14 @@
+id: hdr
+title: HDR
+order: 2
+
+settings:
+  - variable: PROTON_ENABLE_HDR
+    label: Enable HDR in Proton
+    description: Lets Proton advertise HDR support to the game. Needs a Wayland session.
+    kind: toggle
+
+  - variable: DXVK_HDR
+    label: Enable HDR in DXVK
+    description: Turns on HDR output in the D3D-to-Vulkan layer.
+    kind: toggle

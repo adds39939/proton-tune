@@ -1,58 +1,39 @@
 namespace ProtonTune.Core.Launch;
 
 /// <summary>
-/// The groups a launch setting can belong to. These are how the settings are presented, not how
-/// Proton organises anything — the variables themselves come from unrelated projects.
+/// A section of the configuration screen, as declared by one of the setting definition files.
 /// </summary>
-public enum SettingCategory
+/// <remarks>
+/// These are data rather than an enumeration, so a new section is a new file rather than a change
+/// to the application. That is also why the identifier matters: it is the stable name, while the
+/// title is free to be reworded.
+/// </remarks>
+/// <param name="Id">
+/// The stable key, lowercase. Three of these are known to the application by name — see
+/// <see cref="SettingCategoryIds" />.
+/// </param>
+/// <param name="Title">The heading shown to a person.</param>
+/// <param name="Order">Where the section sits in the list, lowest first.</param>
+public sealed record SettingCategory(string Id, string Title, int Order)
 {
-    /// <summary>High dynamic range output.</summary>
-    Hdr,
-
-    /// <summary>Windowing and presentation — Wayland, resolution, upscaling.</summary>
-    Display,
-
-    /// <summary>NVIDIA DLSS and the NGX runtime behind it.</summary>
-    Dlss,
-
-    /// <summary>Processor scheduling: affinity, and the sync primitives Proton uses.</summary>
-    Cpu,
-
-    /// <summary>The MangoHud overlay and its frame limiting.</summary>
-    MangoHud,
-
-    /// <summary>Renderer behaviour in DXVK and VKD3D.</summary>
-    Graphics,
-
-    /// <summary>Wine-level workarounds and logging.</summary>
-    Compatibility
+    /// <summary>Whether this is the section with the given identifier.</summary>
+    public bool Is(string id) => string.Equals(Id, id, StringComparison.OrdinalIgnoreCase);
 }
 
-/// <summary>Presentation details for <see cref="SettingCategory" />.</summary>
-public static class SettingCategories
+/// <summary>
+/// The section identifiers the application looks for by name.
+/// </summary>
+/// <remarks>
+/// Each of these carries a control that is more than a list of variables — the DLSS library swap,
+/// the CPU affinity picker, and MangoHud's option-by-option editor. A section can be renamed in
+/// its file freely; renaming one of these identifiers removes the extra control rather than the
+/// section, so it has to be changed here at the same time.
+/// </remarks>
+public static class SettingCategoryIds
 {
-    /// <summary>The categories in the order they should be listed.</summary>
-    public static IReadOnlyList<SettingCategory> InDisplayOrder { get; } =
-    [
-        SettingCategory.Dlss,
-        SettingCategory.Hdr,
-        SettingCategory.Display,
-        SettingCategory.Graphics,
-        SettingCategory.Cpu,
-        SettingCategory.MangoHud,
-        SettingCategory.Compatibility
-    ];
+    public const string Dlss = "dlss";
 
-    /// <summary>The heading shown for a category, since several are acronyms.</summary>
-    public static string Title(this SettingCategory category) => category switch
-    {
-        SettingCategory.Hdr => "HDR",
-        SettingCategory.Display => "Display",
-        SettingCategory.Dlss => "DLSS",
-        SettingCategory.Cpu => "CPU",
-        SettingCategory.MangoHud => "MangoHud",
-        SettingCategory.Graphics => "Graphics",
-        SettingCategory.Compatibility => "Compatibility",
-        _ => category.ToString()
-    };
+    public const string Cpu = "cpu";
+
+    public const string MangoHud = "mangohud";
 }

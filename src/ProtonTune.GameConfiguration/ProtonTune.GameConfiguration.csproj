@@ -1,0 +1,26 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+    <!--
+      Carries the setting definitions ProtonTune offers, one file per section. There is no code
+      here: the point is that adding a section, or a variable to one, is an edit to a data file
+      rather than a change to the application.
+    -->
+    <PropertyGroup>
+        <TargetFramework>net10.0</TargetFramework>
+        <ImplicitUsings>enable</ImplicitUsings>
+        <Nullable>enable</Nullable>
+        <IsPackable>false</IsPackable>
+    </PropertyGroup>
+
+    <!--
+      Copied into settings/ of whatever references this, which is where the catalogue reads them
+      from. They are copied rather than embedded so that they can be edited in an installed copy
+      without rebuilding.
+    -->
+    <ItemGroup>
+        <Content Include="settings/*.yaml"
+                 TargetPath="settings/%(Filename)%(Extension)"
+                 CopyToOutputDirectory="PreserveNewest" />
+    </ItemGroup>
+
+</Project>

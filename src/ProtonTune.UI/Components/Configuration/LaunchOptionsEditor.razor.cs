@@ -29,9 +29,6 @@ public partial class LaunchOptionsEditor : ComponentBase
     /// </summary>
     private const string MangoHudVariable = "MANGOHUD_CONFIG";
 
-    private static readonly SettingDefinition MangoHudDefinition =
-        SettingCatalog.Find(MangoHudVariable)!;
-
     /// <summary>Commands ProtonTune can add to the launch chain on the user's behalf.</summary>
     private const string MangoHudCommand = "mangohud";
 
@@ -39,6 +36,16 @@ public partial class LaunchOptionsEditor : ComponentBase
 
     [Inject]
     private IDlssManagementService Dlss { get; set; } = null!;
+
+    /// <summary>The settings on offer, read from the definition files at startup.</summary>
+    [Inject]
+    private SettingCatalog Catalog { get; set; } = null!;
+
+    /// <summary>
+    /// MangoHud's definition, or <see langword="null"/> when the definition files do not carry
+    /// one. The section is only offered when they do.
+    /// </summary>
+    private SettingDefinition? MangoHudDefinition => Catalog.Find(MangoHudVariable);
 
     /// <summary>The options being edited.</summary>
     [Parameter]
@@ -74,21 +81,41 @@ public partial class LaunchOptionsEditor : ComponentBase
     public EventCallback<string> CompatToolChanged { get; set; }
 
     /// <summary>
-    /// What the Proton build in force actually reads, so settings it ignores can say so. Defaults
-    /// to judging nothing, which is right for the global profile — it is not tied to a build.
+    /// The Proton build in force, so settings it does nothing with can say so. Null for the global
+    /// profile, which is tied to no build and therefore judges nothing.
     /// </summary>
     [Parameter]
-    public ProtonCapabilities Capabilities { get; set; } = ProtonCapabilities.Unknown;
+    public ProtonBuild? Build { get; set; }
 
-    /// <summary>The build those capabilities belong to, so a note can name it.</summary>
-    [Parameter]
-    public string? BuildName { get; set; }
+    private ProtonCapabilities Capabilities => Build?.Capabilities ?? ProtonCapabilities.Unknown;
+
+    private string? BuildName => Build?.DisplayName;
+
+    /// <summary>
+    /// Whether the build in force does nothing with a setting.
+    /// </summary>
+    /// <remarks>
+    /// Two sources, and they are not equals. Reading the build's own launch script is exact, so
+    /// where it has an opinion it decides. The definition file's declaration speaks only where it
+    /// cannot — the renderer variables, whose names are assembled at runtime and never appear
+    /// whole in the shipped libraries.
+    /// </remarks>
+    private bool IsIgnored(SettingDefinition definition) => Capabilities.Reads(definition.Variable) switch
+    {
+        true => false,
+        false => true,
+        null => !definition.AppliesTo(Build)
+    };
 
     /// <summary>Whether a save is in flight, which locks the raw editor.</summary>
     [Parameter]
     public bool IsBusy { get; set; }
 
-    private SettingCategory? SelectedCategory { get; set; } = SettingCategory.Dlss;
+    /// <summary>
+    /// The section on show. Set on first render rather than here: which sections exist is decided
+    /// by the definition files, so there is no section to name until they have been read.
+    /// </summary>
+    private SettingCategory? SelectedCategory { get; set; }
 
     private string? SelectedSpecial { get; set; }
 
@@ -121,7 +148,14 @@ public partial class LaunchOptionsEditor : ComponentBase
 
     /// <summary>Assignments with no definition. Never dropped, just ungrouped.</summary>
     private IReadOnlyList<EnvironmentVariable> CustomVariables =>
-        Options.Environment.Where(variable => SettingCatalog.Find(variable.Name) is null).ToList();
+        Options.Environment.Where(variable => Catalog.Find(variable.Name) is null).ToList();
+
+    /// <summary>
+    /// Opens on a section rather than on nothing. Which sections exist comes from the definition
+    /// files, so there is nothing to pick until they have been read — and without this the editor
+    /// renders with no section selected, which falls through to the raw text box.
+    /// </summary>
+    protected override void OnInitialized() => SelectedCategory = Catalog.Categories.FirstOrDefault();
 
     /// <inheritdoc />
     protected override void OnParametersSet()
@@ -138,8 +172,8 @@ public partial class LaunchOptionsEditor : ComponentBase
     }
 
     /// <summary>The recognised settings belonging to a category.</summary>
-    private static IReadOnlyList<SettingDefinition> DefinitionsIn(SettingCategory category) =>
-        SettingCatalog.All.Where(definition => definition.Category == category).ToList();
+    private IReadOnlyList<SettingDefinition> DefinitionsIn(SettingCategory category) =>
+        Catalog.In(category);
 
     /// <summary>
     /// A category's settings as the generic list renders them. For a game, Proton's own DLSS
@@ -148,12 +182,12 @@ public partial class LaunchOptionsEditor : ComponentBase
     /// them here rather than losing them.
     /// </summary>
     private IEnumerable<SettingDefinition> ListedSettingsIn(SettingCategory category) =>
-        category is SettingCategory.Dlss && Entry is not null
+        category.Is(SettingCategoryIds.Dlss) && Entry is not null
             ? DefinitionsIn(category).Where(definition => !IsProtonDlss(definition))
             : DefinitionsIn(category);
 
-    private static IReadOnlyList<SettingDefinition> ProtonDlssSettings { get; } =
-        SettingCatalog.All.Where(IsProtonDlss).ToList();
+    private IReadOnlyList<SettingDefinition> ProtonDlssSettings =>
+        Catalog.All.Where(IsProtonDlss).ToList();
 
     private static bool IsProtonDlss(SettingDefinition definition) =>
         definition.Variable.StartsWith("PROTON_DLSS_", StringComparison.Ordinal);
@@ -180,8 +214,9 @@ public partial class LaunchOptionsEditor : ComponentBase
     /// <summary>Opens on the first category with something set, so a configured game shows it.</summary>
     public void SelectFirstConfiguredCategory()
     {
-        SelectedCategory = SettingCategories.InDisplayOrder
-            .FirstOrDefault(category => SetCountIn(category) > 0, SettingCategory.Dlss);
+        SelectedCategory =
+            Catalog.Categories.FirstOrDefault(category => SetCountIn(category) > 0) ??
+            Catalog.Categories.FirstOrDefault();
 
         SelectedSpecial = null;
     }

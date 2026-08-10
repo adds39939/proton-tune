@@ -1,0 +1,9 @@
+id: display
+title: Display
+order: 3
+
+settings:
+  - variable: PROTON_ENABLE_WAYLAND
+    label: Run natively on Wayland
+    description: Skips XWayland. Required before HDR will do anything.
+    kind: toggle

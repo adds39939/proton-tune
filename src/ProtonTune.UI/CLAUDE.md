@@ -114,6 +114,16 @@ Components never touch the filesystem or parse Steam files. They depend on an in
 `ProtonTune.Services` (e.g. `ISteamLibraryService`, `IGameArtworkService`) and render what it
 returns.
 
+**Which settings exist is data, not code.** `SettingCatalog` is injected, read once at startup
+from the YAML files in `ProtonTune.GameConfiguration`. Never hardcode a variable name or a section
+in a component: adding either is an edit to those files. The exceptions are the three section ids
+in `SettingCategoryIds`, which carry a control that is more than a list of variables — the DLSS
+library swap, the CPU affinity picker, and MangoHud's option-by-option editor.
+
+Because the sections come from files, there is no section to select until they are read. A
+component that opens on one has to pick it after the catalogue is available rather than in a field
+initialiser, or it renders with nothing selected.
+
 Every load path handles four states explicitly: loading, error, empty, and populated. Steam may
 be missing, mid-write, or installed with no games — a component that only renders the happy path
 is incomplete. Catch at the component boundary and surface a message rather than letting an

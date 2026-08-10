@@ -50,6 +50,9 @@ public partial class GameConfigDialog : ComponentBase
 
     private LaunchOptionsEditor? Editor { get; set; }
 
+    /// <summary>Whether the opening section has been chosen for the game now being shown.</summary>
+    private bool _hasChosenSection;
+
     private bool IsLoading { get; set; } = true;
 
     private string? LoadError { get; set; }
@@ -119,6 +122,9 @@ public partial class GameConfigDialog : ComponentBase
         LoadError = null;
         SaveMessage = null;
 
+        // A different game deserves its own opening section, worked out once its settings are read.
+        _hasChosenSection = false;
+
         try
         {
             Editing = await LaunchOptionsService.GetAsync(Entry.AppId);
@@ -154,13 +160,17 @@ public partial class GameConfigDialog : ComponentBase
     /// <inheritdoc />
     protected override void OnAfterRender(bool firstRender)
     {
-        // Opening on a section that has something set needs the editor, which does not exist
-        // until the first render has happened.
-        if (firstRender)
+        // Not on the first render: the dialog is still showing the loading message then, so there
+        // is no editor to tell. Waiting for the render that has one is what makes this land.
+        if (_hasChosenSection || Editor is null)
         {
-            Editor?.SelectFirstConfiguredCategory();
-            StateHasChanged();
+            return;
         }
+
+        _hasChosenSection = true;
+
+        Editor.SelectFirstConfiguredCategory();
+        StateHasChanged();
     }
 
     /// <summary>

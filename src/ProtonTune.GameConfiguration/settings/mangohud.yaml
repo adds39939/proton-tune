@@ -1,0 +1,10 @@
+id: mangohud
+title: MangoHud
+order: 6
+
+settings:
+  # Edited option by option rather than as one string, so this entry exists to name the variable
+  # and place it, not to render a text box.
+  - variable: MANGOHUD_CONFIG
+    label: MangoHud options
+    description: Comma-separated MangoHud settings, such as fps_limit and its method.

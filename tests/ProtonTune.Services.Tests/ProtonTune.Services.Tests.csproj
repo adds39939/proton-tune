@@ -21,6 +21,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\..\src\ProtonTune.Services\ProtonTune.Services.csproj" />
+    <ProjectReference Include="..\..\src\ProtonTune.GameConfiguration\ProtonTune.GameConfiguration.csproj" />
   </ItemGroup>
 
 </Project>

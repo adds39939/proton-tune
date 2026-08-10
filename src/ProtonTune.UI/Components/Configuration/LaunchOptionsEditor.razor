@@ -15,15 +15,15 @@
             <hr class="section-divider"/>
         }
 
-        @foreach (var category in SettingCategories.InDisplayOrder)
+        @foreach (var category in Catalog.Categories)
         {
             var count = SetCountIn(category);
 
             <button type="button"
-                    class="section-tab @(SelectedCategory == category ? "is-active" : string.Empty)"
-                    @key="category"
+                    class="section-tab @(SelectedCategory?.Id == category.Id ? "is-active" : string.Empty)"
+                    @key="category.Id"
                     @onclick="() => SelectCategory(category)">
-                <span>@category.Title()</span>
+                <span>@category.Title</span>
                 @if (count > 0)
                 {
                     <span class="section-count">@count</span>
@@ -65,9 +65,9 @@
             </ul>
         }
 
-        @if (SelectedCategory is SettingCategory.MangoHud)
+        @if (SelectedCategory is { } mangoHud && mangoHud.Is(SettingCategoryIds.MangoHud) && MangoHudDefinition is { } mangoHudDefinition)
         {
-            <h3 class="section-title">MangoHud</h3>
+            <h3 class="section-title">@mangoHud.Title</h3>
             <p class="section-note">
                 The overlay's own options, written into a single MANGOHUD_CONFIG variable.
                 They only apply when the game is launched through mangohud.
@@ -80,13 +80,13 @@
                            IsOnChanged="@(on => ApplyWrapperCommand(MangoHudCommand, on))"/>
 
             <MangoHudEditor Value="@Options.FindEnvironment(MangoHudVariable)?.Value"
-                            ValueChanged="@(value => ApplySetting(MangoHudDefinition, value))"/>
+                            ValueChanged="@(value => ApplySetting(mangoHudDefinition, value))"/>
         }
         else if (SelectedCategory is { } selected)
         {
-            <h3 class="section-title">@selected.Title()</h3>
+            <h3 class="section-title">@selected.Title</h3>
 
-            @if (selected is SettingCategory.Cpu)
+            @if (selected.Is(SettingCategoryIds.Cpu))
             {
                 <CpuAffinityEditor Value="@Options.CpuAffinity"
                                    ValueChanged="ApplyCpuAffinity"/>
@@ -101,7 +101,7 @@
             }
 
             @* Libraries belong to an install, so the global profile has none to show. *@
-            @if (selected is SettingCategory.Dlss && Entry is { } game)
+            @if (selected.Is(SettingCategoryIds.Dlss) && Entry is { } game)
             {
                 <h4 class="section-subtitle">Libraries</h4>
 
@@ -131,7 +131,7 @@
                     <SettingEditor Definition="@definition"
                                    Value="@Options.FindEnvironment(definition.Variable)?.Value"
                                    ValueChanged="@(value => ApplySetting(definition, value))"
-                                   IsIgnored="@Capabilities.Ignores(definition.Variable)"
+                                   IsIgnored="@IsIgnored(definition)"
                                    BuildName="@BuildName"
                                    @key="definition.Variable"/>
                 }
@@ -144,7 +144,7 @@
                 <SettingEditor Definition="@definition"
                                Value="@Options.FindEnvironment(definition.Variable)?.Value"
                                ValueChanged="@(value => ApplySetting(definition, value))"
-                               IsIgnored="@Capabilities.Ignores(definition.Variable)"
+                               IsIgnored="@IsIgnored(definition)"
                                BuildName="@BuildName"
                                @key="definition.Variable"/>
             }
