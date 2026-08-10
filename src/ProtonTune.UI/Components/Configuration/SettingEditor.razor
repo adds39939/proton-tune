@@ -1,4 +1,4 @@
-<div class="setting">
+<div class="setting @(IsIgnored ? "is-ignored" : string.Empty)">
     <div class="setting-label">
         <span class="setting-name">@Definition.Label</span>
         @if (Definition.Description is not null)
@@ -6,6 +6,14 @@
             <span class="setting-description">@Definition.Description</span>
         }
         <code class="setting-variable">@Definition.Variable</code>
+
+        @if (IsIgnored)
+        {
+            <span class="setting-ignored">
+                @(BuildName ?? "This Proton build") does not read this variable, so setting it has
+                no effect.
+            </span>
+        }
     </div>
 
     <div class="setting-control">

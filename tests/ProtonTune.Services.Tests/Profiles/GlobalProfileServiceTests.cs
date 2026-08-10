@@ -235,6 +235,12 @@ public sealed class GlobalProfileServiceTests : IDisposable
 
         public Task<LaunchOptionsSaveResult> SaveManyAsync(
             IReadOnlyDictionary<uint, string> launchOptionsByApp,
+            CancellationToken cancellationToken = default) =>
+            SaveManyAsync(launchOptionsByApp, new Dictionary<uint, string>(), cancellationToken);
+
+        public Task<LaunchOptionsSaveResult> SaveManyAsync(
+            IReadOnlyDictionary<uint, string> launchOptionsByApp,
+            IReadOnlyDictionary<uint, string> compatToolsByApp,
             CancellationToken cancellationToken = default)
         {
             LastBatch = launchOptionsByApp;
@@ -257,7 +263,7 @@ public sealed class GlobalProfileServiceTests : IDisposable
             CancellationToken cancellationToken = default) =>
             Task.FromResult(ScriptPathFor(entry.AppId));
 
-        public Task RevertAsync(SteamLibraryEntry entry, CancellationToken cancellationToken = default) =>
-            Task.CompletedTask;
+        public Task<DlssRevertResult> RevertAsync(SteamLibraryEntry entry, CancellationToken cancellationToken = default) =>
+            Task.FromResult(DlssRevertResult.Nothing);
     }
 }

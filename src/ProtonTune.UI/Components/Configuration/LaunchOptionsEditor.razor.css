@@ -76,6 +76,17 @@
     max-width: 62ch;
 }
 
+.section-warning {
+    margin: 4px 0 12px;
+    padding: 10px 12px;
+    border: 1px solid var(--warning);
+    border-radius: 8px;
+    background: var(--warning-soft);
+    color: var(--warning);
+    font-size: 12px;
+    max-width: 62ch;
+}
+
 .section-empty {
     margin: 16px 0 0;
     color: var(--text-muted);

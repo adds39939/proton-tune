@@ -48,6 +48,16 @@ public sealed record DlssGameStatus
     public bool IsManaged => HasLibraries && Libraries.All(library => library.State == DlssLinkState.Managed);
 
     /// <summary>
+    /// Whether any library is linked to ProtonTune's copy, whether or not they all are.
+    /// </summary>
+    /// <remarks>
+    /// This, not <see cref="IsManaged" />, is the question to ask before undoing anything. A game
+    /// where one of two libraries is linked is half swapped, and treating that as "not managed"
+    /// leaves the swapped one in place with nothing offering to put it back.
+    /// </remarks>
+    public bool HasManagedLinks => Libraries.Any(library => library.State == DlssLinkState.Managed);
+
+    /// <summary>
     /// Whether any library is linked somewhere ProtonTune did not put it. Worth saying out loud
     /// rather than quietly overwriting: it is someone's existing arrangement.
     /// </summary>

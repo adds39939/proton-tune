@@ -58,22 +58,45 @@ public sealed class SteamLaunchOptionsService(
         SaveManyAsync(new Dictionary<uint, string> { [appId] = launchOptions }, cancellationToken);
 
     /// <inheritdoc />
+    public Task<LaunchOptionsSaveResult> SaveManyAsync(
+        IReadOnlyDictionary<uint, string> launchOptionsByApp,
+        CancellationToken cancellationToken = default) =>
+        SaveManyAsync(launchOptionsByApp, NoCompatTools, cancellationToken);
+
+    /// <inheritdoc />
     public async Task<LaunchOptionsSaveResult> SaveManyAsync(
         IReadOnlyDictionary<uint, string> launchOptionsByApp,
+        IReadOnlyDictionary<uint, string> compatToolsByApp,
         CancellationToken cancellationToken = default)
     {
-        if (launchOptionsByApp.Count == 0)
+        if (launchOptionsByApp.Count == 0 && compatToolsByApp.Count == 0)
         {
             return new LaunchOptionsSaveResult(LaunchOptionsSaveStatus.Saved);
         }
 
-        var configPath = FindUserConfig();
+        // Each file is located only if something is going to be written to it, so a machine that
+        // cannot supply one is not refused a save that never needed it.
+        string? userConfigPath = null;
 
-        if (configPath is null)
+        if (launchOptionsByApp.Count > 0 && (userConfigPath = FindUserConfig()) is null)
         {
             return new LaunchOptionsSaveResult(
                 LaunchOptionsSaveStatus.NoUserConfig,
                 "No Steam user configuration was found to write to.");
+        }
+
+        string? installConfigPath = null;
+
+        if (compatToolsByApp.Count > 0)
+        {
+            if (installLocator.Locate() is not { } steamRoot)
+            {
+                return new LaunchOptionsSaveResult(
+                    LaunchOptionsSaveStatus.NoUserConfig,
+                    "No Steam installation was found to write to.");
+            }
+
+            installConfigPath = SteamCompatTools.ConfigPathIn(steamRoot);
         }
 
         if (steamClient.IsGameRunning())
@@ -94,57 +117,93 @@ public sealed class SteamLaunchOptionsService(
 
         try
         {
-            // Read only now. Steam rewrites this file as it exits, so anything read before the
+            // Read only now. Steam rewrites these files as it exits, so anything read before the
             // shutdown is already stale and would undo whatever else changed in the meantime.
-            var document = await File.ReadAllTextAsync(configPath, cancellationToken).ConfigureAwait(false);
-            var updated = document;
+            var edits = new List<PendingEdit>();
 
-            // Every game is spliced into the same document before it is written once. Writing per
-            // game would mean closing and reopening Steam for each, which is unusable for a
-            // profile applied across a library.
-            foreach (var (appId, launchOptions) in launchOptionsByApp)
+            if (userConfigPath is not null)
             {
-                if (SteamConfigText.SetValue(updated, PathTo(appId), launchOptions) is not { } next)
+                var document = await File.ReadAllTextAsync(userConfigPath, cancellationToken).ConfigureAwait(false);
+                var updated = document;
+
+                // Every game is spliced into the same document before it is written once. Writing
+                // per game would mean closing and reopening Steam for each, which is unusable for
+                // a profile applied across a library.
+                foreach (var (appId, launchOptions) in launchOptionsByApp)
                 {
-                    return Restart(new LaunchOptionsSaveResult(
-                        LaunchOptionsSaveStatus.ConfigUnrecognised,
-                        "The Steam configuration file was not in the expected format. Nothing was changed."));
+                    if (SteamConfigText.SetValue(updated, PathTo(appId), launchOptions) is not { } next)
+                    {
+                        return Restart(Unrecognised(userConfigPath));
+                    }
+
+                    updated = next;
                 }
 
-                updated = next;
+                edits.Add(new PendingEdit(userConfigPath, document, updated));
             }
 
-            var backupPath = await BackUpAsync(configPath, document, cancellationToken).ConfigureAwait(false);
+            if (installConfigPath is not null)
+            {
+                var document = await File.ReadAllTextAsync(installConfigPath, cancellationToken).ConfigureAwait(false);
+                var updated = document;
 
-            await WriteAtomicallyAsync(configPath, updated, cancellationToken).ConfigureAwait(false);
+                foreach (var (appId, toolName) in compatToolsByApp)
+                {
+                    foreach (var (path, value) in SteamCompatTools.Assignment(appId, toolName))
+                    {
+                        if (SteamConfigText.SetValue(updated, path, value) is not { } next)
+                        {
+                            return Restart(Unrecognised(installConfigPath));
+                        }
 
-            var readBack = await File.ReadAllTextAsync(configPath, cancellationToken).ConfigureAwait(false);
-            var mismatched = launchOptionsByApp
-                .Where(entry => SteamConfigText.GetValue(readBack, PathTo(entry.Key)) != entry.Value)
-                .Select(entry => entry.Key)
-                .ToList();
+                        updated = next;
+                    }
+                }
+
+                edits.Add(new PendingEdit(installConfigPath, document, updated));
+            }
+
+            // Both documents are prepared before either is written, so a file that turns out not
+            // to be the document expected stops the save while everything is still untouched.
+            var backups = new List<string>();
+
+            foreach (var edit in edits)
+            {
+                backups.Add(await BackUpAsync(edit.Path, edit.Original, cancellationToken).ConfigureAwait(false));
+
+                await WriteAtomicallyAsync(edit.Path, edit.Updated, cancellationToken).ConfigureAwait(false);
+            }
+
+            var mismatched = await FindMismatchesAsync(
+                userConfigPath,
+                launchOptionsByApp,
+                installConfigPath,
+                compatToolsByApp,
+                cancellationToken).ConfigureAwait(false);
 
             if (mismatched.Count > 0)
             {
                 return Restart(new LaunchOptionsSaveResult(
                     LaunchOptionsSaveStatus.WriteFailed,
-                    $"The file was written but read back differently for {string.Join(", ", mismatched)}. " +
-                    $"The previous version is at {backupPath}.")
+                    $"Written, but read back differently for {string.Join(", ", mismatched)}. " +
+                    $"The previous version is at {string.Join(" and ", backups)}.")
                 {
-                    BackupPath = backupPath
+                    BackupPath = backups[0]
                 });
             }
 
             logger.LogInformation(
-                "Wrote launch options for {AppCount} apps; previous configuration at {BackupPath}.",
+                "Wrote launch options for {AppCount} apps and Proton builds for {ToolCount}; " +
+                "previous configuration at {BackupPaths}.",
                 launchOptionsByApp.Count,
-                backupPath);
+                compatToolsByApp.Count,
+                string.Join(", ", backups));
 
-            return Restart(new LaunchOptionsSaveResult(LaunchOptionsSaveStatus.Saved) { BackupPath = backupPath });
+            return Restart(new LaunchOptionsSaveResult(LaunchOptionsSaveStatus.Saved) { BackupPath = backups[0] });
         }
         catch (Exception e) when (e is IOException or UnauthorizedAccessException)
         {
-            logger.LogError(e, "Could not write {ConfigPath}.", configPath);
+            logger.LogError(e, "Could not write the Steam configuration.");
 
             return Restart(new LaunchOptionsSaveResult(LaunchOptionsSaveStatus.WriteFailed, e.Message));
         }
@@ -161,6 +220,51 @@ public sealed class SteamLaunchOptionsService(
             return result with { SteamWasRestarted = steamWasRunning };
         }
     }
+
+    private static LaunchOptionsSaveResult Unrecognised(string path) =>
+        new(LaunchOptionsSaveStatus.ConfigUnrecognised,
+            $"{path} was not in the expected format. Nothing was changed.");
+
+    /// <summary>
+    /// Reads both files back and reports what did not survive the write, described so the message
+    /// says which change was lost rather than only which app it belonged to.
+    /// </summary>
+    private static async Task<IReadOnlyList<string>> FindMismatchesAsync(
+        string? userConfigPath,
+        IReadOnlyDictionary<uint, string> launchOptionsByApp,
+        string? installConfigPath,
+        IReadOnlyDictionary<uint, string> compatToolsByApp,
+        CancellationToken cancellationToken)
+    {
+        var mismatched = new List<string>();
+
+        if (userConfigPath is not null)
+        {
+            var readBack = await File.ReadAllTextAsync(userConfigPath, cancellationToken).ConfigureAwait(false);
+
+            mismatched.AddRange(launchOptionsByApp
+                .Where(entry => SteamConfigText.GetValue(readBack, PathTo(entry.Key)) != entry.Value)
+                .Select(entry => $"the launch options of {entry.Key}"));
+        }
+
+        if (installConfigPath is not null)
+        {
+            var readBack = await File.ReadAllTextAsync(installConfigPath, cancellationToken).ConfigureAwait(false);
+
+            mismatched.AddRange(compatToolsByApp
+                .Where(entry => SteamConfigText.GetValue(
+                    readBack,
+                    SteamCompatTools.PathTo(entry.Key, SteamCompatTools.NameKey)) != entry.Value)
+                .Select(entry => $"the Proton build of {entry.Key}"));
+        }
+
+        return mismatched;
+    }
+
+    /// <summary>A file about to be replaced, and what it is being replaced with.</summary>
+    private sealed record PendingEdit(string Path, string Original, string Updated);
+
+    private static readonly IReadOnlyDictionary<uint, string> NoCompatTools = new Dictionary<uint, string>();
 
     /// <summary>
     /// Copies the configuration aside before it is changed, named so several backups can coexist.

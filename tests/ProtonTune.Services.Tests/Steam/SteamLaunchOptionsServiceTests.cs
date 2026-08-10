@@ -21,15 +21,51 @@ public sealed class SteamLaunchOptionsServiceTests : IDisposable
         "\t\t\t\t\t\t\"LaunchOptions\"\t\t\"PROTON_ENABLE_HDR=1 %command%\"\n" +
         "\t\t\t\t\t}\n\t\t\t\t}\n\t\t\t}\n\t\t}\n\t}\n}\n";
 
+    /// <summary>
+    /// The other game in the fixture, already pointed at a build, so changes to one app can be
+    /// shown not to disturb another.
+    /// </summary>
+    private const uint OtherAppId = 2138720;
+
+    /// <summary>
+    /// A choice of compatibility tool lives in the installation's own config.vdf rather than the
+    /// account's, so a save that changes both touches two files.
+    /// </summary>
+    private const string InstallDocument =
+        "\"InstallConfigStore\"\n{\n\t\"Software\"\n\t{\n\t\t\"Valve\"\n\t\t{\n\t\t\t\"Steam\"\n\t\t\t{\n" +
+        "\t\t\t\t\"CompatToolMapping\"\n\t\t\t\t{\n" +
+        "\t\t\t\t\t\"0\"\n\t\t\t\t\t{\n" +
+        "\t\t\t\t\t\t\"name\"\t\t\"proton_experimental\"\n" +
+        "\t\t\t\t\t\t\"config\"\t\t\"\"\n" +
+        "\t\t\t\t\t\t\"priority\"\t\t\"75\"\n\t\t\t\t\t}\n" +
+        "\t\t\t\t\t\"2138720\"\n\t\t\t\t\t{\n" +
+        "\t\t\t\t\t\t\"name\"\t\t\"GE-Proton11-3\"\n" +
+        "\t\t\t\t\t\t\"config\"\t\t\"\"\n" +
+        "\t\t\t\t\t\t\"priority\"\t\t\"250\"\n\t\t\t\t\t}\n" +
+        "\t\t\t\t}\n\t\t\t}\n\t\t}\n\t}\n}\n";
+
     private readonly string _root = Directory.CreateTempSubdirectory("protontune-test-").FullName;
 
     private string ConfigPath => Path.Combine(_root, "userdata", "145618525", "config", "localconfig.vdf");
+
+    private string InstallConfigPath => Path.Combine(_root, "config", "config.vdf");
 
     public SteamLaunchOptionsServiceTests()
     {
         Directory.CreateDirectory(Path.GetDirectoryName(ConfigPath)!);
         File.WriteAllText(ConfigPath, Document);
+
+        Directory.CreateDirectory(Path.GetDirectoryName(InstallConfigPath)!);
+        File.WriteAllText(InstallConfigPath, InstallDocument);
     }
+
+    /// <summary>Reads one field of an app's mapping back out of the file that was written.</summary>
+    private async Task<string?> MappingField(uint appId, string key) =>
+        SteamConfigText.GetValue(
+            await File.ReadAllTextAsync(InstallConfigPath),
+            ["InstallConfigStore", "Software", "Valve", "Steam", "CompatToolMapping", appId.ToString(), key]);
+
+    private static Dictionary<uint, string> Only(uint appId, string value) => new() { [appId] = value };
 
     public void Dispose() => Directory.Delete(_root, recursive: true);
 
@@ -135,6 +171,123 @@ public sealed class SteamLaunchOptionsServiceTests : IDisposable
         var result = await service.SaveAsync(AppId, "DXVK_HDR=1 %command%");
 
         Assert.Equal(LaunchOptionsSaveStatus.NoUserConfig, result.Status);
+    }
+
+    // Choosing a Proton build ------------------------------------------------
+
+    /// <summary>
+    /// A mapping is more than a name. Steam settles competing mappings by priority, and the ones
+    /// that come from app metadata sit at 90 — so a name written without a priority would lose to
+    /// whatever Steam had already decided, and the change would appear to do nothing.
+    /// </summary>
+    [Fact]
+    public async Task RecordsANewChoiceWithEverythingSteamNeedsToHonourIt()
+    {
+        await CreateService(new StubSteamClient())
+            .SaveManyAsync(new Dictionary<uint, string>(), Only(AppId, "GE-Proton11-3"));
+
+        Assert.Equal("GE-Proton11-3", await MappingField(AppId, "name"));
+        Assert.Equal("250", await MappingField(AppId, "priority"));
+        Assert.Equal(string.Empty, await MappingField(AppId, "config"));
+    }
+
+    [Fact]
+    public async Task PointsAGameThatAlreadyHasAChoiceAtADifferentBuild()
+    {
+        await CreateService(new StubSteamClient())
+            .SaveManyAsync(new Dictionary<uint, string>(), Only(OtherAppId, "proton_experimental"));
+
+        Assert.Equal("proton_experimental", await MappingField(OtherAppId, "name"));
+        Assert.Equal("250", await MappingField(OtherAppId, "priority"));
+    }
+
+    /// <summary>
+    /// Clearing means "decide for me", so nothing is named and the entry goes back to the bottom.
+    /// Leaving it at 250 with no tool would outrank Steam's own mapping with a blank.
+    /// </summary>
+    [Fact]
+    public async Task ClearingAChoiceNamesNoToolAndGivesUpItsPriority()
+    {
+        await CreateService(new StubSteamClient())
+            .SaveManyAsync(new Dictionary<uint, string>(), Only(OtherAppId, string.Empty));
+
+        Assert.Equal(string.Empty, await MappingField(OtherAppId, "name"));
+        Assert.Equal("0", await MappingField(OtherAppId, "priority"));
+    }
+
+    [Fact]
+    public async Task LeavesEveryOtherMappingAlone()
+    {
+        await CreateService(new StubSteamClient())
+            .SaveManyAsync(new Dictionary<uint, string>(), Only(OtherAppId, "proton_hotfix"));
+
+        Assert.Equal("proton_experimental", await MappingField(0, "name"));
+        Assert.Equal("75", await MappingField(0, "priority"));
+    }
+
+    /// <summary>
+    /// The two files are held in memory by the same running Steam. Saving them one after the other
+    /// would close and reopen it twice, and the second shutdown would discard the first write.
+    /// </summary>
+    [Fact]
+    public async Task WritesBothFilesInsideOneShutdown()
+    {
+        var client = new StubSteamClient { Running = true };
+
+        var result = await CreateService(client).SaveManyAsync(
+            Only(AppId, "DXVK_HDR=1 %command%"),
+            Only(AppId, "GE-Proton11-3"));
+
+        Assert.True(result.IsSuccess);
+        Assert.Equal(1, client.ShutdownCalls);
+        Assert.Equal(1, client.StartCalls);
+
+        Assert.Equal("GE-Proton11-3", await MappingField(AppId, "name"));
+        Assert.Contains("DXVK_HDR=1 %command%", await File.ReadAllTextAsync(ConfigPath));
+    }
+
+    /// <summary>
+    /// Changing only the build must not require an account configuration, which is a different
+    /// file and not the one being written.
+    /// </summary>
+    [Fact]
+    public async Task ChangesTheBuildWithoutTouchingTheAccountConfiguration()
+    {
+        var result = await CreateService(new StubSteamClient())
+            .SaveManyAsync(new Dictionary<uint, string>(), Only(AppId, "GE-Proton11-3"));
+
+        Assert.True(result.IsSuccess);
+        Assert.Equal(Document, await File.ReadAllTextAsync(ConfigPath));
+    }
+
+    [Fact]
+    public async Task KeepsTheOldInstallConfigurationAsABackup()
+    {
+        await CreateService(new StubSteamClient())
+            .SaveManyAsync(new Dictionary<uint, string>(), Only(AppId, "GE-Proton11-3"));
+
+        var backups = Directory
+            .EnumerateFiles(Path.GetDirectoryName(InstallConfigPath)!, "config.vdf.protontune-*.bak")
+            .ToList();
+
+        Assert.Equal(InstallDocument, await File.ReadAllTextAsync(Assert.Single(backups)));
+    }
+
+    /// <summary>
+    /// Nothing is written until both documents have been spliced, so a file that is not what was
+    /// expected stops the save with the other one still untouched.
+    /// </summary>
+    [Fact]
+    public async Task WritesNothingWhenOneOfTheFilesIsNotRecognised()
+    {
+        await File.WriteAllTextAsync(InstallConfigPath, "not a KeyValues document at all");
+
+        var result = await CreateService(new StubSteamClient()).SaveManyAsync(
+            Only(AppId, "DXVK_HDR=1 %command%"),
+            Only(AppId, "GE-Proton11-3"));
+
+        Assert.Equal(LaunchOptionsSaveStatus.ConfigUnrecognised, result.Status);
+        Assert.Equal(Document, await File.ReadAllTextAsync(ConfigPath));
     }
 
     private sealed class StubInstallLocator(string? root) : ISteamInstallLocator

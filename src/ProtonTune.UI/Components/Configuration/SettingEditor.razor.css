@@ -25,6 +25,21 @@
     font-size: 12px;
 }
 
+/*
+ * A setting the build ignores is dimmed rather than hidden or disabled: it may already be set,
+ * and a user switching to a build that reads it should be able to prepare the value first.
+ */
+.is-ignored .setting-name,
+.is-ignored .setting-description,
+.is-ignored .setting-control {
+    opacity: 0.55;
+}
+
+.setting-ignored {
+    color: var(--warning);
+    font-size: 12px;
+}
+
 .setting-variable {
     color: var(--text-muted);
     font-family: "JetBrains Mono", ui-monospace, monospace;

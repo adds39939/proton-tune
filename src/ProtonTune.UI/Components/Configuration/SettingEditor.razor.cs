@@ -23,6 +23,22 @@ public partial class SettingEditor : ComponentBase
     [Parameter]
     public EventCallback<string?> ValueChanged { get; set; }
 
+    /// <summary>
+    /// Whether the Proton build the game runs under is known not to read this variable, in which
+    /// case setting it does nothing at all.
+    /// </summary>
+    /// <remarks>
+    /// The control stays usable. A false negative here would take away a setting that works, and
+    /// the probe cannot see into every component — saying so and leaving the decision alone is
+    /// safer than deciding for the user.
+    /// </remarks>
+    [Parameter]
+    public bool IsIgnored { get; set; }
+
+    /// <summary>The build doing the ignoring, so the note can name it.</summary>
+    [Parameter]
+    public string? BuildName { get; set; }
+
     private bool IsOn => Definition.IsOn(Value);
 
     /// <summary>

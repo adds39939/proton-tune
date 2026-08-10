@@ -2,6 +2,19 @@
    LaunchOptions it is given. *@
 <div class="panel-body">
     <nav class="sections" aria-label="Setting sections">
+        @* Which build a game runs under is not a launch option — it is a different file, and one
+           only a real game has. It leads because everything below it depends on it. *@
+        @if (Entry is not null)
+        {
+            <button type="button"
+                    class="section-tab @(SelectedSpecial == ProtonSection ? "is-active" : string.Empty)"
+                    @onclick="() => SelectSpecial(ProtonSection)">
+                <span>@ProtonSection</span>
+            </button>
+
+            <hr class="section-divider"/>
+        }
+
         @foreach (var category in SettingCategories.InDisplayOrder)
         {
             var count = SetCountIn(category);
@@ -92,22 +105,67 @@
             {
                 <h4 class="section-subtitle">Libraries</h4>
 
-                <DlssLibraryEditor Entry="@game" ScriptChanged="OnDlssScriptChanged"/>
+                @if (BuildUpgradesDlss)
+                {
+                    <p class="section-note">
+                        @BuildName replaces these libraries itself, through the setting below, and
+                        without touching the files in the install. ProtonTune's own swap is not
+                        offered here: two mechanisms over the same files would fight.
+                    </p>
+
+                    @if (DlssIsManaged)
+                    {
+                        <p class="section-warning">
+                            This game still has ProtonTune's libraries linked in from an earlier
+                            build. Reset the game to put its own back before relying on Proton's.
+                        </p>
+                    }
+                }
+                else
+                {
+                    <DlssLibraryEditor Entry="@game" ScriptChanged="OnDlssScriptChanged"/>
+                }
+
+                @foreach (var definition in ProtonDlssSettings)
+                {
+                    <SettingEditor Definition="@definition"
+                                   Value="@Options.FindEnvironment(definition.Variable)?.Value"
+                                   ValueChanged="@(value => ApplySetting(definition, value))"
+                                   IsIgnored="@Capabilities.Ignores(definition.Variable)"
+                                   BuildName="@BuildName"
+                                   @key="definition.Variable"/>
+                }
 
                 <h4 class="section-subtitle">Driver overrides</h4>
             }
 
-            @foreach (var definition in DefinitionsIn(selected))
+            @foreach (var definition in ListedSettingsIn(selected))
             {
                 <SettingEditor Definition="@definition"
                                Value="@Options.FindEnvironment(definition.Variable)?.Value"
                                ValueChanged="@(value => ApplySetting(definition, value))"
+                               IsIgnored="@Capabilities.Ignores(definition.Variable)"
+                               BuildName="@BuildName"
                                @key="definition.Variable"/>
             }
         }
         else
             switch (SelectedSpecial)
             {
+                case ProtonSection when Entry is { } protonGame:
+                {
+                    <h3 class="section-title">Proton</h3>
+                    <p class="section-note">
+                        The compatibility build the game runs under. Saved with everything else, in
+                        the same trip through Steam.
+                    </p>
+
+                    <ProtonVersionEditor AppId="@protonGame.AppId"
+                                         Value="@CompatTool"
+                                         ValueChanged="@CompatToolChanged"
+                                         IsBusy="@IsBusy"/>
+                    break;
+                }
                 case LaunchChainSection:
                 {
                     <h3 class="section-title">Launch chain</h3>

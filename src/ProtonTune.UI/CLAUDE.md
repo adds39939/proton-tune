@@ -42,7 +42,13 @@ Components are grouped by what they are responsible for, not by what they are:
 Components/Game/           One game's presentation primitives — GameArtwork, GameTags.
 Components/Library/        Browsing the collection — GameLibrary, its cards, LibraryViewMode.
 Components/Configuration/  Changing things — GameConfigDialog, SettingsPanel.
+Components/Proton/         The installed compatibility builds — ProtonPanel.
 ```
+
+`Components/Proton/` shares its last segment with `ProtonTune.Core.Proton`, so keep that namespace
+out of `_Imports.razor`: importing both would make a bare `Proton` ambiguous. Markup needs no types
+from it — expose what a page has to render as a helper on the code-behind, which has its own
+`using` directives and no such clash.
 
 Put a component in the area whose job it serves. `GameArtwork` sits in `Game/` rather than
 `Library/` because the config dialog uses it too — anything shared by two areas belongs to the

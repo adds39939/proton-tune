@@ -129,6 +129,80 @@ public sealed class DlssManagementServiceTests : IDisposable
             await File.ReadAllTextAsync(Path.Combine(InstallDirectory, "nvngx_dlssg.dll")));
     }
 
+    /// <summary>
+    /// The state Overwatch was found in: a link into ProtonTune's store with no backup behind it,
+    /// which a revert had previously restored and something re-created afterwards. Reverting used
+    /// to walk the backup directory alone, so with none there it did nothing at all and reported
+    /// success — leaving the game permanently on ProtonTune's library with no way back.
+    /// </summary>
+    [Fact]
+    public async Task UnpicksALinkWhoseBackupHasGone()
+    {
+        var service = CreateService();
+        var linked = Path.Combine(InstallDirectory, NestedPath, "nvngx_dlss.dll");
+
+        await service.ApplyAsync(Entry, Runtime);
+        await service.RevertAsync(Entry);
+
+        // Re-link by hand, as the launch script does when it runs after a revert. It points into
+        // ProtonTune's own store, which is what makes the link managed, and backs nothing up —
+        // there is no original left to move aside.
+        File.Delete(linked);
+        File.CreateSymbolicLink(
+            linked,
+            Path.Combine(_root, "storage", "dlss", "310.7.0", "nvngx_dlss.dll"));
+
+        var result = await service.RevertAsync(Entry);
+
+        Assert.False(service.Inspect(Entry).HasManagedLinks);
+        Assert.False(result.IsComplete);
+        Assert.Contains(Path.Combine(NestedPath, "nvngx_dlss.dll"), result.Replaced);
+
+        // Left as a real file the game owns, rather than a link or a hole in the install.
+        Assert.Null(new FileInfo(linked).LinkTarget);
+        Assert.Equal("new super resolution", await File.ReadAllTextAsync(linked));
+    }
+
+    /// <summary>
+    /// A revert that put everything back says so, so the difference between a complete restore and
+    /// a partial one is visible to whatever reports it.
+    /// </summary>
+    [Fact]
+    public async Task ReportsACompleteRestore()
+    {
+        var service = CreateService();
+
+        await service.ApplyAsync(Entry, Runtime);
+
+        var result = await service.RevertAsync(Entry);
+
+        Assert.True(result.IsComplete);
+        Assert.Empty(result.Replaced);
+        Assert.Equal(2, result.Restored.Count);
+    }
+
+    /// <summary>
+    /// Half a swap is still a swap. Treating a game as untouched because only one of its libraries
+    /// is linked leaves that one in place with nothing offering to undo it.
+    /// </summary>
+    [Fact]
+    public async Task NoticesAGameThatIsOnlyPartlyLinked()
+    {
+        var service = CreateService();
+
+        await service.ApplyAsync(Entry, Runtime);
+
+        var loose = Path.Combine(InstallDirectory, "nvngx_dlssg.dll");
+
+        File.Delete(loose);
+        await File.WriteAllTextAsync(loose, "the game's own");
+
+        var status = service.Inspect(Entry);
+
+        Assert.False(status.IsManaged);
+        Assert.True(status.HasManagedLinks);
+    }
+
     [Fact]
     public async Task ApplyingTwiceDoesNotDestroyTheOriginal()
     {

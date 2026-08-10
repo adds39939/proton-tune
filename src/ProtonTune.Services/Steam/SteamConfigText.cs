@@ -68,22 +68,25 @@ public static class SteamConfigText
         var insertAt = scan.InsertAt;
         var builder = new StringBuilder();
 
-        // Objects between the deepest existing ancestor and the key itself.
+        // Objects between the deepest existing ancestor and the key itself. A key at index i of
+        // the path sits i tabs in, which is what puts an inserted block level with the ones Steam
+        // wrote itself — the file parses either way, but a stray indent reads as corruption to
+        // anyone diffing it.
         for (var level = depth; level < keyPath.Count - 1; level++)
         {
-            var indent = new string(IndentCharacter, level + 1);
+            var indent = new string(IndentCharacter, level);
 
             builder.Append(indent).Append('"').Append(Escape(keyPath[level])).Append("\"\n");
             builder.Append(indent).Append("{\n");
         }
 
         builder
-            .Append(new string(IndentCharacter, keyPath.Count))
+            .Append(new string(IndentCharacter, keyPath.Count - 1))
             .Append('"').Append(Escape(keyPath[^1])).Append("\"\t\t\"").Append(escaped).Append("\"\n");
 
         for (var level = keyPath.Count - 2; level >= depth; level--)
         {
-            builder.Append(new string(IndentCharacter, level + 1)).Append("}\n");
+            builder.Append(new string(IndentCharacter, level)).Append("}\n");
         }
 
         return string.Concat(document.AsSpan(0, insertAt), builder.ToString(), document.AsSpan(insertAt));

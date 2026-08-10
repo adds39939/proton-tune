@@ -107,22 +107,52 @@ public sealed class DlssManagementService(
     }
 
     /// <inheritdoc />
-    public async Task RevertAsync(SteamLibraryEntry entry, CancellationToken cancellationToken = default)
+    public async Task<DlssRevertResult> RevertAsync(
+        SteamLibraryEntry entry,
+        CancellationToken cancellationToken = default)
     {
         var backupRoot = storage.BackupsFor(entry.AppId);
+        var restored = new List<string>();
 
         if (Directory.Exists(backupRoot))
         {
             foreach (var backup in Directory.EnumerateFiles(backupRoot, "*", SearchOption.AllDirectories))
             {
-                var destination = Path.Combine(entry.InstallDirectory, Path.GetRelativePath(backupRoot, backup));
+                var relativePath = Path.GetRelativePath(backupRoot, backup);
+                var destination = Path.Combine(entry.InstallDirectory, relativePath);
 
                 Directory.CreateDirectory(Path.GetDirectoryName(destination)!);
                 File.Delete(destination);
                 File.Move(backup, destination);
+
+                restored.Add(relativePath);
             }
 
             Directory.Delete(backupRoot, recursive: true);
+        }
+
+        // Anything still linked has outlived its backup, so there is no original left to put back.
+        // Leaving it would mean reporting the game restored while a file inside it still pointed at
+        // ProtonTune — and nothing would ever clear it, because the next revert finds no backup
+        // either. Turning the link into a real file at least leaves the game owning its own files.
+        var replaced = new List<string>();
+
+        foreach (var library in Inspect(entry).Libraries.Where(library => library.State == DlssLinkState.Managed))
+        {
+            if (library.LinkTarget is not { } target || !File.Exists(target))
+            {
+                continue;
+            }
+
+            File.Delete(library.Path);
+            File.Copy(target, library.Path);
+
+            replaced.Add(library.RelativePath);
+
+            logger.LogWarning(
+                "{RelativePath} had no backup for {AppId}, so a copy of the linked version was left in its place.",
+                library.RelativePath,
+                entry.AppId);
         }
 
         var scriptPath = ScriptPathFor(entry.AppId);
@@ -132,9 +162,15 @@ public sealed class DlssManagementService(
             File.Delete(scriptPath);
         }
 
-        logger.LogInformation("Restored the DLSS libraries {AppId} shipped with.", entry.AppId);
+        logger.LogInformation(
+            "Reverted DLSS for {AppId}: {RestoredCount} restored, {ReplacedCount} replaced with a copy.",
+            entry.AppId,
+            restored.Count,
+            replaced.Count);
 
         await Task.CompletedTask.ConfigureAwait(false);
+
+        return new DlssRevertResult(restored, replaced);
     }
 
     /// <summary>

@@ -113,6 +113,23 @@ public class SteamConfigTextTests
         Assert.Equal("PROTON_ENABLE_HDR=1 %command%", SteamConfigText.GetValue(updated, PathTo("2357570")));
     }
 
+    /// <summary>
+    /// The file parses whatever the indentation, but a block sitting a level deeper than its
+    /// siblings reads as corruption to anyone who opens the file or diffs a backup against it.
+    /// </summary>
+    [Fact]
+    public void IndentsAnInsertedBlockLevelWithTheOnesSteamWrote()
+    {
+        var updated = SteamConfigText.SetValue(Document, PathTo("993090"), "MANGOHUD_CONFIG=fps_limit=60 %command%");
+
+        Assert.NotNull(updated);
+
+        // The same depth the fixture's own app block and its keys are written at.
+        Assert.Contains("\n\t\t\t\t\t\"993090\"\n\t\t\t\t\t{\n", updated);
+        Assert.Contains("\n\t\t\t\t\t\t\"LaunchOptions\"\t\t\"MANGOHUD_CONFIG=fps_limit=60 %command%\"\n", updated);
+        Assert.Contains("%command%\"\n\t\t\t\t\t}\n", updated);
+    }
+
     [Fact]
     public void WritesAValueThatNeedsEscaping()
     {

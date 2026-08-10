@@ -16,6 +16,7 @@ public partial class MainLayout : LayoutComponentBase
     [
         new("/", "Library", NavLinkMatch.All),
         new("/global", "Global"),
+        new("/proton", "Proton"),
         new("/settings", "Settings")
     ];
 

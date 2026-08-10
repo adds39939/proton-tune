@@ -32,6 +32,16 @@ public static class SettingCatalog
     public static IReadOnlyList<SettingDefinition> All { get; } =
     [
         // DLSS ---------------------------------------------------------------------------------
+        new("PROTON_DLSS_UPGRADE", SettingCategory.Dlss, "Upgrade DLSS libraries")
+        {
+            Description = "Runs the game against the build's own newer DLSS libraries, without touching the files in the install.",
+            Kind = SettingKind.Toggle
+        },
+        new("PROTON_DLSS_INDICATOR", SettingCategory.Dlss, "Show the DLSS indicator")
+        {
+            Description = "Draws NVIDIA's own on-screen marker showing DLSS is running and which preset it picked.",
+            Kind = SettingKind.Toggle
+        },
         new("PROTON_ENABLE_NVAPI", SettingCategory.Dlss, "Enable NVAPI")
         {
             Description = "Exposes NVIDIA's NVAPI to the game. Recent Proton enables it by default, so this is only needed on older versions.",

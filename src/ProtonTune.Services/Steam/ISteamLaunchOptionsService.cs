@@ -50,4 +50,24 @@ public interface ISteamLaunchOptionsService
     Task<LaunchOptionsSaveResult> SaveManyAsync(
         IReadOnlyDictionary<uint, string> launchOptionsByApp,
         CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Writes launch options and choices of Proton build together.
+    /// </summary>
+    /// <param name="launchOptionsByApp">Launch options to write, by app id.</param>
+    /// <param name="compatToolsByApp">
+    /// Proton builds to point apps at, by app id, named as Steam knows them. An empty value clears
+    /// the choice and lets Steam decide; an app absent from the map keeps whatever it has.
+    /// </param>
+    /// <remarks>
+    /// The two land in different files — launch options in the account's
+    /// <c>localconfig.vdf</c>, the build in the installation's <c>config.vdf</c> — but both are
+    /// held in memory by a running Steam and must be written inside the same shutdown. Saving them
+    /// separately would close and reopen Steam twice for one change, and the second shutdown would
+    /// discard the first write.
+    /// </remarks>
+    Task<LaunchOptionsSaveResult> SaveManyAsync(
+        IReadOnlyDictionary<uint, string> launchOptionsByApp,
+        IReadOnlyDictionary<uint, string> compatToolsByApp,
+        CancellationToken cancellationToken = default);
 }

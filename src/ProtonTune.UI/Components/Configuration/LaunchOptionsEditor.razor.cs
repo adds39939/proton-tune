@@ -1,6 +1,8 @@
 using Microsoft.AspNetCore.Components;
 using ProtonTune.Core.Launch;
+using ProtonTune.Core.Proton;
 using ProtonTune.Core.Steam;
+using ProtonTune.Services.Dlss;
 
 namespace ProtonTune.UI.Components.Configuration;
 
@@ -16,6 +18,7 @@ namespace ProtonTune.UI.Components.Configuration;
 /// </remarks>
 public partial class LaunchOptionsEditor : ComponentBase
 {
+    private const string ProtonSection = "Proton";
     private const string LaunchChainSection = "Launch chain";
     private const string CustomSection = "Custom variables";
     private const string RawSection = "Raw";
@@ -33,6 +36,9 @@ public partial class LaunchOptionsEditor : ComponentBase
     private const string MangoHudCommand = "mangohud";
 
     private const string GameModeCommand = "gamemoderun";
+
+    [Inject]
+    private IDlssManagementService Dlss { get; set; } = null!;
 
     /// <summary>The options being edited.</summary>
     [Parameter]
@@ -54,6 +60,29 @@ public partial class LaunchOptionsEditor : ComponentBase
     /// </summary>
     [Parameter]
     public SteamLibraryEntry? Entry { get; set; }
+
+    /// <summary>
+    /// The Proton build the game is set to run under, empty when it has no choice of its own.
+    /// Only meaningful alongside <see cref="Entry" />; the global profile has no single game to
+    /// point anywhere.
+    /// </summary>
+    [Parameter]
+    public string CompatTool { get; set; } = string.Empty;
+
+    /// <summary>Raised when a different build is picked.</summary>
+    [Parameter]
+    public EventCallback<string> CompatToolChanged { get; set; }
+
+    /// <summary>
+    /// What the Proton build in force actually reads, so settings it ignores can say so. Defaults
+    /// to judging nothing, which is right for the global profile — it is not tied to a build.
+    /// </summary>
+    [Parameter]
+    public ProtonCapabilities Capabilities { get; set; } = ProtonCapabilities.Unknown;
+
+    /// <summary>The build those capabilities belong to, so a note can name it.</summary>
+    [Parameter]
+    public string? BuildName { get; set; }
 
     /// <summary>Whether a save is in flight, which locks the raw editor.</summary>
     [Parameter]
@@ -111,6 +140,38 @@ public partial class LaunchOptionsEditor : ComponentBase
     /// <summary>The recognised settings belonging to a category.</summary>
     private static IReadOnlyList<SettingDefinition> DefinitionsIn(SettingCategory category) =>
         SettingCatalog.All.Where(definition => definition.Category == category).ToList();
+
+    /// <summary>
+    /// A category's settings as the generic list renders them. For a game, Proton's own DLSS
+    /// settings are held back: they belong beside the libraries they replace, not among the driver
+    /// overrides. The global profile has no libraries section to put them next to, so it lists
+    /// them here rather than losing them.
+    /// </summary>
+    private IEnumerable<SettingDefinition> ListedSettingsIn(SettingCategory category) =>
+        category is SettingCategory.Dlss && Entry is not null
+            ? DefinitionsIn(category).Where(definition => !IsProtonDlss(definition))
+            : DefinitionsIn(category);
+
+    private static IReadOnlyList<SettingDefinition> ProtonDlssSettings { get; } =
+        SettingCatalog.All.Where(IsProtonDlss).ToList();
+
+    private static bool IsProtonDlss(SettingDefinition definition) =>
+        definition.Variable.StartsWith("PROTON_DLSS_", StringComparison.Ordinal);
+
+    /// <summary>
+    /// Whether the build replaces DLSS libraries itself, in which case ProtonTune's own swap is
+    /// not offered.
+    /// </summary>
+    /// <remarks>
+    /// Two mechanisms replacing the same files would fight: ProtonTune symlinks its shipped
+    /// libraries over the game's and adds a script to put them back after Steam verifies, while
+    /// Proton substitutes its own at launch without touching the install. Whichever ran last
+    /// would win, and which that was would not be visible from here.
+    /// </remarks>
+    private bool BuildUpgradesDlss => Capabilities.Reads("PROTON_DLSS_UPGRADE") is true;
+
+    /// <summary>Whether ProtonTune's swapped libraries are still in place inside the install.</summary>
+    private bool DlssIsManaged => Entry is not null && Dlss.Inspect(Entry).HasManagedLinks;
 
     /// <summary>How many of a category's settings are set.</summary>
     private int SetCountIn(SettingCategory category) =>
