@@ -105,101 +105,107 @@
                                @key="definition.Variable"/>
             }
         }
-        else if (SelectedSpecial == LaunchChainSection)
-        {
-            <h3 class="section-title">Launch chain</h3>
-            <p class="section-note">
-                Commands the game is launched through, in order. Not editable here yet —
-                change it in the raw options for now.
-            </p>
-
-            @if (Options.Wrapper.Count == 0)
-            {
-                <p class="section-empty">The game is launched directly.</p>
-            }
-            else
-            {
-                <ol class="chain">
-                    @foreach (var token in Options.Wrapper)
-                    {
-                        <li><code>@token</code></li>
-                    }
-                </ol>
-            }
-
-            <SettingRow Label="Command placeholder"
-                        Variable="%command%"
-                        Value="@(Options.HasCommandPlaceholder ? "present" : "absent — options are appended")"
-                        Description="Where Steam substitutes the game's own command line."/>
-
-            @if (Options.Arguments.Count > 0)
-            {
-                <SettingRow Label="Game arguments"
-                            Variable="after %command%"
-                            Value="@string.Join(' ', Options.Arguments)"
-                            Description="Passed to the game itself."/>
-            }
-        }
-        else if (SelectedSpecial == CustomSection)
-        {
-            <h3 class="section-title">Custom variables</h3>
-            <p class="section-note">
-                Anything ProtonTune has no definition for, plus whatever you want to add.
-            </p>
-
-            @foreach (var variable in CustomVariables)
-            {
-                <div class="custom" @key="variable.Name">
-                    <code class="custom-name">@variable.Name</code>
-
-                    <input class="custom-value"
-                           type="text"
-                           spellcheck="false"
-                           value="@variable.Value"
-                           @onchange="@(args => SetCustomVariable(variable.Name, args.Value?.ToString()))"/>
-
-                    <button type="button"
-                            class="button button-quiet"
-                            @onclick="() => RemoveCustomVariable(variable.Name)">
-                        Remove
-                    </button>
-                </div>
-            }
-
-            <div class="custom custom-new">
-                <input class="custom-name-input"
-                       type="text"
-                       spellcheck="false"
-                       placeholder="VARIABLE_NAME"
-                       value="@NewVariableName"
-                       @onchange="@(args => NewVariableName = args.Value?.ToString() ?? string.Empty)"/>
-
-                <input class="custom-value"
-                       type="text"
-                       spellcheck="false"
-                       placeholder="value"
-                       value="@NewVariableValue"
-                       @onchange="@(args => NewVariableValue = args.Value?.ToString() ?? string.Empty)"/>
-
-                <button type="button" class="button" @onclick="AddCustomVariable">Add</button>
-            </div>
-        }
         else
-        {
-            <h3 class="section-title">Raw launch options</h3>
-            <p class="section-note">
-                The whole string, as Steam stores it. Editing here is the escape hatch for
-                anything ProtonTune does not yet understand.
-            </p>
+            switch (SelectedSpecial)
+            {
+                case LaunchChainSection:
+                {
+                    <h3 class="section-title">Launch chain</h3>
+                    <p class="section-note">
+                        Commands the game is launched through, in order. Not editable here yet —
+                        change it in the raw options for now.
+                    </p>
 
-            <textarea class="raw-editor"
+                    if (Options.Wrapper.Count == 0)
+                    {
+                        <p class="section-empty">The game is launched directly.</p>
+                    }
+                    else
+                    {
+                        <ol class="chain">
+                            @foreach (var token in Options.Wrapper)
+                            {
+                                <li><code>@token</code></li>
+                            }
+                        </ol>
+                    }
+
+                    <SettingRow Label="Command placeholder"
+                                Variable="%command%"
+                                Value="@(Options.HasCommandPlaceholder ? "present" : "absent — options are appended")"
+                                Description="Where Steam substitutes the game's own command line."/>
+
+                    if (Options.Arguments.Count > 0)
+                    {
+                        <SettingRow Label="Game arguments"
+                                    Variable="after %command%"
+                                    Value="@string.Join(' ', Options.Arguments)"
+                                    Description="Passed to the game itself."/>
+                    }
+
+                    break;
+                }
+                case CustomSection:
+                {
+                    <h3 class="section-title">Custom variables</h3>
+                    <p class="section-note">
+                        Anything ProtonTune has no definition for, plus whatever you want to add.
+                    </p>
+
+                    foreach (var variable in CustomVariables)
+                    {
+                        <div class="custom" @key="variable.Name">
+                            <code class="custom-name">@variable.Name</code>
+
+                            <input class="custom-value"
+                                   type="text"
+                                   spellcheck="false"
+                                   value="@variable.Value"
+                                   @onchange="@(args => SetCustomVariable(variable.Name, args.Value?.ToString()))"/>
+
+                            <button type="button"
+                                    class="button button-quiet"
+                                    @onclick="() => RemoveCustomVariable(variable.Name)">
+                                Remove
+                            </button>
+                        </div>
+                    }
+
+                    <div class="custom custom-new">
+                        <input class="custom-name-input"
+                               type="text"
+                               spellcheck="false"
+                               placeholder="VARIABLE_NAME"
+                               value="@NewVariableName"
+                               @onchange="@(args => NewVariableName = args.Value?.ToString() ?? string.Empty)"/>
+
+                        <input class="custom-value"
+                               type="text"
+                               spellcheck="false"
+                               placeholder="value"
+                               value="@NewVariableValue"
+                               @onchange="@(args => NewVariableValue = args.Value?.ToString() ?? string.Empty)"/>
+
+                        <button type="button" class="button" @onclick="AddCustomVariable">Add</button>
+                    </div>
+                    break;
+                }
+                default:
+                    <h3 class="section-title">Raw launch options</h3>
+                    <p class="section-note">
+                        The whole string, as Steam stores it. Editing here is the escape hatch for
+                        anything ProtonTune does not yet understand.
+                    </p>
+
+                    <textarea class="raw-editor"
                       rows="6"
                       spellcheck="false"
                       placeholder="No launch options are set."
                       disabled="@IsBusy"
                       value="@RawDraft"
                       @oninput="OnRawInput"></textarea>
-        }
+                    break;
+            }
 
         @if (HasChanges)
         {

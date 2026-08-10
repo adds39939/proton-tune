@@ -21,19 +21,19 @@ internal class Program
             .AddLogging(logging => logging.AddConsole())
             .AddProtonTuneServices()
             .AddProtonTuneUI();
-        
+
         appBuilder.RootComponents.Add<UI.App>("app");
-        
+
         var app = appBuilder.Build();
-    
+
         app.MainWindow.SetTitle("ProtonTune");
         app.MainWindow.Size = new Size(1280, 900);
 
         AppDomain.CurrentDomain.UnhandledException += (s, e) =>
         {
-            app.MainWindow.ShowMessage("Unhandled Exception", e.ExceptionObject.ToString());
+            app.MainWindow.ShowMessage("Unhandled Exception", e.ExceptionObject.ToString() ?? "Unknown Exception");
         };
-    
+
         app.Run();
     }
 }
