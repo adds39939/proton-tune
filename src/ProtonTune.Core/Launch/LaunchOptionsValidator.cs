@@ -37,6 +37,13 @@ public static class LaunchOptionsValidator
                 "will be ignored.");
         }
 
+        if (!options.HasCommandPlaceholder && (options.Environment.Count > 0 || options.Wrapper.Count > 0))
+        {
+            warnings.Add(
+                "There is no %command% placeholder, so Steam passes all of this to the game as " +
+                "arguments instead of applying it. Add %command% at the end.");
+        }
+
         if (IsOn(options, "PROTON_NO_ESYNC") && IsOn(options, "PROTON_NO_FSYNC"))
         {
             warnings.Add(

@@ -1,0 +1,56 @@
+<section class="profile">
+    <header class="profile-header">
+        <div>
+            <h1>Global</h1>
+            <p class="profile-subtitle">
+                Settings a game can adopt instead of being configured on its own.
+            </p>
+        </div>
+
+        <div class="profile-actions">
+            <button type="button"
+                    class="button @(ResetPending ? "button-danger" : string.Empty)"
+                    disabled="@IsSaving"
+                    @onclick="ResetAsync">
+                @(ResetPending ? "Confirm reset" : "Reset")
+            </button>
+
+            <button type="button" class="button" disabled="@(!HasChanges || IsSaving)" @onclick="Revert">
+                Revert
+            </button>
+
+            <button type="button"
+                    class="button button-primary"
+                    disabled="@(!HasChanges || IsSaving)"
+                    @onclick="SaveAsync">
+                @(IsSaving ? "Saving…" : WillRestartSteam ? "Save and restart Steam" : "Save")
+            </button>
+        </div>
+    </header>
+
+    @if (SaveMessage is not null)
+    {
+        <p class="profile-message @(SaveFailed ? "is-error" : "is-success")">@SaveMessage</p>
+    }
+    else if (LinkedCount > 0)
+    {
+        <p class="profile-message">
+            @LinkedCount @(LinkedCount == 1 ? "game follows" : "games follow") this profile. Saving
+            applies these settings to @(LinkedCount == 1 ? "it" : "them") too.
+        </p>
+    }
+
+    @if (IsLoading)
+    {
+        <p class="profile-message">Reading the global profile…</p>
+    }
+    else
+    {
+        <div class="profile-editor">
+            <LaunchOptionsEditor Options="@Editing"
+                                 OptionsChanged="OnOptionsChanged"
+                                 Saved="@Saved"
+                                 IsBusy="@IsSaving"/>
+        </div>
+    }
+</section>

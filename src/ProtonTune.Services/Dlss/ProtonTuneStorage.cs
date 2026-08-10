@@ -42,6 +42,9 @@ public sealed class ProtonTuneStorage
     /// <summary>Generated launch scripts.</summary>
     public string Scripts => Path.Combine(Root, "bin");
 
+    /// <summary>The global profile and the games following it.</summary>
+    public string ProfileFile => Path.Combine(Root, "profile.json");
+
     /// <summary>The store directory for one runtime version.</summary>
     public string StoreFor(string version) => Path.Combine(LibraryStore, version);
 

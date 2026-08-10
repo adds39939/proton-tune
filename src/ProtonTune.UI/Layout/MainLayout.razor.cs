@@ -15,6 +15,7 @@ public partial class MainLayout : LayoutComponentBase
     private static readonly IReadOnlyList<NavItem> NavItems =
     [
         new("/", "Library", NavLinkMatch.All),
+        new("/global", "Global"),
         new("/settings", "Settings")
     ];
 

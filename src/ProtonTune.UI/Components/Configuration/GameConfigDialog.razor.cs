@@ -1,41 +1,31 @@
 using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.Components.Web;
 using ProtonTune.Core.Launch;
+using ProtonTune.Core.Dlss;
 using ProtonTune.Core.Steam;
+using ProtonTune.Services.Dlss;
+using ProtonTune.Services.Profiles;
 using ProtonTune.Services.Steam;
 
 namespace ProtonTune.UI.Components.Configuration;
 
 /// <summary>
-/// Per-game configuration: recognised settings as typed controls, everything else as raw text.
+/// Per-game configuration: reads what Steam has stored, hands it to the shared editor, and writes
+/// it back.
 /// </summary>
-/// <remarks>
-/// The parsed options are the single source of truth. Typed controls edit them and the raw text
-/// is regenerated; editing the raw text parses straight back. Both routes end at the same string,
-/// which is the one shown in the preview and the one written to Steam.
-/// </remarks>
 public partial class GameConfigDialog : ComponentBase
 {
-    private const string LaunchChainSection = "Launch chain";
-    private const string CustomSection = "Custom variables";
-    private const string RawSection = "Raw";
-
-    /// <summary>
-    /// MangoHud's options all live in one variable, edited option by option rather than through
-    /// the generic per-variable control.
-    /// </summary>
-    private const string MangoHudVariable = "MANGOHUD_CONFIG";
-
-    private static readonly SettingDefinition MangoHudDefinition =
-        SettingCatalog.Find(MangoHudVariable)!;
-
-    /// <summary>Commands ProtonTune can add to the launch chain on the user's behalf.</summary>
-    private const string MangoHudCommand = "mangohud";
-
-    private const string GameModeCommand = "gamemoderun";
-
     [Inject]
     private ISteamLaunchOptionsService LaunchOptionsService { get; set; } = null!;
+
+    [Inject]
+    private IGlobalProfileService Profile { get; set; } = null!;
+
+    [Inject]
+    private IDlssManagementService Dlss { get; set; } = null!;
+
+    [Inject]
+    private IDlssRuntimeProvider DlssRuntimes { get; set; } = null!;
 
     /// <summary>The entry being configured.</summary>
     [Parameter]
@@ -52,16 +42,11 @@ public partial class GameConfigDialog : ComponentBase
     /// <summary>What Steam has stored, to compare against.</summary>
     private string Saved { get; set; } = string.Empty;
 
-    /// <summary>The literal text in the raw editor, which may not yet be well formed.</summary>
-    private string RawDraft { get; set; } = string.Empty;
+    private LaunchOptionsEditor? Editor { get; set; }
 
     private bool IsLoading { get; set; } = true;
 
     private string? LoadError { get; set; }
-
-    private SettingCategory? SelectedCategory { get; set; } = SettingCategory.Dlss;
-
-    private string? SelectedSpecial { get; set; }
 
     private bool IsSaving { get; set; }
 
@@ -73,28 +58,21 @@ public partial class GameConfigDialog : ComponentBase
 
     private bool GameIsRunning { get; set; }
 
-    /// <summary>New variable being added under custom variables.</summary>
-    private string NewVariableName { get; set; } = string.Empty;
+    /// <summary>Whether this game is following the global profile.</summary>
+    private bool UsesGlobal { get; set; }
 
-    private string NewVariableValue { get; set; } = string.Empty;
+    /// <summary>What was stored, so an unchanged link is not rewritten on save.</summary>
+    private bool SavedUsesGlobal { get; set; }
 
-    /// <summary>Exactly what would be written.</summary>
-    private string Preview => Editing.Format();
+    private bool HasChanges =>
+        !string.Equals(Editing.Format(), Saved, StringComparison.Ordinal) || UsesGlobal != SavedUsesGlobal;
 
-    private bool HasChanges => !string.Equals(Preview, Saved, StringComparison.Ordinal);
+    /// <summary>Whether the reset button is waiting for a second click.</summary>
+    private bool ResetPending { get; set; }
 
-    private IReadOnlyList<string> Warnings => LaunchOptionsValidator.Validate(Editing);
-
-    /// <summary>
-    /// The pending string broken into what is staying, arriving, and going, so the change can be
-    /// read at a glance rather than by comparing two long lines.
-    /// </summary>
-    private IReadOnlyList<LaunchDiffToken> PreviewDiff =>
-        LaunchOptionsDiff.Compare(LaunchOptions.Parse(Saved), Editing);
-
-    /// <summary>Assignments with no definition. Never dropped, just ungrouped.</summary>
-    private IReadOnlyList<EnvironmentVariable> CustomVariables =>
-        Editing.Environment.Where(variable => SettingCatalog.Find(variable.Name) is null).ToList();
+    /// <summary>Whether there is anything to reset at all.</summary>
+    private bool HasAnythingToReset =>
+        Saved.Length > 0 || SavedUsesGlobal || Dlss.Inspect(Entry).IsManaged;
 
     /// <inheritdoc />
     protected override async Task OnParametersSetAsync()
@@ -107,12 +85,8 @@ public partial class GameConfigDialog : ComponentBase
         {
             Editing = await LaunchOptionsService.GetAsync(Entry.AppId);
             Saved = Editing.Format();
-            RawDraft = Saved;
-
-            // Open on the first category that has something set, so a configured game shows its
-            // configuration rather than an empty section.
-            SelectedCategory = SettingCategories.InDisplayOrder.FirstOrDefault(HasAnySet, SettingCategory.Dlss);
-            SelectedSpecial = null;
+            SavedUsesGlobal = await Profile.IsLinkedAsync(Entry.AppId);
+            UsesGlobal = SavedUsesGlobal;
 
             RefreshSteamState();
         }
@@ -127,112 +101,129 @@ public partial class GameConfigDialog : ComponentBase
         }
     }
 
-    /// <summary>The recognised settings belonging to a category.</summary>
-    private static IReadOnlyList<SettingDefinition> DefinitionsIn(SettingCategory category) =>
-        SettingCatalog.All.Where(definition => definition.Category == category).ToList();
-
-    /// <summary>How many of a category's settings this game has set.</summary>
-    private int SetCountIn(SettingCategory category) =>
-        DefinitionsIn(category).Count(definition => Editing.FindEnvironment(definition.Variable) is not null);
-
-    private bool HasAnySet(SettingCategory category) => SetCountIn(category) > 0;
-
-    private void SelectCategory(SettingCategory category)
+    /// <inheritdoc />
+    protected override void OnAfterRender(bool firstRender)
     {
-        SelectedCategory = category;
-        SelectedSpecial = null;
-    }
-
-    private void SelectSpecial(string section)
-    {
-        SelectedSpecial = section;
-        SelectedCategory = null;
+        // Opening on a section that has something set needs the editor, which does not exist
+        // until the first render has happened.
+        if (firstRender)
+        {
+            Editor?.SelectFirstConfiguredCategory();
+            StateHasChanged();
+        }
     }
 
     /// <summary>
-    /// Applies a change from a typed control and regenerates the raw text so both views agree.
+    /// Takes a change from the editor. Editing anything by hand stops the game following the
+    /// global profile, but keeps whatever the profile had already put there — the settings are
+    /// the game's own from that point on.
     /// </summary>
-    private void ApplySetting(SettingDefinition definition, string? value)
+    private void OnOptionsChanged(LaunchOptions options)
     {
-        Editing = value is null
-            ? Editing.RemoveEnvironment(definition.Variable)
-            : Editing.SetEnvironment(definition.Variable, value);
-
-        RawDraft = Editing.Format();
+        Editing = options;
+        UsesGlobal = false;
         SaveMessage = null;
-    }
-
-    /// <summary>Adds or removes a command from the launch chain.</summary>
-    private void ApplyWrapperCommand(string command, bool present)
-    {
-        Editing = Editing.WithWrapperCommand(command, present);
-        RawDraft = Editing.Format();
-        SaveMessage = null;
+        ResetPending = false;
     }
 
     /// <summary>
-    /// Adds or removes the generated DLSS launch script. The libraries themselves have already
-    /// been changed on disk by the time this runs; the launch options entry still needs saving.
+    /// Replaces the game's settings with the global profile's, or stops following it.
     /// </summary>
-    private void OnDlssScriptChanged((string ScriptPath, bool Present) change) =>
-        ApplyWrapperCommand(change.ScriptPath, change.Present);
-
-    /// <summary>Pins the game to a set of threads, or removes the pinning.</summary>
-    private void ApplyCpuAffinity(string? mask)
+    /// <remarks>
+    /// Turning it off leaves the settings exactly as they are. The profile is a starting point
+    /// rather than an owner: unlinking should not silently undo a configuration the user can see
+    /// in front of them.
+    /// </remarks>
+    private async Task OnUseGlobalChanged(bool useGlobal)
     {
-        Editing = Editing.WithCpuAffinity(mask);
-        RawDraft = Editing.Format();
+        UsesGlobal = useGlobal;
         SaveMessage = null;
-    }
 
-    private void RemoveCustomVariable(string name)
-    {
-        Editing = Editing.RemoveEnvironment(name);
-        RawDraft = Editing.Format();
-        SaveMessage = null;
-    }
-
-    private void SetCustomVariable(string name, string? value)
-    {
-        Editing = Editing.SetEnvironment(name, value ?? string.Empty);
-        RawDraft = Editing.Format();
-        SaveMessage = null;
-    }
-
-    private void AddCustomVariable()
-    {
-        var name = NewVariableName.Trim();
-
-        if (name.Length == 0)
+        if (!useGlobal)
         {
             return;
         }
 
-        Editing = Editing.SetEnvironment(name, NewVariableValue.Trim());
-        RawDraft = Editing.Format();
-        NewVariableName = string.Empty;
-        NewVariableValue = string.Empty;
+        var global = await Profile.GetAsync();
+
+        // The DLSS launch script is generated per game and names its own app id, so it cannot
+        // come from a shared profile. Carry it across rather than dropping it.
+        var scriptPath = Dlss.ScriptPathFor(Entry.AppId);
+        var hadScript = Editing.HasWrapperCommand(scriptPath);
+
+        Editing = hadScript ? global.WithWrapperCommand(scriptPath, true) : global;
+    }
+
+    private void Revert()
+    {
+        Editing = LaunchOptions.Parse(Saved);
+        UsesGlobal = SavedUsesGlobal;
         SaveMessage = null;
+        ResetPending = false;
     }
 
     /// <summary>
-    /// Parses the raw editor back into the model. The editor keeps the user's literal text so
-    /// their cursor is not thrown around mid-word by reformatting.
+    /// Puts the game back to how it was before ProtonTune touched it: no launch options, not
+    /// following the profile, and its own DLSS libraries restored.
     /// </summary>
-    private void OnRawInput(ChangeEventArgs args)
+    /// <remarks>
+    /// Asks first. This clears settings the user cannot see from here — the DLSS libraries in
+    /// particular are files inside the install — so a single mis-click should not do it.
+    /// </remarks>
+    private async Task ResetAsync()
     {
-        RawDraft = args.Value?.ToString() ?? string.Empty;
-        Editing = LaunchOptions.Parse(RawDraft);
-        SaveMessage = null;
-    }
+        if (!ResetPending)
+        {
+            ResetPending = true;
 
-    private async Task RevertAsync()
-    {
-        Editing = LaunchOptions.Parse(Saved);
-        RawDraft = Saved;
+            return;
+        }
+
+        ResetPending = false;
+        IsSaving = true;
         SaveMessage = null;
 
-        await Task.CompletedTask;
+        try
+        {
+            // Libraries first: the launch script that re-applies them is about to be removed, and
+            // leaving links behind with nothing maintaining them is the one state worse than
+            // either extreme.
+            if (Dlss.Inspect(Entry).IsManaged)
+            {
+                await Dlss.RevertAsync(Entry);
+            }
+
+            var result = await LaunchOptionsService.SaveAsync(Entry.AppId, string.Empty);
+
+            SaveFailed = !result.IsSuccess;
+
+            if (result.IsSuccess)
+            {
+                await Profile.SetLinkedAsync(Entry.AppId, false);
+
+                Editing = new LaunchOptions();
+                Saved = string.Empty;
+                UsesGlobal = false;
+                SavedUsesGlobal = false;
+
+                SaveMessage = "Reset. The game has no launch options and its own DLSS libraries." +
+                              (result.SteamWasRestarted ? " Steam was closed and started again." : string.Empty);
+            }
+            else
+            {
+                SaveMessage = result.Message ?? "The game could not be reset.";
+            }
+        }
+        catch (Exception e)
+        {
+            SaveFailed = true;
+            SaveMessage = $"The game could not be reset: {e.Message}";
+        }
+        finally
+        {
+            IsSaving = false;
+            RefreshSteamState();
+        }
     }
 
     /// <summary>Re-checks Steam's state, which can change while the dialog is open.</summary>
@@ -249,15 +240,16 @@ public partial class GameConfigDialog : ComponentBase
 
         try
         {
-            var result = await LaunchOptionsService.SaveAsync(Entry.AppId, Preview);
+            var result = await LaunchOptionsService.SaveAsync(Entry.AppId, Editing.Format());
 
             SaveFailed = !result.IsSuccess;
 
             if (result.IsSuccess)
             {
-                Saved = Preview;
-                RawDraft = Saved;
-                Editing = LaunchOptions.Parse(Saved);
+                Saved = Editing.Format();
+
+                await Profile.SetLinkedAsync(Entry.AppId, UsesGlobal);
+                SavedUsesGlobal = UsesGlobal;
 
                 SaveMessage = result.SteamWasRestarted
                     ? "Saved. Steam was closed and started again so the change would stick."

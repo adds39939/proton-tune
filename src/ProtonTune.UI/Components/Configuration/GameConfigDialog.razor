@@ -21,225 +21,35 @@
         }
         else
         {
-            <div class="panel-body">
-                <nav class="sections" aria-label="Setting sections">
-                    @foreach (var category in SettingCategories.InDisplayOrder)
+            <div class="global-link">
+                <label class="switch">
+                    <input type="checkbox"
+                           checked="@UsesGlobal"
+                           disabled="@IsSaving"
+                           @onchange="@(args => OnUseGlobalChanged(args.Value is true))"/>
+                    <span>Use Global</span>
+                </label>
+
+                <span class="global-note">
+                    @if (UsesGlobal)
                     {
-                        var count = SetCountIn(category);
-
-                        <button type="button"
-                                class="section-tab @(SelectedCategory == category ? "is-active" : string.Empty)"
-                                @key="category"
-                                @onclick="() => SelectCategory(category)">
-                            <span>@category.Title()</span>
-                            @if (count > 0)
-                            {
-                                <span class="section-count">@count</span>
-                            }
-                        </button>
-                    }
-
-                    <hr class="section-divider"/>
-
-                    <button type="button"
-                            class="section-tab @(SelectedSpecial == LaunchChainSection ? "is-active" : string.Empty)"
-                            @onclick="() => SelectSpecial(LaunchChainSection)">
-                        <span>@LaunchChainSection</span>
-                        <span class="section-count">@Editing.Wrapper.Count</span>
-                    </button>
-
-                    <button type="button"
-                            class="section-tab @(SelectedSpecial == CustomSection ? "is-active" : string.Empty)"
-                            @onclick="() => SelectSpecial(CustomSection)">
-                        <span>@CustomSection</span>
-                        <span class="section-count">@CustomVariables.Count</span>
-                    </button>
-
-                    <button type="button"
-                            class="section-tab @(SelectedSpecial == RawSection ? "is-active" : string.Empty)"
-                            @onclick="() => SelectSpecial(RawSection)">
-                        <span>@RawSection</span>
-                    </button>
-                </nav>
-
-                <div class="section-content">
-                    @if (Warnings.Count > 0)
-                    {
-                        <ul class="warnings">
-                            @foreach (var warning in Warnings)
-                            {
-                                <li @key="warning">@warning</li>
-                            }
-                        </ul>
-                    }
-
-                    @if (SelectedCategory is SettingCategory.MangoHud)
-                    {
-                        <h3 class="section-title">MangoHud</h3>
-                        <p class="section-note">
-                            The overlay's own options, written into a single MANGOHUD_CONFIG variable.
-                            They only apply when the game is launched through mangohud.
-                        </p>
-
-                        <CommandToggle Label="Launch through MangoHud"
-                                       Command="@MangoHudCommand"
-                                       Description="Adds mangohud to the launch chain. Without it none of these options apply."
-                                       IsOn="@Editing.HasWrapperCommand(MangoHudCommand)"
-                                       IsOnChanged="@(on => ApplyWrapperCommand(MangoHudCommand, on))"/>
-
-                        <MangoHudEditor Value="@Editing.FindEnvironment(MangoHudVariable)?.Value"
-                                        ValueChanged="@(value => ApplySetting(MangoHudDefinition, value))"/>
-                    }
-                    else if (SelectedCategory is { } selected)
-                    {
-                        <h3 class="section-title">@selected.Title()</h3>
-
-                        @if (selected is SettingCategory.Cpu)
-                        {
-                            <CpuAffinityEditor Value="@Editing.CpuAffinity"
-                                               ValueChanged="ApplyCpuAffinity"/>
-
-                            <h4 class="section-subtitle">Scheduling</h4>
-
-                            <CommandToggle Label="Launch through GameMode"
-                                           Command="@GameModeCommand"
-                                           Description="Asks the system to favour the game while it runs."
-                                           IsOn="@Editing.HasWrapperCommand(GameModeCommand)"
-                                           IsOnChanged="@(on => ApplyWrapperCommand(GameModeCommand, on))"/>
-                        }
-
-                        @if (selected is SettingCategory.Dlss)
-                        {
-                            <h4 class="section-subtitle">Libraries</h4>
-
-                            <DlssLibraryEditor Entry="@Entry" ScriptChanged="OnDlssScriptChanged"/>
-
-                            <h4 class="section-subtitle">Driver overrides</h4>
-                        }
-
-                        @foreach (var definition in DefinitionsIn(selected))
-                        {
-                            <SettingEditor Definition="@definition"
-                                           Value="@Editing.FindEnvironment(definition.Variable)?.Value"
-                                           ValueChanged="@(value => ApplySetting(definition, value))"
-                                           @key="definition.Variable"/>
-                        }
-                    }
-                    else if (SelectedSpecial == LaunchChainSection)
-                    {
-                        <h3 class="section-title">Launch chain</h3>
-                        <p class="section-note">
-                            Commands the game is launched through, in order. Not editable here yet —
-                            change it in the raw options for now.
-                        </p>
-
-                        @if (Editing.Wrapper.Count == 0)
-                        {
-                            <p class="section-empty">The game is launched directly.</p>
-                        }
-                        else
-                        {
-                            <ol class="chain">
-                                @foreach (var token in Editing.Wrapper)
-                                {
-                                    <li><code>@token</code></li>
-                                }
-                            </ol>
-                        }
-
-                        <SettingRow Label="Command placeholder"
-                                    Variable="%command%"
-                                    Value="@(Editing.HasCommandPlaceholder ? "present" : "absent — options are appended")"
-                                    Description="Where Steam substitutes the game's own command line."/>
-
-                        @if (Editing.Arguments.Count > 0)
-                        {
-                            <SettingRow Label="Game arguments"
-                                        Variable="after %command%"
-                                        Value="@string.Join(' ', Editing.Arguments)"
-                                        Description="Passed to the game itself."/>
-                        }
-                    }
-                    else if (SelectedSpecial == CustomSection)
-                    {
-                        <h3 class="section-title">Custom variables</h3>
-                        <p class="section-note">
-                            Anything ProtonTune has no definition for, plus whatever you want to add.
-                        </p>
-
-                        @foreach (var variable in CustomVariables)
-                        {
-                            <div class="custom" @key="variable.Name">
-                                <code class="custom-name">@variable.Name</code>
-
-                                <input class="custom-value"
-                                       type="text"
-                                       spellcheck="false"
-                                       value="@variable.Value"
-                                       @onchange="@(args => SetCustomVariable(variable.Name, args.Value?.ToString()))"/>
-
-                                <button type="button"
-                                        class="button button-quiet"
-                                        @onclick="() => RemoveCustomVariable(variable.Name)">
-                                    Remove
-                                </button>
-                            </div>
-                        }
-
-                        <div class="custom custom-new">
-                            <input class="custom-name-input"
-                                   type="text"
-                                   spellcheck="false"
-                                   placeholder="VARIABLE_NAME"
-                                   value="@NewVariableName"
-                                   @onchange="@(args => NewVariableName = args.Value?.ToString() ?? string.Empty)"/>
-
-                            <input class="custom-value"
-                                   type="text"
-                                   spellcheck="false"
-                                   placeholder="value"
-                                   value="@NewVariableValue"
-                                   @onchange="@(args => NewVariableValue = args.Value?.ToString() ?? string.Empty)"/>
-
-                            <button type="button" class="button" @onclick="AddCustomVariable">Add</button>
-                        </div>
+                        <text>
+                            Following the global profile. Changing any setting below makes these the
+                            game's own, keeping whatever the profile put there.
+                        </text>
                     }
                     else
                     {
-                        <h3 class="section-title">Raw launch options</h3>
-                        <p class="section-note">
-                            The whole string, as Steam stores it. Editing here is the escape hatch for
-                            anything ProtonTune does not yet understand.
-                        </p>
-
-                        <textarea class="raw-editor"
-                                  rows="6"
-                                  spellcheck="false"
-                                  placeholder="No launch options are set."
-                                  disabled="@IsSaving"
-                                  value="@RawDraft"
-                                  @oninput="OnRawInput"></textarea>
+                        <text>Configured on its own. Turning this on replaces the settings below.</text>
                     }
-
-                    @if (HasChanges)
-                    {
-                        <div class="preview">
-                            <div class="preview-heading">
-                                <span class="preview-label">Will be written as</span>
-                                <span class="legend">
-                                    <span class="legend-item legend-added">added</span>
-                                    <span class="legend-item legend-removed">removed</span>
-                                </span>
-                            </div>
-
-                            @* The separator is an explicit expression: a whitespace-only literal
-                               gets trimmed away, and the tokens then run together unreadably. *@
-                            <pre class="raw">@foreach (var token in PreviewDiff)
-{<span class="token token-@token.Kind.ToString().ToLowerInvariant()">@token.Text</span>@(" ")}</pre>
-                        </div>
-                    }
-                </div>
+                </span>
             </div>
+
+            <LaunchOptionsEditor Options="@Editing"
+                                 OptionsChanged="OnOptionsChanged"
+                                 Saved="@Saved"
+                                 Entry="@Entry"
+                                 IsBusy="@IsSaving"/>
 
             <footer class="panel-footer">
                 <div class="footer-status">
@@ -268,9 +78,16 @@
 
                 <div class="footer-actions">
                     <button type="button"
+                            class="button @(ResetPending ? "button-danger" : string.Empty)"
+                            disabled="@(IsSaving || GameIsRunning || !HasAnythingToReset)"
+                            @onclick="ResetAsync">
+                        @(ResetPending ? "Confirm reset" : "Reset")
+                    </button>
+
+                    <button type="button"
                             class="button"
                             disabled="@(!HasChanges || IsSaving)"
-                            @onclick="RevertAsync">
+                            @onclick="Revert">
                         Revert
                     </button>
 

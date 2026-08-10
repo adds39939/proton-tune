@@ -38,4 +38,16 @@ public interface ISteamLaunchOptionsService
         uint appId,
         string launchOptions,
         CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Writes launch options for several apps at once.
+    /// </summary>
+    /// <remarks>
+    /// One shutdown, one write, one restart, however many games are involved. Saving them
+    /// individually would close and reopen Steam once per game, which a profile applied across a
+    /// library makes intolerable — and would leave the library half updated if one failed.
+    /// </remarks>
+    Task<LaunchOptionsSaveResult> SaveManyAsync(
+        IReadOnlyDictionary<uint, string> launchOptionsByApp,
+        CancellationToken cancellationToken = default);
 }

@@ -1,6 +1,7 @@
 using Microsoft.Extensions.DependencyInjection;
 using ProtonTune.Services.Cpu;
 using ProtonTune.Services.Dlss;
+using ProtonTune.Services.Profiles;
 using ProtonTune.Services.Steam;
 
 namespace ProtonTune.Services.DependencyExtensions;
@@ -16,6 +17,7 @@ public static class ServiceCollectionExtensions
         services.AddSingleton<ProtonTuneStorage>();
         services.AddSingleton<IDlssRuntimeProvider, ShippedDlssRuntimeProvider>();
         services.AddSingleton<IDlssManagementService, DlssManagementService>();
+        services.AddSingleton<IGlobalProfileService, GlobalProfileService>();
         services.AddSingleton<ISteamClient, SteamClient>();
         services.AddSingleton<ISteamLaunchOptionsService, SteamLaunchOptionsService>();
 

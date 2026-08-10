@@ -43,6 +43,7 @@ public sealed partial record LaunchOptions
     /// </remarks>
     public LaunchOptions WithCpuAffinity(string? mask)
     {
+        var wasEmpty = IsEmpty;
         var wrapper = Wrapper.ToList();
         var index = IndexOfCommand(TasksetCommand, wrapper);
         var hasList = index >= 0 && index + 2 < wrapper.Count && TasksetListFlags.Contains(wrapper[index + 1]);
@@ -72,7 +73,7 @@ public sealed partial record LaunchOptions
             wrapper.AddRange([TasksetCommand, "-c", mask.Trim()]);
         }
 
-        return this with { Wrapper = wrapper };
+        return this with { Wrapper = wrapper, HasCommandPlaceholder = HasCommandPlaceholder || wasEmpty };
     }
 
     /// <summary>
@@ -98,6 +99,7 @@ public sealed partial record LaunchOptions
             return this;
         }
 
+        var wasEmpty = IsEmpty;
         var wrapper = Wrapper.ToList();
 
         if (present)
@@ -109,7 +111,7 @@ public sealed partial record LaunchOptions
             wrapper.RemoveAt(index);
         }
 
-        return this with { Wrapper = wrapper };
+        return this with { Wrapper = wrapper, HasCommandPlaceholder = HasCommandPlaceholder || wasEmpty };
     }
 
     /// <summary>Finds a command in the chain by file name.</summary>

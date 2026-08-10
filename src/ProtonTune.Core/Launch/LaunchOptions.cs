@@ -147,6 +147,7 @@ public sealed partial record LaunchOptions
     /// </summary>
     public LaunchOptions SetEnvironment(string name, string value)
     {
+        var wasEmpty = IsEmpty;
         var environment = Environment.ToList();
         var index = environment.FindIndex(variable => string.Equals(variable.Name, name, StringComparison.Ordinal));
 
@@ -159,7 +160,7 @@ public sealed partial record LaunchOptions
             environment.Add(new EnvironmentVariable(name, value));
         }
 
-        return this with { Environment = environment };
+        return this with { Environment = environment, HasCommandPlaceholder = HasCommandPlaceholder || wasEmpty };
     }
 
     /// <summary>

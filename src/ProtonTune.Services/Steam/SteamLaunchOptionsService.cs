@@ -51,11 +51,22 @@ public sealed class SteamLaunchOptionsService(
     public bool IsGameRunning() => steamClient.IsGameRunning();
 
     /// <inheritdoc />
-    public async Task<LaunchOptionsSaveResult> SaveAsync(
+    public Task<LaunchOptionsSaveResult> SaveAsync(
         uint appId,
         string launchOptions,
+        CancellationToken cancellationToken = default) =>
+        SaveManyAsync(new Dictionary<uint, string> { [appId] = launchOptions }, cancellationToken);
+
+    /// <inheritdoc />
+    public async Task<LaunchOptionsSaveResult> SaveManyAsync(
+        IReadOnlyDictionary<uint, string> launchOptionsByApp,
         CancellationToken cancellationToken = default)
     {
+        if (launchOptionsByApp.Count == 0)
+        {
+            return new LaunchOptionsSaveResult(LaunchOptionsSaveStatus.Saved);
+        }
+
         var configPath = FindUserConfig();
 
         if (configPath is null)
@@ -86,35 +97,48 @@ public sealed class SteamLaunchOptionsService(
             // Read only now. Steam rewrites this file as it exits, so anything read before the
             // shutdown is already stale and would undo whatever else changed in the meantime.
             var document = await File.ReadAllTextAsync(configPath, cancellationToken).ConfigureAwait(false);
-            var updated = SteamConfigText.SetValue(document, PathTo(appId), launchOptions);
+            var updated = document;
 
-            if (updated is null)
+            // Every game is spliced into the same document before it is written once. Writing per
+            // game would mean closing and reopening Steam for each, which is unusable for a
+            // profile applied across a library.
+            foreach (var (appId, launchOptions) in launchOptionsByApp)
             {
-                return Restart(new LaunchOptionsSaveResult(
-                    LaunchOptionsSaveStatus.ConfigUnrecognised,
-                    "The Steam configuration file was not in the expected format. Nothing was changed."));
+                if (SteamConfigText.SetValue(updated, PathTo(appId), launchOptions) is not { } next)
+                {
+                    return Restart(new LaunchOptionsSaveResult(
+                        LaunchOptionsSaveStatus.ConfigUnrecognised,
+                        "The Steam configuration file was not in the expected format. Nothing was changed."));
+                }
+
+                updated = next;
             }
 
             var backupPath = await BackUpAsync(configPath, document, cancellationToken).ConfigureAwait(false);
 
             await WriteAtomicallyAsync(configPath, updated, cancellationToken).ConfigureAwait(false);
 
-            var written = SteamConfigText.GetValue(
-                await File.ReadAllTextAsync(configPath, cancellationToken).ConfigureAwait(false),
-                PathTo(appId));
+            var readBack = await File.ReadAllTextAsync(configPath, cancellationToken).ConfigureAwait(false);
+            var mismatched = launchOptionsByApp
+                .Where(entry => SteamConfigText.GetValue(readBack, PathTo(entry.Key)) != entry.Value)
+                .Select(entry => entry.Key)
+                .ToList();
 
-            if (written != launchOptions)
+            if (mismatched.Count > 0)
             {
                 return Restart(new LaunchOptionsSaveResult(
                     LaunchOptionsSaveStatus.WriteFailed,
-                    $"The file was written but read back differently. The previous version is at {backupPath}.")
+                    $"The file was written but read back differently for {string.Join(", ", mismatched)}. " +
+                    $"The previous version is at {backupPath}.")
                 {
                     BackupPath = backupPath
                 });
             }
 
-            logger.LogInformation("Wrote launch options for {AppId}; previous configuration at {BackupPath}.",
-                appId, backupPath);
+            logger.LogInformation(
+                "Wrote launch options for {AppCount} apps; previous configuration at {BackupPath}.",
+                launchOptionsByApp.Count,
+                backupPath);
 
             return Restart(new LaunchOptionsSaveResult(LaunchOptionsSaveStatus.Saved) { BackupPath = backupPath });
         }

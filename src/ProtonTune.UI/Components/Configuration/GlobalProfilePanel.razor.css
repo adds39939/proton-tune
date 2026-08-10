@@ -1,0 +1,93 @@
+.profile {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    max-width: 1180px;
+    margin: 0 auto;
+}
+
+.profile-header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 16px;
+    flex: none;
+}
+
+.profile-header h1 {
+    margin: 0;
+    font-size: 22px;
+    font-weight: 600;
+}
+
+.profile-subtitle {
+    margin: 2px 0 0;
+    color: var(--text-muted);
+    font-size: 13px;
+}
+
+.profile-actions {
+    display: flex;
+    gap: 8px;
+    flex: none;
+}
+
+.profile-message {
+    margin: 14px 0 0;
+    color: var(--text-muted);
+    font-size: 12px;
+}
+
+.is-error {
+    color: var(--danger);
+}
+
+.is-success {
+    color: var(--accent);
+}
+
+/*
+ * The editor lays itself out as a sidebar beside a scrolling pane, so it needs a bounded height
+ * to scroll within rather than growing the page.
+ */
+.profile-editor {
+    flex: 1;
+    min-height: 0;
+    margin-top: 18px;
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    overflow: hidden;
+}
+
+.button {
+    padding: 8px 16px;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    background: var(--surface-2);
+    color: var(--text);
+    font: inherit;
+    cursor: pointer;
+    transition: border-color 120ms ease, background 120ms ease;
+}
+
+.button:hover:not(:disabled) {
+    border-color: var(--accent);
+    background: var(--accent-soft);
+}
+
+.button:disabled {
+    opacity: 0.5;
+    cursor: default;
+}
+
+.button-primary {
+    border-color: var(--accent);
+    background: var(--accent-soft);
+    color: var(--text);
+}
+
+.button-danger {
+    border-color: var(--danger);
+    background: var(--removed-soft);
+    color: var(--danger);
+}
