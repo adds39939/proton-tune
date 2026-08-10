@@ -115,6 +115,19 @@ public class LaunchOptionsWrapperTests
         Assert.Equal(Overwatch, LaunchOptions.Parse(Overwatch).WithWrapperCommand("mangohud", true).Format());
 
     [Fact]
+    public void FindsAnAbsoluteScriptItAddedItself()
+    {
+        // Generated launch scripts are inserted by full path, and have to be recognised again to
+        // be removed — otherwise turning the feature off would leave the script in the chain.
+        var script = "/home/adam/.local/share/proton-tune/bin/dlss-2357570.sh";
+        var edited = LaunchOptions.Parse("%command%").WithWrapperCommand(script, true);
+
+        Assert.True(edited.HasWrapperCommand(script));
+        Assert.Equal($"{script} %command%", edited.Format());
+        Assert.Equal("%command%", edited.WithWrapperCommand(script, false).Format());
+    }
+
+    [Fact]
     public void NeverDisturbsACustomScript()
     {
         // ow-dlss is a hand-written launcher. Nothing here should know or care what it is.

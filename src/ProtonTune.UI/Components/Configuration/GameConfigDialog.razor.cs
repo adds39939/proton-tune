@@ -163,6 +163,13 @@ public partial class GameConfigDialog : ComponentBase
         SaveMessage = null;
     }
 
+    /// <summary>
+    /// Adds or removes the generated DLSS launch script. The libraries themselves have already
+    /// been changed on disk by the time this runs; the launch options entry still needs saving.
+    /// </summary>
+    private void OnDlssScriptChanged((string ScriptPath, bool Present) change) =>
+        ApplyWrapperCommand(change.ScriptPath, change.Present);
+
     /// <summary>Pins the game to a set of threads, or removes the pinning.</summary>
     private void ApplyCpuAffinity(string? mask)
     {

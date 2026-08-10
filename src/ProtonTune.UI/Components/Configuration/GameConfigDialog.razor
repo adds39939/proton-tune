@@ -108,6 +108,15 @@
                                            IsOnChanged="@(on => ApplyWrapperCommand(GameModeCommand, on))"/>
                         }
 
+                        @if (selected is SettingCategory.Dlss)
+                        {
+                            <h4 class="section-subtitle">Libraries</h4>
+
+                            <DlssLibraryEditor Entry="@Entry" ScriptChanged="OnDlssScriptChanged"/>
+
+                            <h4 class="section-subtitle">Driver overrides</h4>
+                        }
+
                         @foreach (var definition in DefinitionsIn(selected))
                         {
                             <SettingEditor Definition="@definition"

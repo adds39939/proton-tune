@@ -76,8 +76,9 @@ public sealed partial record LaunchOptions
     }
 
     /// <summary>
-    /// Whether the game is launched through a command. Matched on the file name, so an absolute
-    /// path to the same tool counts.
+    /// Whether the game is launched through a command. Matched on file name at both ends, so
+    /// <c>mangohud</c> finds <c>/usr/bin/mangohud</c> and an absolute path to a generated script
+    /// finds itself.
     /// </summary>
     public bool HasWrapperCommand(string command) => IndexOfCommand(command) >= 0;
 
@@ -118,7 +119,7 @@ public sealed partial record LaunchOptions
     {
         for (var i = 0; i < wrapper.Count; i++)
         {
-            if (string.Equals(Path.GetFileName(wrapper[i]), command, StringComparison.Ordinal))
+            if (string.Equals(Path.GetFileName(wrapper[i]), Path.GetFileName(command), StringComparison.Ordinal))
             {
                 return i;
             }
