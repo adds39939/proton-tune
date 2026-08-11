@@ -31,7 +31,7 @@ public sealed record SettingCategory(string Id, string Title, int Order)
 /// </remarks>
 public static class SettingCategoryIds
 {
-    public const string Dlss = "dlss";
+    public const string Nvidia = "nvidia";
 
     public const string Cpu = "cpu";
 

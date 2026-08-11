@@ -163,7 +163,7 @@ public partial class LaunchOptionsEditor : ComponentBase
             return true;
         }
 
-        if (category.Is(SettingCategoryIds.Dlss) && Entry is not null)
+        if (category.Is(SettingCategoryIds.Nvidia) && Entry is not null)
         {
             return true;
         }
@@ -182,7 +182,7 @@ public partial class LaunchOptionsEditor : ComponentBase
     /// them here rather than losing them.
     /// </summary>
     private IEnumerable<SettingDefinition> ListedSettingsIn(SettingCategory category) =>
-        (category.Is(SettingCategoryIds.Dlss) && Entry is not null
+        (category.Is(SettingCategoryIds.Nvidia) && Entry is not null
             ? DefinitionsIn(category).Where(definition => !IsProtonDlss(definition))
             : DefinitionsIn(category))
         .Where(IsVisible);

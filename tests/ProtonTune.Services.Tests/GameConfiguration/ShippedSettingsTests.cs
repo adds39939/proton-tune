@@ -67,7 +67,7 @@ public class ShippedSettingsTests
     /// file removes that control rather than the section, which would be silent.
     /// </summary>
     [Theory]
-    [InlineData(SettingCategoryIds.Dlss)]
+    [InlineData(SettingCategoryIds.Nvidia)]
     [InlineData(SettingCategoryIds.Cpu)]
     [InlineData(SettingCategoryIds.MangoHud)]
     public void KeepsTheSectionsTheApplicationLooksForByName(string id) =>
@@ -75,7 +75,7 @@ public class ShippedSettingsTests
 
     [Fact]
     public void OrdersSectionsWithDlssFirst() =>
-        Assert.Equal(SettingCategoryIds.Dlss, Catalog.Categories[0].Id);
+        Assert.Equal(SettingCategoryIds.Nvidia, Catalog.Categories[0].Id);
 
     /// <summary>
     /// These fail silently when given a value the driver does not recognise — the game just runs

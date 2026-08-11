@@ -19,7 +19,7 @@ public class LaunchOptionsTests
         "DXVK_NVAPI_DRS_NGX_DLSS_SR_OVERRIDE_RENDER_PRESET_SELECTION=RENDER_PRESET_L " +
         "DXVK_NVAPI_SET_NGX_DEBUG_OPTIONS=DLSSIndicator=1024 " +
         "MANGOHUD_CONFIG=fps_limit=224,fps_limit_method=late " +
-        "/home/adam/bin/ow-dlss mangohud taskset -c 0-7,16-23 %command%";
+        "taskset -c 0-7,16-23 %command%";
 
     [Theory]
     [InlineData("")]
@@ -73,7 +73,7 @@ public class LaunchOptionsTests
         var options = LaunchOptions.Parse(OverwatchOptions);
 
         Assert.Equal(
-            ["/home/adam/bin/ow-dlss", "mangohud", "taskset", "-c", "0-7,16-23"],
+            ["taskset", "-c", "0-7,16-23"],
             options.Wrapper);
         Assert.True(options.HasCommandPlaceholder);
         Assert.Empty(options.Arguments);
