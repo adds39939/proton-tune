@@ -57,8 +57,6 @@ internal static class SteamLibraryCache
                 return null;
             }
 
-            // Both arrangements, preferred name first in each, so a stale copy left behind by an
-            // upgrade never wins over the one Steam is keeping current.
             foreach (var directory in Directories(appDirectory))
             {
                 foreach (var name in names)
