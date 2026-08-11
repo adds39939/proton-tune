@@ -1,7 +1,12 @@
+/* Fills the window: the heading stays put and the builds scroll beneath it. */
 .proton {
     display: flex;
     flex-direction: column;
-    height: 100%;
+    flex: 1;
+    min-height: 0;
+    /* Auto margins centre it, which in a flex column also stops it stretching — so the
+       width is asked for explicitly and then capped. */
+    width: 100%;
     max-width: 1180px;
     margin: 0 auto;
 }

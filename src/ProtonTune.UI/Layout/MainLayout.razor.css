@@ -63,8 +63,17 @@
     border-bottom-color: var(--accent);
 }
 
+/*
+ * A column so that a page can ask to fill the window rather than sizing to its content. A
+ * percentage height does not survive the trip through here — the height of a flex item is not
+ * something a child's `height: 100%` can rely on — which is why every page says which of the two
+ * it wants: `flex: 1` to fill, `flex: none` to grow and let this scroll.
+ */
 .content {
+    display: flex;
+    flex-direction: column;
     flex: 1;
+    min-height: 0;
     overflow-y: auto;
     padding: 28px;
 }
