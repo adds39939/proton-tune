@@ -27,9 +27,13 @@
     font-size: 13px;
 }
 
+/*
+ * Stretched rather than centred, so the controls beside the search box come out the same height
+ * as it whatever padding and font size each ends up with.
+ */
 .library-filters {
     display: flex;
-    align-items: center;
+    align-items: stretch;
     gap: 16px;
     margin: 20px 0 24px;
 }
@@ -87,6 +91,40 @@
     border-color: var(--accent);
 }
 
+/* Sorting ----------------------------------------------------------------- */
+
+.sort {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex: none;
+}
+
+.sort-label {
+    color: var(--text-muted);
+    font-size: 13px;
+    white-space: nowrap;
+}
+
+.sort-select {
+    height: 100%;
+    padding: 0 12px;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    background: var(--surface-1);
+    color: var(--text);
+    font: inherit;
+    font-size: 13px;
+    cursor: pointer;
+}
+
+.sort-select:focus {
+    outline: none;
+    border-color: var(--accent);
+}
+
+/* View mode --------------------------------------------------------------- */
+
 .view-toggle {
     display: flex;
     flex: none;
@@ -97,7 +135,9 @@
 }
 
 .view-button {
-    padding: 6px 14px;
+    display: flex;
+    align-items: center;
+    padding: 0 14px;
     border: none;
     border-radius: 6px;
     background: transparent;

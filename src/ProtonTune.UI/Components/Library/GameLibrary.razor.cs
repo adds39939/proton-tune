@@ -22,6 +22,11 @@ public partial class GameLibrary : ComponentBase
 
     private LibraryViewMode ViewMode { get; set; } = LibraryViewMode.Grid;
 
+    /// <summary>The available orders, in the order they appear in the menu.</summary>
+    private static readonly LibrarySortOrder[] SortOrders = Enum.GetValues<LibrarySortOrder>();
+
+    private LibrarySortOrder SortOrder { get; set; } = LibrarySortOrder.Name;
+
     /// <summary>The entry whose configuration dialog is open, or null when none is.</summary>
     private SteamLibraryEntry? SelectedApp { get; set; }
 
@@ -37,9 +42,8 @@ public partial class GameLibrary : ComponentBase
     /// and share the library, but they are not launched and have nothing to configure, so showing
     /// them is only ever noise.
     /// </remarks>
-    private IReadOnlyList<SteamLibraryEntry> VisibleApps => Apps
-        .Where(app => app.Kind == SteamAppKind.Game)
-        .Where(MatchesSearch)
+    private IReadOnlyList<SteamLibraryEntry> VisibleApps => SortOrder
+        .Apply(Apps.Where(app => app.Kind == SteamAppKind.Game).Where(MatchesSearch))
         .ToList();
 
     private string SubtitleText
@@ -87,6 +91,14 @@ public partial class GameLibrary : ComponentBase
     private void OnSearchChanged(ChangeEventArgs args) => SearchTerm = args.Value?.ToString() ?? string.Empty;
 
     private void SetViewMode(LibraryViewMode mode) => ViewMode = mode;
+
+    private void OnSortChanged(ChangeEventArgs args)
+    {
+        if (Enum.TryParse<LibrarySortOrder>(args.Value?.ToString(), out var order))
+        {
+            SortOrder = order;
+        }
+    }
 
     private void Select(SteamLibraryEntry entry) => SelectedApp = entry;
 

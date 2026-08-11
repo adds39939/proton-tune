@@ -5,10 +5,17 @@ namespace ProtonTune.UI.Formatting;
 /// </summary>
 public static class LastPlayedDisplay
 {
+    /// <summary>Once "n days ago" stops being easier to read than the date itself.</summary>
+    private const int DaysBeforeShowingADate = 30;
+
     /// <summary>
-    /// Describes when an app was last launched, relative for the recent past and as a date once
-    /// "n days ago" stops being easier to read than the date itself.
+    /// Describes when an app was last launched, in the largest unit that still says something
+    /// useful: minutes within the hour, hours within the day, then days.
     /// </summary>
+    /// <remarks>
+    /// Elapsed rather than calendar based, and truncated rather than rounded — the convention for
+    /// this kind of label, where "1 hour ago" is understood to mean at least an hour.
+    /// </remarks>
     public static string Format(DateTimeOffset? lastPlayed)
     {
         if (lastPlayed is null)
@@ -16,14 +23,24 @@ public static class LastPlayedDisplay
             return "Never";
         }
 
-        var days = (DateTimeOffset.Now - lastPlayed.Value).Days;
+        var elapsed = DateTimeOffset.Now - lastPlayed.Value;
 
-        return days switch
+        // A timestamp in the future means the clock moved, not that the game is played tomorrow.
+        if (elapsed < TimeSpan.Zero)
         {
-            <= 0 => "Today",
-            1 => "Yesterday",
-            < 30 => $"{days} days ago",
+            elapsed = TimeSpan.Zero;
+        }
+
+        return elapsed switch
+        {
+            { TotalMinutes: < 1 } => "Just now",
+            { TotalHours: < 1 } => Count(elapsed.Minutes, "minute"),
+            { TotalDays: < 1 } => Count(elapsed.Hours, "hour"),
+            { TotalDays: < DaysBeforeShowingADate } => Count(elapsed.Days, "day"),
             _ => lastPlayed.Value.ToLocalTime().ToString("d MMM yyyy")
         };
     }
+
+    private static string Count(int value, string unit) =>
+        value == 1 ? $"1 {unit} ago" : $"{value} {unit}s ago";
 }
