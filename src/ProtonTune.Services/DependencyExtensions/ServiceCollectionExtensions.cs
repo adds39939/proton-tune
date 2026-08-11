@@ -1,5 +1,6 @@
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
+using ProtonTune.Core.Hosting;
 using ProtonTune.Core.Launch;
 using ProtonTune.Services.Cpu;
 using ProtonTune.Services.GameConfiguration;
@@ -24,7 +25,21 @@ public static class ServiceCollectionExtensions
 
         services.AddSingleton<ISteamInstallLocator, SteamInstallLocator>();
         services.AddSingleton<ISteamLibraryService, SteamLibraryService>();
-        services.AddSingleton<IGameArtworkService, SteamCdnArtworkService>();
+        // Order matters: the cache Steam fills locally is tried before its CDN, since the CDN has
+        // no reachable URL for recent titles. Registering the composite by hand keeps it from
+        // being handed itself along with the two it wraps.
+        services.AddSingleton<SteamLibraryCacheArtworkService>();
+        services.AddSingleton<IGameArtworkService>(provider => new FallbackArtworkService(
+        [
+            provider.GetRequiredService<SteamLibraryCacheArtworkService>(),
+            new SteamCdnArtworkService()
+        ]));
+
+        // The cached artwork is on disk rather than anywhere the web view can reach, so it is
+        // offered to the host as a scheme to serve. The host registers it without knowing that
+        // artwork is what it is.
+        services.AddSingleton<ICustomSchemeHandler>(provider =>
+            provider.GetRequiredService<SteamLibraryCacheArtworkService>());
         services.AddSingleton<IProtonToolService, ProtonToolService>();
         services.AddSingleton<ICpuTopologyService, LinuxCpuTopologyService>();
         services.AddSingleton<ProtonTuneStorage>();

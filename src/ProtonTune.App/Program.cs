@@ -24,7 +24,9 @@ internal class Program
 
         appBuilder.RootComponents.Add<UI.App>("app");
 
-        var app = appBuilder.Build();
+        var app = appBuilder
+            .Build()
+            .RegisterCustomSchemes();
 
         app.MainWindow.SetTitle("ProtonTune");
         app.MainWindow.Size = new Size(1280, 900);

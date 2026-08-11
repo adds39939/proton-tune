@@ -1,7 +1,9 @@
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
+using ProtonTune.Core.Hosting;
 using ProtonTune.Services.DependencyExtensions;
+using ProtonTune.Services.Steam;
 
 namespace ProtonTune.Services.Tests.DependencyExtensions;
 
@@ -50,6 +52,22 @@ public class ServiceRegistrationTests
             (service.ServiceType.IsInterface || service.ImplementationFactory is not null));
 
         Assert.All(resolvable, service => Assert.NotNull(provider.GetService(service.ServiceType)));
+    }
+
+    /// <summary>
+    /// The host registers scheme handlers by asking the container for them and nothing else, so a
+    /// handler that is written but never registered is a feature that silently does not work. The
+    /// artwork one is the reason the extension point exists; if it stops arriving, covers stop
+    /// loading and nothing else complains.
+    /// </summary>
+    [Fact]
+    public void OffersItsCustomSchemeHandlersToTheHost()
+    {
+        using var provider = WithLogging().AddProtonTuneServices().BuildServiceProvider();
+
+        Assert.Contains(
+            provider.GetServices<ICustomSchemeHandler>(),
+            handler => handler.Scheme == ArtworkScheme.Name);
     }
 
     /// <summary>
