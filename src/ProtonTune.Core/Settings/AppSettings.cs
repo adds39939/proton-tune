@@ -24,11 +24,22 @@ public sealed record AppSettings
     public int BackupsToKeep { get; init; } = DefaultBackupsToKeep;
 
     /// <summary>
-    /// The same settings with the retention held inside what is allowed, so a hand-edited file
-    /// cannot ask for none or for thousands.
+    /// Whether the library was last left showing rows or cover art. Remembered because it is a
+    /// standing preference about how someone reads a list, not a choice worth making twice.
+    /// </summary>
+    public LibraryViewMode LibraryView { get; init; }
+
+    /// <summary>The order the library was last left in, remembered for the same reason.</summary>
+    public LibrarySortOrder LibrarySort { get; init; }
+
+    /// <summary>
+    /// The same settings with everything held inside what is allowed, so a hand-edited file cannot
+    /// ask for no backups, for thousands of them, or for a view that does not exist.
     /// </summary>
     public AppSettings Sanitised() => this with
     {
-        BackupsToKeep = Math.Clamp(BackupsToKeep, MinimumBackupsToKeep, MaximumBackupsToKeep)
+        BackupsToKeep = Math.Clamp(BackupsToKeep, MinimumBackupsToKeep, MaximumBackupsToKeep),
+        LibraryView = Enum.IsDefined(LibraryView) ? LibraryView : default,
+        LibrarySort = Enum.IsDefined(LibrarySort) ? LibrarySort : default
     };
 }

@@ -1,4 +1,5 @@
 using System.Text.Json;
+using System.Text.Json.Serialization;
 using Microsoft.Extensions.Logging;
 using ProtonTune.Core.Settings;
 using ProtonTune.Services.Dlss;
@@ -10,7 +11,16 @@ public sealed class AppSettingsService(
     ProtonTuneStorage storage,
     ILogger<AppSettingsService> logger) : IAppSettingsService
 {
-    private static readonly JsonSerializerOptions SerializerOptions = new() { WriteIndented = true };
+    /// <remarks>
+    /// Enums are written by name. A number would tie the file to the order the members happen to
+    /// be declared in, so reordering them — which is how the library's buttons and menu are
+    /// ordered — would silently reinterpret what someone had already chosen.
+    /// </remarks>
+    private static readonly JsonSerializerOptions SerializerOptions = new()
+    {
+        WriteIndented = true,
+        Converters = { new JsonStringEnumConverter() }
+    };
 
     private readonly SemaphoreSlim _lock = new(1, 1);
 

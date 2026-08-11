@@ -1,5 +1,7 @@
 using Microsoft.AspNetCore.Components;
+using ProtonTune.Core.Settings;
 using ProtonTune.Core.Steam;
+using ProtonTune.Services.Settings;
 using ProtonTune.Services.Steam;
 
 namespace ProtonTune.UI.Components.Library;
@@ -13,6 +15,9 @@ public partial class GameLibrary : ComponentBase
     [Inject]
     private ISteamLibraryService SteamLibrary { get; set; } = null!;
 
+    [Inject]
+    private IAppSettingsService Settings { get; set; } = null!;
+
     private IReadOnlyList<SteamLibraryEntry> Apps { get; set; } = [];
 
     private string SearchTerm { get; set; } = string.Empty;
@@ -20,12 +25,17 @@ public partial class GameLibrary : ComponentBase
     /// <summary>The available view modes, in the order their buttons appear.</summary>
     private static readonly LibraryViewMode[] ViewModes = Enum.GetValues<LibraryViewMode>();
 
-    private LibraryViewMode ViewMode { get; set; } = LibraryViewMode.Grid;
-
     /// <summary>The available orders, in the order they appear in the menu.</summary>
     private static readonly LibrarySortOrder[] SortOrders = Enum.GetValues<LibrarySortOrder>();
 
-    private LibrarySortOrder SortOrder { get; set; } = LibrarySortOrder.Name;
+    /// <summary>
+    /// How the library is being shown and ordered. Both are read from the stored settings when the
+    /// page opens and written back as soon as either changes, so the library reopens as it was
+    /// left. Until the read finishes they hold the defaults, which is what a first run shows.
+    /// </summary>
+    private LibraryViewMode ViewMode { get; set; }
+
+    private LibrarySortOrder SortOrder { get; set; }
 
     /// <summary>The entry whose configuration dialog is open, or null when none is.</summary>
     private SteamLibraryEntry? SelectedApp { get; set; }
@@ -66,7 +76,15 @@ public partial class GameLibrary : ComponentBase
         : "No games match that search.";
 
     /// <inheritdoc />
-    protected override Task OnInitializedAsync() => LoadAsync();
+    protected override async Task OnInitializedAsync()
+    {
+        var settings = await Settings.GetAsync();
+
+        ViewMode = settings.LibraryView;
+        SortOrder = settings.LibrarySort;
+
+        await LoadAsync();
+    }
 
     private async Task LoadAsync()
     {
@@ -90,13 +108,42 @@ public partial class GameLibrary : ComponentBase
 
     private void OnSearchChanged(ChangeEventArgs args) => SearchTerm = args.Value?.ToString() ?? string.Empty;
 
-    private void SetViewMode(LibraryViewMode mode) => ViewMode = mode;
-
-    private void OnSortChanged(ChangeEventArgs args)
+    private Task SetViewMode(LibraryViewMode mode)
     {
-        if (Enum.TryParse<LibrarySortOrder>(args.Value?.ToString(), out var order))
+        ViewMode = mode;
+
+        return RememberAsync(settings => settings with { LibraryView = mode });
+    }
+
+    private Task OnSortChanged(ChangeEventArgs args)
+    {
+        if (!Enum.TryParse<LibrarySortOrder>(args.Value?.ToString(), out var order))
         {
-            SortOrder = order;
+            return Task.CompletedTask;
+        }
+
+        SortOrder = order;
+
+        return RememberAsync(settings => settings with { LibrarySort = order });
+    }
+
+    /// <summary>
+    /// Writes a change back to the stored settings, reading them first so that whatever else the
+    /// settings page has put there is carried through rather than overwritten.
+    /// </summary>
+    /// <remarks>
+    /// A preference that fails to save is not worth interrupting anyone over: the library is
+    /// already showing what was asked for, and the only cost is opening on the other view next
+    /// time. The service logs what went wrong.
+    /// </remarks>
+    private async Task RememberAsync(Func<AppSettings, AppSettings> change)
+    {
+        try
+        {
+            await Settings.SaveAsync(change(await Settings.GetAsync()));
+        }
+        catch (Exception e) when (e is IOException or UnauthorizedAccessException)
+        {
         }
     }
 

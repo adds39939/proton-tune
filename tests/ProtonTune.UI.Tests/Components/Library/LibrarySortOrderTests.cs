@@ -1,3 +1,4 @@
+using ProtonTune.Core.Settings;
 using ProtonTune.Core.Steam;
 using ProtonTune.UI.Components.Library;
 

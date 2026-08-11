@@ -1,21 +1,7 @@
+using ProtonTune.Core.Settings;
 using ProtonTune.Core.Steam;
 
 namespace ProtonTune.UI.Components.Library;
-
-/// <summary>
-/// How the library orders its entries.
-/// </summary>
-public enum LibrarySortOrder
-{
-    /// <summary>Alphabetical, which is the order to reach for when looking something up.</summary>
-    Name,
-
-    /// <summary>
-    /// Most recently played first, which puts the games worth configuring at the top. Games never
-    /// played come last rather than first: no timestamp is not the same as a very old one.
-    /// </summary>
-    RecentlyPlayed
-}
 
 /// <summary>Presentation details for <see cref="LibrarySortOrder" />.</summary>
 public static class LibrarySortOrders
