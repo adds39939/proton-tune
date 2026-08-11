@@ -28,7 +28,6 @@ public class ShippedSettingsTests
         Assert.NotEmpty(Catalog.Categories);
         Assert.NotEmpty(Catalog.All);
 
-        // Every setting names a variable and belongs to a section that was actually declared.
         Assert.All(Catalog.All, definition =>
         {
             Assert.NotEmpty(definition.Variable);
@@ -77,8 +76,6 @@ public class ShippedSettingsTests
     [Fact]
     public void OrdersSectionsWithDlssFirst() =>
         Assert.Equal(SettingCategoryIds.Dlss, Catalog.Categories[0].Id);
-
-    // The DLSS preset overrides ----------------------------------------------
 
     /// <summary>
     /// These fail silently when given a value the driver does not recognise — the game just runs
@@ -147,8 +144,6 @@ public class ShippedSettingsTests
         Assert.Equal("DLSSIndicator=1024", definition.OnValue);
     }
 
-    // Variables that pack several settings into one string ---------------------
-
     /// <summary>
     /// MangoHud's options used to be a list in code. Losing one in the move to a file would be
     /// silent — the option simply would not appear.
@@ -162,7 +157,6 @@ public class ShippedSettingsTests
         Assert.Equal([",", "="], new[] { compound.Separator, compound.Assignment });
         Assert.Equal(["Frame limiting", "Metrics", "Appearance"], compound.Groups.Select(group => group.Name));
 
-        // A flag, a text field and a choice: one of each shape the editor renders.
         Assert.Equal(SettingKind.Toggle, compound.Find("fps")!.Kind);
         Assert.Equal(SettingKind.Text, compound.Find("fps_limit")!.Kind);
         Assert.Equal(["early", "late"], compound.Find("fps_limit_method")!.Choices);

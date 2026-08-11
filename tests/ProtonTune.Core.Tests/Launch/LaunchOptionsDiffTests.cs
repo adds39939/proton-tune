@@ -43,8 +43,6 @@ public class LaunchOptionsDiffTests
     [Fact]
     public void ShowsAChangedValueAsBothSides()
     {
-        // A different value is a different token, so it reads as the old one going and the new
-        // one arriving — which is what actually happens to the string.
         var diff = Compare(
             "DXVK_NVAPI_DRS_NGX_DLSS_SR_OVERRIDE_RENDER_PRESET_SELECTION=RENDER_PRESET_L %command%",
             "DXVK_NVAPI_DRS_NGX_DLSS_SR_OVERRIDE_RENDER_PRESET_SELECTION=RENDER_PRESET_K %command%");
@@ -64,8 +62,6 @@ public class LaunchOptionsDiffTests
     [Fact]
     public void KeepsAQuotedValueWhole()
     {
-        // Splitting the formatted string on spaces would tear this in half and report two
-        // meaningless additions.
         var diff = Compare(string.Empty, "DXVK_CONFIG_FILE=\"/home/adam/my games/dxvk.conf\" %command%");
 
         Assert.Contains("DXVK_CONFIG_FILE=\"/home/adam/my games/dxvk.conf\"", Of(diff, LaunchDiffKind.Added));
@@ -74,7 +70,6 @@ public class LaunchOptionsDiffTests
     [Fact]
     public void ReadsTheRealChangeMadeToRematch()
     {
-        // The launch script inserted ahead of %command%, with the existing setting untouched.
         var diff = Compare(
             "PROTON_ENABLE_NVAPI=1 %command%",
             "PROTON_ENABLE_NVAPI=1 /home/adam/.local/share/proton-tune/bin/dlss-2138720.sh %command%");
@@ -86,8 +81,6 @@ public class LaunchOptionsDiffTests
     [Fact]
     public void TheKeptTokensAreExactlyWhatWillBeWritten()
     {
-        // Whatever the diff shows as staying or arriving has to reassemble into the string the
-        // save actually writes, or the preview is lying.
         const string pending = "A=1 gamemoderun taskset -c 0-7 %command% -novid";
 
         var diff = Compare("A=1 mangohud %command%", pending);

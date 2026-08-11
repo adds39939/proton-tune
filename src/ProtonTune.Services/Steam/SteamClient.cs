@@ -39,12 +39,14 @@ public sealed class SteamClient(ILogger<SteamClient> logger) : ISteamClient
     }
 
     /// <inheritdoc />
+    /// <remarks>
+    /// Command lines are read from <c>/proc</c> directly, since .NET does not expose a process's
+    /// arguments on Linux. Arguments there are NUL separated rather than spaced.
+    /// </remarks>
     public bool IsGameRunning()
     {
         try
         {
-            // Reading /proc directly rather than asking each Process for its command line, which
-            // the framework does not expose on Linux.
             foreach (var directory in Directory.EnumerateDirectories("/proc"))
             {
                 var name = Path.GetFileName(directory);
@@ -62,11 +64,9 @@ public sealed class SteamClient(ILogger<SteamClient> logger) : ISteamClient
                 }
                 catch (Exception e) when (e is IOException or UnauthorizedAccessException)
                 {
-                    // The process exited between listing and reading, or belongs to someone else.
                     continue;
                 }
 
-                // Arguments are NUL separated in /proc.
                 if (commandLine.Replace('\0', ' ').Contains(GameLaunchMarker, StringComparison.Ordinal))
                 {
                     return true;
@@ -96,8 +96,6 @@ public sealed class SteamClient(ILogger<SteamClient> logger) : ISteamClient
             return false;
         }
 
-        // Steam writes its configuration on the way out, so the file is only safe to touch once
-        // the process has actually gone — not merely once the request has been accepted.
         var deadline = DateTimeOffset.UtcNow + timeout;
 
         while (DateTimeOffset.UtcNow < deadline)
@@ -172,6 +170,10 @@ public sealed class SteamClient(ILogger<SteamClient> logger) : ISteamClient
     /// take a broken pipe when ProtonTune exited. Steam does its own logging, so letting the
     /// streams alone is both simpler and safer than draining pipes nobody wants.
     /// </para>
+    /// <para>
+    /// <c>--fork</c> is what guarantees the new session: <c>setsid</c> without it is a no-op when
+    /// the calling process already leads its group.
+    /// </para>
     /// </remarks>
     internal static ProcessStartInfo BuildStartInfo(bool detached, IReadOnlyList<string> arguments)
     {
@@ -182,8 +184,6 @@ public sealed class SteamClient(ILogger<SteamClient> logger) : ISteamClient
 
         if (detached)
         {
-            // --fork guarantees a new session whether or not this process happens to lead its
-            // group; setsid alone is a no-op for a group leader.
             startInfo.ArgumentList.Add("--fork");
             startInfo.ArgumentList.Add(ProcessName);
         }

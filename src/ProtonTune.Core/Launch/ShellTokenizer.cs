@@ -21,6 +21,10 @@ public readonly record struct ShellToken(string Text, string RawText);
 /// means — but it is how the guides write it, so re-quoting from the logical value alone would
 /// hand users back a string that differs from the one they wrote for no reason they can see.
 /// </remarks>
+/// <remarks>
+/// Inside double quotes a backslash only escapes <c>"</c>, <c>\</c>, <c>$</c> and <c>`</c>;
+/// before anything else it stands for itself.
+/// </remarks>
 public static class ShellTokenizer
 {
     /// <summary>
@@ -85,8 +89,6 @@ public static class ShellTokenizer
             {
                 var next = commandLine[i + 1];
 
-                // Inside double quotes a backslash only escapes a handful of characters; before
-                // anything else it stands for itself.
                 if (inDoubleQuotes && next is not ('"' or '\\' or '$' or '`'))
                 {
                     current.Append(c);

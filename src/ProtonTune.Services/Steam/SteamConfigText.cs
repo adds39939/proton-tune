@@ -38,7 +38,9 @@ public static class SteamConfigText
 
     /// <summary>
     /// Returns the document with the value at a key path set, creating the key — and any missing
-    /// objects above it — where necessary.
+    /// objects above it — where necessary. A key at index <c>i</c> of the path is written
+    /// <c>i</c> tabs in, matching the blocks Steam writes itself: the file parses either way, but
+    /// a stray indent reads as corruption to anyone diffing it.
     /// </summary>
     /// <returns>
     /// The updated document, or <see langword="null"/> when not even the root object could be
@@ -57,8 +59,6 @@ public static class SteamConfigText
                 document.AsSpan(scan.ValueStart + scan.ValueLength));
         }
 
-        // The key is not there. Insert it, along with whatever objects above it are also missing,
-        // into the deepest ancestor that does exist.
         if (scan.DeepestExistingDepth < 0)
         {
             return null;
@@ -68,10 +68,6 @@ public static class SteamConfigText
         var insertAt = scan.InsertAt;
         var builder = new StringBuilder();
 
-        // Objects between the deepest existing ancestor and the key itself. A key at index i of
-        // the path sits i tabs in, which is what puts an inserted block level with the ones Steam
-        // wrote itself — the file parses either way, but a stray indent reads as corruption to
-        // anyone diffing it.
         for (var level = depth; level < keyPath.Count - 1; level++)
         {
             var indent = new string(IndentCharacter, level);
@@ -113,8 +109,6 @@ public static class SteamConfigText
 
             if (document[position] == '}')
             {
-                // Leaving an object. If it is an ancestor of the target, remember that a new key
-                // could be inserted just before this brace.
                 if (IsPrefixOf(path, keyPath) && path.Count > result.DeepestExistingDepth)
                 {
                     result.DeepestExistingDepth = path.Count;
@@ -133,8 +127,6 @@ public static class SteamConfigText
 
             if (document[position] != '"')
             {
-                // Not a key, brace, or comment. Skip it rather than failing: these files are
-                // written by Steam and occasionally carry things we do not model.
                 position++;
 
                 continue;
@@ -232,7 +224,6 @@ public static class SteamConfigText
             position += document[position] == '\\' ? 2 : 1;
         }
 
-        // A trailing escape can run the index past the closing quote.
         position = Math.Min(position, document.Length);
         length = position - start;
 

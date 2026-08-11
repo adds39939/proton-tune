@@ -95,7 +95,6 @@ public partial class CpuAffinityEditor : ComponentBase
             threads.Remove(thread);
         }
 
-        // Every thread selected is the same as no pinning, and says so more clearly.
         return Apply(threads.Count == 0 || threads.Count == Topology.AllThreads.Count
             ? null
             : CpuAffinityMask.Format(threads));

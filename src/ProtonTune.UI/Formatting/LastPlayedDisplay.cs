@@ -25,7 +25,6 @@ public static class LastPlayedDisplay
 
         var elapsed = DateTimeOffset.Now - lastPlayed.Value;
 
-        // A timestamp in the future means the clock moved, not that the game is played tomorrow.
         if (elapsed < TimeSpan.Zero)
         {
             elapsed = TimeSpan.Zero;

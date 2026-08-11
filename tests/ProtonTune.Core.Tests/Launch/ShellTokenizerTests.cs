@@ -34,8 +34,6 @@ public class ShellTokenizerTests
 
     [Fact]
     public void ReadsAnUnterminatedQuoteToEndOfInput() =>
-        // Lenient by design: these strings are hand-edited in Steam, and a parse failure would
-        // leave the user unable to see the setting they need to fix.
         Assert.Equal(["broken value"], ShellTokenizer.Tokenize("\"broken value"));
 
     [Theory]

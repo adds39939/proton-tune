@@ -66,6 +66,12 @@ public sealed class SteamLaunchOptionsService(
         SaveManyAsync(launchOptionsByApp, NoCompatTools, cancellationToken);
 
     /// <inheritdoc />
+    /// <remarks>
+    /// The order is load bearing. Both documents are read only after Steam has gone, since it
+    /// rewrites them as it exits and anything read earlier is already stale; both are then
+    /// prepared in full before either is written, so a file that turns out not to be the document
+    /// expected stops the save while everything is still untouched.
+    /// </remarks>
     public async Task<LaunchOptionsSaveResult> SaveManyAsync(
         IReadOnlyDictionary<uint, string> launchOptionsByApp,
         IReadOnlyDictionary<uint, string> compatToolsByApp,
@@ -76,8 +82,6 @@ public sealed class SteamLaunchOptionsService(
             return new LaunchOptionsSaveResult(LaunchOptionsSaveStatus.Saved);
         }
 
-        // Each file is located only if something is going to be written to it, so a machine that
-        // cannot supply one is not refused a save that never needed it.
         string? userConfigPath = null;
 
         if (launchOptionsByApp.Count > 0 && (userConfigPath = FindUserConfig()) is null)
@@ -119,8 +123,6 @@ public sealed class SteamLaunchOptionsService(
 
         try
         {
-            // Read only now. Steam rewrites these files as it exits, so anything read before the
-            // shutdown is already stale and would undo whatever else changed in the meantime.
             var edits = new List<PendingEdit>();
 
             if (userConfigPath is not null)
@@ -128,9 +130,6 @@ public sealed class SteamLaunchOptionsService(
                 var document = await File.ReadAllTextAsync(userConfigPath, cancellationToken).ConfigureAwait(false);
                 var updated = document;
 
-                // Every game is spliced into the same document before it is written once. Writing
-                // per game would mean closing and reopening Steam for each, which is unusable for
-                // a profile applied across a library.
                 foreach (var (appId, launchOptions) in launchOptionsByApp)
                 {
                     if (SteamConfigText.SetValue(updated, PathTo(appId), launchOptions) is not { } next)
@@ -165,8 +164,6 @@ public sealed class SteamLaunchOptionsService(
                 edits.Add(new PendingEdit(installConfigPath, document, updated));
             }
 
-            // Both documents are prepared before either is written, so a file that turns out not
-            // to be the document expected stops the save while everything is still untouched.
             var backupPaths = new List<string>();
 
             foreach (var edit in edits)
@@ -176,8 +173,6 @@ public sealed class SteamLaunchOptionsService(
                 await WriteAtomicallyAsync(edit.Path, edit.Updated, cancellationToken).ConfigureAwait(false);
             }
 
-            // Every save leaves a copy behind, so without this the directory beside Steam's own
-            // configuration grows by a hundred and thirty kilobytes each time and never shrinks.
             await PruneBackupsAsync(cancellationToken).ConfigureAwait(false);
 
             var mismatched = await FindMismatchesAsync(
@@ -216,8 +211,6 @@ public sealed class SteamLaunchOptionsService(
 
         LaunchOptionsSaveResult Restart(LaunchOptionsSaveResult result)
         {
-            // Steam goes back up however the write went, so the user is never left without it
-            // because ProtonTune failed.
             if (steamWasRunning)
             {
                 steamClient.Start();

@@ -59,8 +59,6 @@ public class CompoundValueTests
     [Fact]
     public void KeepsANumericListWithItsSetting()
     {
-        // MangoHud cycles through fps_limit=0,30,60. Split naively, the 30 and 60 would read as
-        // unknown flags and be shown as junk in the free-text field.
         var value = Parse("fps_limit=0,30,60,fps");
 
         Assert.Equal("0,30,60", value.GetValue("fps_limit"));
@@ -103,8 +101,6 @@ public class CompoundValueTests
     [Fact]
     public void ToleratesUntidySpacingAndEmptyEntries() =>
         Assert.Equal("fps,fps_limit=60", Parse(" fps , , fps_limit=60 ,").Format());
-
-    // Formats other than MangoHud's --------------------------------------------
 
     /// <summary>
     /// The whole point of describing the shape rather than hardcoding it: a variable that packs

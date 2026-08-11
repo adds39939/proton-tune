@@ -13,8 +13,6 @@
     }
     else
     {
-        @* The separator is an explicit expression: a whitespace-only literal
-           gets trimmed away, and the tokens then run together unreadably. *@
         <pre class="raw">@foreach (var token in Diff)
 {<span class="token token-@token.Kind.ToString().ToLowerInvariant()">@token.Text</span>@(" ")}</pre>
     }

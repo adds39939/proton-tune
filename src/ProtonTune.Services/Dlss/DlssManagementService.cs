@@ -20,6 +20,10 @@ public sealed class DlssManagementService(
     public string ScriptPathFor(uint appId) => storage.ScriptFor(appId);
 
     /// <inheritdoc />
+    /// <remarks>
+    /// The install is searched recursively: an Unreal game keeps these libraries several
+    /// directories down under <c>Engine/Plugins</c>, and may carry more than one copy.
+    /// </remarks>
     public DlssGameStatus Inspect(SteamLibraryEntry entry)
     {
         if (!Directory.Exists(entry.InstallDirectory))
@@ -34,8 +38,6 @@ public sealed class DlssManagementService(
         try
         {
             var libraries = replaceable
-                // Searched recursively: an Unreal game keeps these several directories down,
-                // under Engine/Plugins, and may carry more than one copy.
                 .SelectMany(name => Directory.EnumerateFiles(entry.InstallDirectory, name, SearchOption.AllDirectories))
                 .Distinct(StringComparer.Ordinal)
                 .Select(path => Describe(path, entry.InstallDirectory))
@@ -133,10 +135,6 @@ public sealed class DlssManagementService(
             Directory.Delete(backupRoot, recursive: true);
         }
 
-        // Anything still linked has outlived its backup, so there is no original left to put back.
-        // Leaving it would mean reporting the game restored while a file inside it still pointed at
-        // ProtonTune — and nothing would ever clear it, because the next revert finds no backup
-        // either. Turning the link into a real file at least leaves the game owning its own files.
         var replaced = new List<string>();
 
         foreach (var library in Inspect(entry).Libraries.Where(library => library.State == DlssLinkState.Managed))
@@ -261,6 +259,16 @@ public sealed class DlssManagementService(
     /// <summary>One library the script maintains: what it points at, and where its own copy is.</summary>
     private sealed record DlssLink(string Source, string Destination, string Backup);
 
+    /// <summary>
+    /// Writes the script that re-applies a game's links every time it launches.
+    /// </summary>
+    /// <remarks>
+    /// Before re-linking, a real file at the destination is copied to the backup when the backup
+    /// is missing or a different size. Steam puts the game's own library back when it verifies or
+    /// updates, and that copy is then the only original there is — losing it would make the swap
+    /// impossible to undo. Size is enough to spot a file the game has updated: these run to tens
+    /// of megabytes and a new release is never byte-identical in length.
+    /// </remarks>
     private async Task<string> WriteLaunchScriptAsync(
         SteamLibraryEntry entry,
         IReadOnlyList<DlssLink> links,
@@ -285,10 +293,6 @@ public sealed class DlssManagementService(
                 .AppendLine($"dst={Quote(destination)}")
                 .AppendLine($"bak={Quote(backup)}")
                 .AppendLine("if [ -f \"$src\" ] && [ \"$(readlink -f \"$dst\" 2>/dev/null)\" != \"$src\" ]; then")
-                // Steam has put the game's own file back. It is about to be replaced again, and it
-                // is the only copy of the original, so it is kept first — otherwise the swap
-                // becomes impossible to undo. Size is enough to spot a file the game has updated:
-                // these are tens of megabytes and a new release is never byte-identical in length.
                 .AppendLine("    if [ -f \"$dst\" ] && [ ! -L \"$dst\" ]; then")
                 .AppendLine("        if [ ! -f \"$bak\" ] || " +
                             "[ \"$(stat -c%s \"$dst\")\" != \"$(stat -c%s \"$bak\")\" ]; then")
@@ -309,8 +313,6 @@ public sealed class DlssManagementService(
 
         await File.WriteAllTextAsync(path, script.ToString(), cancellationToken).ConfigureAwait(false);
 
-        // Guarded rather than asserted: ProtonTune only runs on Linux, but the permission bits
-        // have no meaning elsewhere and the analyzer is right to ask.
         if (OperatingSystem.IsLinux())
         {
             File.SetUnixFileMode(

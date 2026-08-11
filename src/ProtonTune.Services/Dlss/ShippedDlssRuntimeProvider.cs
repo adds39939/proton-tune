@@ -22,6 +22,12 @@ public sealed class ShippedDlssRuntimeProvider(ILogger<ShippedDlssRuntimeProvide
     /// <inheritdoc />
     public DlssRuntime? Latest => GetAll().FirstOrDefault();
 
+    /// <summary>
+    /// Reads the shipped versions, newest first.
+    /// </summary>
+    /// <remarks>
+    /// Ordered as version numbers rather than text, so that 310.7.0 comes before 99.9.9.
+    /// </remarks>
     private IReadOnlyList<DlssRuntime> Read()
     {
         var root = Path.Combine(AppContext.BaseDirectory, "lib", "dlss");
@@ -40,7 +46,6 @@ public sealed class ShippedDlssRuntimeProvider(ILogger<ShippedDlssRuntimeProvide
                 .Select(ReadVersion)
                 .Where(runtime => runtime is not null)
                 .Select(runtime => runtime!)
-                // Newest first, compared as version numbers so 310.7.0 beats 99.9.9.
                 .OrderByDescending(runtime => runtime.Version, VersionComparer.Instance)
                 .ToList();
 

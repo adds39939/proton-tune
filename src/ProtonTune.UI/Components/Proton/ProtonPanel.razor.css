@@ -1,25 +1,17 @@
-/* Fills the window: the heading stays put and the builds scroll beneath it. */
 .proton {
     display: flex;
     flex-direction: column;
     flex: 1;
     min-height: 0;
-    /* Auto margins centre it, which in a flex column also stops it stretching — so the
-       width is asked for explicitly and then capped. */
     width: 100%;
     max-width: 1180px;
     margin: 0 auto;
 }
 
-/* The heading stays put and the builds scroll under it, as the global profile page does. */
 .proton-header {
     flex: none;
 }
 
-/*
- * The rule is what makes the scroll obvious: without it the first card slides under the subtitle
- * with nothing to mark where the heading ends and the scrolling region begins.
- */
 .proton-body {
     flex: 1;
     min-height: 0;
@@ -101,10 +93,6 @@
     color: var(--text);
 }
 
-/*
- * Facts wrap into as many columns as fit rather than a fixed grid, so the path — much the
- * longest of them — can take a row of its own on a narrow window.
- */
 .build-facts {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));

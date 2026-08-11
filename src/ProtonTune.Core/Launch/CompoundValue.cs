@@ -32,6 +32,11 @@ public sealed record CompoundValue
     public bool IsEmpty => Entries.Count == 0;
 
     /// <summary>Reads a variable's value.</summary>
+    /// <remarks>
+    /// A bare number continues the entry before it rather than standing alone: these formats take
+    /// lists inside the separated string — MangoHud's <c>fps_limit=0,30,60</c> — and none of them
+    /// has a numeric flag.
+    /// </remarks>
     public static CompoundValue Parse(CompoundSchema schema, string? value)
     {
         var entries = new List<CompoundEntry>();
@@ -47,10 +52,6 @@ public sealed record CompoundValue
 
             if (separator < 0)
             {
-                // A bare number continues the previous setting rather than standing alone — these
-                // formats take lists like fps_limit=0,30,60 inside a comma-separated string, and
-                // none of them has a numeric flag. Left as its own entry it would read as an
-                // unknown option and display wrongly.
                 if (entries.Count > 0 && entry.All(char.IsAsciiDigit) && entries[^1].Value is { } previous)
                 {
                     entries[^1] = entries[^1] with { Value = $"{previous}{schema.Separator}{entry}" };

@@ -1,8 +1,5 @@
-/* Grows with its content and lets the page scroll, rather than filling the window. */
 .settings {
     flex: none;
-    /* Auto margins centre it, which in a flex column also stops it stretching — so the
-       width is asked for explicitly and then capped. */
     width: 100%;
     max-width: 1180px;
     margin: 0 auto;

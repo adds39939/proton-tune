@@ -1,4 +1,3 @@
-/* The dialog fills the window: there are far more settings than a centred panel would hold. */
 .backdrop {
     position: fixed;
     inset: 0;

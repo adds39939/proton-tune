@@ -34,7 +34,6 @@ public sealed class GlobalProfileServiceTests : IDisposable
     {
         await CreateService().SaveAsync(LaunchOptions.Parse("PROTON_ENABLE_HDR=1 mangohud %command%"));
 
-        // A second instance reads from disk rather than from the first one's memory.
         Assert.Equal("PROTON_ENABLE_HDR=1 mangohud %command%", (await CreateService().GetAsync()).Format());
     }
 
@@ -94,8 +93,6 @@ public sealed class GlobalProfileServiceTests : IDisposable
     [Fact]
     public async Task StartsFreshWhenTheFileIsDamaged()
     {
-        // A profile is a convenience, not a record of the user's games. Losing it costs a retype;
-        // refusing to start would cost far more.
         await File.WriteAllTextAsync(ProtonTuneStorage.At(_root).ProfileFile, "{ this is not json");
 
         var service = CreateService();
@@ -126,8 +123,6 @@ public sealed class GlobalProfileServiceTests : IDisposable
     [Fact]
     public async Task WritesEveryGameInOnePass()
     {
-        // One batch means one Steam shutdown. Saving them one at a time would close and reopen
-        // Steam once per game.
         var service = CreateService();
 
         await service.SetLinkedAsync(2357570, true);
@@ -148,7 +143,6 @@ public sealed class GlobalProfileServiceTests : IDisposable
     [Fact]
     public async Task DoesNotStoreTheProfileWhenTheGamesCouldNotBeWritten()
     {
-        // Otherwise the profile would claim settings the library never received.
         var service = CreateService();
 
         await service.SetLinkedAsync(2357570, true);
@@ -189,15 +183,12 @@ public sealed class GlobalProfileServiceTests : IDisposable
         Assert.True((await reopened.GetAsync()).IsEmpty);
         Assert.False(await reopened.IsLinkedAsync(2357570));
 
-        // Resetting the profile must not reach into the games themselves.
         Assert.Equal(0, _steam.BatchCount);
     }
 
     [Fact]
     public async Task DoesNotDeadlockOnRepeatedUse()
     {
-        // Reading takes a lock and writing takes it again; a missing release would hang here
-        // rather than fail.
         var service = CreateService();
 
         for (var i = 0; i < 5; i++)
@@ -254,7 +245,6 @@ public sealed class GlobalProfileServiceTests : IDisposable
     }
 
     /// <summary>Names scripts under the temporary root so none of this touches a real install.</summary>
-    // Keeping the profile honest about which games follow it --------------------
 
     /// <summary>
     /// Which games follow the profile is ProtonTune's own belief. Anything that changes launch

@@ -41,8 +41,6 @@ public partial class GameArtwork : ComponentBase
     {
         var source = await Artwork.GetArtworkSourceAsync(AppId, Kind);
 
-        // Only reset the failure flag when the request actually changed, or a re-render after a
-        // failed load would retry the same broken URL on every parameter change.
         if (source != Source)
         {
             Source = source;

@@ -135,16 +135,12 @@ public partial class LaunchOptionsEditor : ComponentBase
     {
         var formatted = Options.Format();
 
-        // Only resync the raw text when the options were changed from outside. Doing it on every
-        // render would overwrite what the user is part way through typing.
         if (!string.Equals(formatted, _lastRendered, StringComparison.Ordinal))
         {
             RawDraft = formatted;
             _lastRendered = formatted;
         }
 
-        // Changing the Proton build can empty the section on show. Leaving it selected would
-        // leave the screen blank with no way of telling why.
         if (SelectedCategory is { } selected && !HasAnythingToShow(selected))
         {
             SelectedCategory = VisibleCategories.FirstOrDefault();
@@ -162,9 +158,6 @@ public partial class LaunchOptionsEditor : ComponentBase
     /// <summary>Whether a section would show anything if it were opened.</summary>
     private bool HasAnythingToShow(SettingCategory category)
     {
-        // Three sections carry a control that is more than a list of variables — the DLSS
-        // libraries, the CPU affinity picker, MangoHud's launch-chain toggle — so they stand up
-        // whether or not any of their settings apply.
         if (category.Is(SettingCategoryIds.Cpu) || category.Is(SettingCategoryIds.MangoHud))
         {
             return true;
@@ -175,8 +168,6 @@ public partial class LaunchOptionsEditor : ComponentBase
             return true;
         }
 
-        // A setting that is already set counts as something to show, which is what keeps a value
-        // reachable on a build that would otherwise hide it.
         return DefinitionsIn(category).Any(IsVisible);
     }
 

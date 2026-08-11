@@ -64,7 +64,6 @@ public sealed partial record LaunchOptions
         }
         else
         {
-            // Replace a bare taskset that has no list rather than leaving it stranded.
             if (index >= 0)
             {
                 wrapper.RemoveAt(index);

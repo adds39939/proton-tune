@@ -39,8 +39,6 @@ public static partial class ProtonToolName
             var major = version.Groups["major"].Value;
             var minor = version.Groups["minor"].Value;
 
-            // The dot is dropped rather than replaced, and a trailing ".0" is dropped whole:
-            // Proton 6.3 is proton_63, but Proton 9.0 is proton_9 rather than proton_90.
             return minor == "0" ? $"proton_{major}" : $"proton_{major}{minor}";
         }
 

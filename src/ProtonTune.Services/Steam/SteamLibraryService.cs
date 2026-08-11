@@ -16,14 +16,18 @@ public sealed class SteamLibraryService(
     /// </summary>
     private const int StateFullyInstalled = 4;
 
+    private const uint SteamworksCommonRedistributablesAppId = 228980;
+
+    private const uint SteamControllerConfigsAppId = 353370;
+
     /// <summary>
     /// Support apps that ship without a <c>toolmanifest.vdf</c> and so cannot be recognised as
     /// tools by inspecting their install directory.
     /// </summary>
     private static readonly HashSet<uint> KnownToolAppIds =
     [
-        228980, // Steamworks Common Redistributables
-        353370  // Steam Controller Configs
+        SteamworksCommonRedistributablesAppId,
+        SteamControllerConfigsAppId
     ];
 
     /// <inheritdoc />
@@ -48,7 +52,6 @@ public sealed class SteamLibraryService(
         {
             await foreach (var entry in ReadLibraryAsync(libraryPath, cancellationToken).ConfigureAwait(false))
             {
-                // A game moved between libraries can briefly leave a manifest behind in both.
                 if (seenAppIds.Add(entry.AppId))
                 {
                     entries.Add(entry);
@@ -67,6 +70,10 @@ public sealed class SteamLibraryService(
     /// Resolves every library folder Steam knows about. The root install is always a library;
     /// additional drives are listed in <c>steamapps/libraryfolders.vdf</c>.
     /// </summary>
+    /// <remarks>
+    /// That file comes in two shapes: current clients nest the path in an object alongside the
+    /// library's size and apps, while older ones map the index straight to the path.
+    /// </remarks>
     private async Task<IReadOnlyList<string>> GetLibraryPathsAsync(
         string steamRoot,
         CancellationToken cancellationToken)
@@ -86,7 +93,6 @@ public sealed class SteamLibraryService(
 
         foreach (var folder in libraryFolders.Properties())
         {
-            // Current clients nest the path in an object; older ones map the index straight to it.
             var path = folder.Value switch
             {
                 VObject details => details.GetString("path"),

@@ -154,7 +154,6 @@ public partial class GameConfigDialog : ComponentBase
         LoadError = null;
         SaveMessage = null;
 
-        // A different game deserves its own opening section, worked out once its settings are read.
         _hasChosenSection = false;
 
         try
@@ -164,8 +163,6 @@ public partial class GameConfigDialog : ComponentBase
             SavedUsesGlobal = await Profile.IsLinkedAsync(Entry.AppId);
             UsesGlobal = SavedUsesGlobal;
 
-            // Only a choice the game has made of its own counts. Inheriting the default is not a
-            // choice, and recording it as one would write a mapping the user never asked for.
             ProtonBuilds = await ProtonTools.GetCatalogueAsync();
 
             var selection = ProtonBuilds.SelectionFor(Entry.AppId);
@@ -192,8 +189,6 @@ public partial class GameConfigDialog : ComponentBase
     /// <inheritdoc />
     protected override void OnAfterRender(bool firstRender)
     {
-        // Not on the first render: the dialog is still showing the loading message then, so there
-        // is no editor to tell. Waiting for the render that has one is what makes this land.
         if (_hasChosenSection || Editor is null)
         {
             return;
@@ -238,8 +233,6 @@ public partial class GameConfigDialog : ComponentBase
 
         var global = await Profile.GetAsync();
 
-        // The DLSS launch script is generated per game and names its own app id, so it cannot
-        // come from a shared profile. Carry it across rather than dropping it.
         var scriptPath = Dlss.ScriptPathFor(Entry.AppId);
         var hadScript = Editing.HasWrapperCommand(scriptPath);
 
@@ -295,10 +288,6 @@ public partial class GameConfigDialog : ComponentBase
 
         try
         {
-            // Libraries first: the launch script that re-applies them is about to be removed, and
-            // leaving links behind with nothing maintaining them is the one state worse than
-            // either extreme. Run unconditionally — asking whether the game looks managed first
-            // meant a half-swapped install, or one whose backup had gone, was skipped silently.
             var reverted = await Dlss.RevertAsync(Entry);
 
             var result = await LaunchOptionsService.SaveAsync(Entry.AppId, string.Empty);
@@ -379,8 +368,6 @@ public partial class GameConfigDialog : ComponentBase
 
         try
         {
-            // The build is only sent when it changed, so saving a setting never rewrites a mapping
-            // Steam owns — including one made in Steam's own interface.
             var result = await LaunchOptionsService.SaveManyAsync(
                 new Dictionary<uint, string> { [Entry.AppId] = Editing.Format() },
                 CompatToolChanged

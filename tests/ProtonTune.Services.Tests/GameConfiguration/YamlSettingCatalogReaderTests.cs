@@ -162,8 +162,6 @@ public sealed class YamlSettingCatalogReaderTests : IDisposable
         Assert.Equal(catalog.Find("FIRST")!.Choices, catalog.Find("SECOND")!.Choices);
     }
 
-    // Variables that pack several settings into one string ---------------------
-
     [Fact]
     public void ReadsACompoundVariable()
     {
@@ -303,8 +301,6 @@ public sealed class YamlSettingCatalogReaderTests : IDisposable
 
         Assert.Equal(["fps"], compound.AllOptions.Select(option => option.Key));
     }
-
-    // Files a person got wrong -----------------------------------------------
 
     [Fact]
     public void OneBrokenFileDoesNotCostTheOthers()

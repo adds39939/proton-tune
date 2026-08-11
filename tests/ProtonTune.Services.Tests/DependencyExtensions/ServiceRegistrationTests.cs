@@ -23,8 +23,6 @@ public class ServiceRegistrationTests
     {
         var services = WithLogging().AddProtonTuneServices();
 
-        // ValidateOnBuild walks every registration and reports what it cannot construct, rather
-        // than waiting for the first screen that asks for one.
         using var provider = services.BuildServiceProvider(new ServiceProviderOptions
         {
             ValidateOnBuild = true,
@@ -45,8 +43,6 @@ public class ServiceRegistrationTests
 
         using var provider = services.BuildServiceProvider();
 
-        // Open generics such as ILogger<> are resolved through a closed type rather than asked for
-        // directly, so they are not something to ask the container for here.
         var resolvable = services.Where(service =>
             !service.ServiceType.IsGenericTypeDefinition &&
             (service.ServiceType.IsInterface || service.ImplementationFactory is not null));

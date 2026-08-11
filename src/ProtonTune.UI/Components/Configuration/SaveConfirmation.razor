@@ -1,6 +1,4 @@
-@* Sits above the configuration dialog, which owns the screen below it. *@
 <div class="backdrop" @onclick="Cancel" @onkeydown="OnKeyDown">
-    @* Clicks inside the panel must not reach the backdrop, or picking text would dismiss it. *@
     <div class="panel" role="dialog" aria-modal="true" aria-label="@Title" @onclick:stopPropagation="true">
         <h2 class="title">@Title</h2>
 

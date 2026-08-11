@@ -25,8 +25,6 @@ public sealed class SettingCatalog
         Categories = categories.OrderBy(category => category.Order).ToList();
         All = definitions.ToList();
 
-        // First definition wins. A variable declared twice is a mistake in the files, and taking
-        // the first keeps the catalogue usable rather than failing the whole load over it.
         _byVariable = new Dictionary<string, SettingDefinition>(StringComparer.Ordinal);
 
         foreach (var definition in All)

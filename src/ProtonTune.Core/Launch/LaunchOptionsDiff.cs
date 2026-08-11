@@ -40,8 +40,6 @@ public static class LaunchOptionsDiff
         IReadOnlyList<string> saved,
         IReadOnlyList<string> pending)
     {
-        // Longest common subsequence lengths, filled from the end backwards. These sequences are
-        // a few dozen tokens at most, so the quadratic table costs nothing.
         var common = new int[saved.Count + 1, pending.Count + 1];
 
         for (var i = saved.Count - 1; i >= 0; i--)

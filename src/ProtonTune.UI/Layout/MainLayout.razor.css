@@ -39,10 +39,6 @@
     flex: none;
 }
 
-/*
- * NavLink renders its own anchor, so it never carries this component's scope attribute.
- * ::deep applies the rule from .nav, which is markup this component does own.
- */
 .nav ::deep .nav-tab {
     padding: 9px 14px;
     border-bottom: 2px solid transparent;
@@ -63,12 +59,6 @@
     border-bottom-color: var(--accent);
 }
 
-/*
- * A column so that a page can ask to fill the window rather than sizing to its content. A
- * percentage height does not survive the trip through here — the height of a flex item is not
- * something a child's `height: 100%` can rely on — which is why every page says which of the two
- * it wants: `flex: 1` to fill, `flex: none` to grow and let this scroll.
- */
 .content {
     display: flex;
     flex-direction: column;

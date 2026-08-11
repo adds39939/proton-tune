@@ -147,8 +147,6 @@ public class LaunchOptionsValidatorTests
     [Fact]
     public void SaysNothingAboutADlssOverrideWithoutNvapi()
     {
-        // Proton enables NVAPI by default, so an override on its own is the normal setup. A real
-        // working configuration tripped this rule, which is how it was caught.
         var warnings = LaunchOptionsValidator.Validate(LaunchOptions.Parse(
             "DXVK_NVAPI_DRS_NGX_DLSS_SR_OVERRIDE_RENDER_PRESET_SELECTION=RENDER_PRESET_L %command%"));
 
@@ -176,8 +174,6 @@ public class LaunchOptionsValidatorTests
     [Fact]
     public void HasNothingToSayAboutARealConfiguration()
     {
-        // The real Overwatch configuration: HDR with Wayland, a DLSS preset override, and
-        // mangohud in the chain. Nothing here is a mistake.
         var warnings = LaunchOptionsValidator.Validate(LaunchOptions.Parse(
             "PROTON_ENABLE_WAYLAND=1 PROTON_ENABLE_HDR=1 DXVK_HDR=1 " +
             "DXVK_NVAPI_DRS_NGX_DLSS_SR_OVERRIDE_RENDER_PRESET_SELECTION=RENDER_PRESET_L " +

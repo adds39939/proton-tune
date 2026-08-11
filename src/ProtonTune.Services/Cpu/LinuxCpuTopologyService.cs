@@ -95,6 +95,10 @@ public sealed class LinuxCpuTopologyService(ILogger<LinuxCpuTopologyService> log
     /// Takes the lowest thread of each physical core, which is the one to keep when avoiding
     /// sibling threads.
     /// </summary>
+    /// <remarks>
+    /// A thread whose <c>thread_siblings_list</c> cannot be read counts as its own core, so a
+    /// kernel that does not publish the topology yields every thread rather than none.
+    /// </remarks>
     private IReadOnlyList<int> ReadPhysicalCoreThreads(IEnumerable<int> threads)
     {
         var cores = new HashSet<string>(StringComparer.Ordinal);
@@ -104,7 +108,6 @@ public sealed class LinuxCpuTopologyService(ILogger<LinuxCpuTopologyService> log
         {
             var siblings = ReadValue($"{CpuRoot}/cpu{thread}/topology/thread_siblings_list");
 
-            // Without sibling information every thread has to count as its own core.
             if (siblings is null || cores.Add(siblings))
             {
                 primary.Add(thread);

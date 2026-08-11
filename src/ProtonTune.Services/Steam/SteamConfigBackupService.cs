@@ -53,9 +53,6 @@ public sealed class SteamConfigBackupService(
 
         var steamWasRunning = steamClient.IsRunning();
 
-        // The same order a save follows, and for the same reason: Steam holds these files in
-        // memory and writes them out as it exits, so anything restored underneath a running Steam
-        // is discarded moments later.
         if (steamWasRunning &&
             !await steamClient.ShutdownAsync(ShutdownTimeout, cancellationToken).ConfigureAwait(false))
         {
@@ -66,8 +63,6 @@ public sealed class SteamConfigBackupService(
 
         try
         {
-            // What is being replaced is kept first, so restoring the wrong backup is no more final
-            // than the save that prompted it.
             var replacedPath = SteamConfigBackup.NameFor(backup.TargetPath, DateTimeOffset.Now);
 
             File.Copy(backup.TargetPath, replacedPath, overwrite: true);
@@ -83,8 +78,6 @@ public sealed class SteamConfigBackupService(
                 backup.Path,
                 replacedPath);
 
-            // The restored file may hold launch options a game had before it followed the profile,
-            // so what ProtonTune believes about that game is now a claim rather than a fact.
             var unlinked = await profile.ReconcileLinksAsync(cancellationToken).ConfigureAwait(false);
 
             return Restart(new SteamConfigRestoreResult(true)

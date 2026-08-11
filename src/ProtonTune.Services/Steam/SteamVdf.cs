@@ -40,6 +40,11 @@ internal static class SteamVdf
     /// malformed. Steam rewrites these files in place while it runs, so a torn or half-written
     /// document is an expected outcome rather than an error worth failing the whole scan over.
     /// </returns>
+    /// <remarks>
+    /// A token longer than <see cref="VdfSerializerSettings.MaximumTokenSize" /> surfaces from the
+    /// reader as an <see cref="IndexOutOfRangeException" /> rather than a <c>VdfException</c>,
+    /// which is why both are caught.
+    /// </remarks>
     public static async Task<VObject?> TryReadAsync(string path, CancellationToken cancellationToken)
     {
         try
@@ -48,8 +53,6 @@ internal static class SteamVdf
 
             return VdfConvert.Deserialize(text, ReaderSettings).Value as VObject;
         }
-        // IndexOutOfRangeException is how the reader reports a token it cannot fit, so it belongs
-        // with the other malformed-input cases rather than escaping as an unhandled fault.
         catch (Exception e) when (e is IOException
                                       or UnauthorizedAccessException
                                       or VdfException

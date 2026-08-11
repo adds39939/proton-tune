@@ -23,8 +23,6 @@ else
                     @onchange="OnSelected">
                 <option value="@InheritValue">@InheritLabel</option>
 
-                @* A build can be mapped and then deleted. Keep the name selectable so opening the
-                   dialog does not quietly reassign the game to something else. *@
                 @if (ChoiceIsMissing)
                 {
                     <option value="@Value">@Value — not installed</option>

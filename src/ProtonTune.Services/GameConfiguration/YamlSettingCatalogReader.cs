@@ -20,7 +20,6 @@ public sealed class YamlSettingCatalogReader(string directory, ILogger<YamlSetti
     public static string DefaultDirectory => Path.Combine(AppContext.BaseDirectory, "settings");
 
     private static readonly IDeserializer Deserializer = new DeserializerBuilder()
-        // The files are written in camelCase, matching how the properties read in prose.
         .WithNamingConvention(CamelCaseNamingConvention.Instance)
         .IgnoreUnmatchedProperties()
         .Build();
@@ -50,7 +49,6 @@ public sealed class YamlSettingCatalogReader(string directory, ILogger<YamlSetti
         var categories = new List<SettingCategory>();
         var definitions = new List<SettingDefinition>();
 
-        // Ordered by path so that two files claiming the same order still load the same way twice.
         foreach (var path in paths.Order(StringComparer.Ordinal))
         {
             if (ReadFile(path) is not { } file || file.Id is not { Length: > 0 } id)
@@ -168,7 +166,6 @@ public sealed class YamlSettingCatalogReader(string directory, ILogger<YamlSetti
 
         return new CompoundOptionDefinition(key, option.Label ?? key)
         {
-            // Unlike a setting, an option with no kind is a flag: these formats write the bare key.
             Kind = option.Kind is { Length: > 0 }
                 ? ParseKind(option.Kind, $"{variable}.{key}", path)
                 : SettingKind.Toggle,
@@ -182,6 +179,11 @@ public sealed class YamlSettingCatalogReader(string directory, ILogger<YamlSetti
     /// Reads the kind, falling back to a text box. An unrecognised kind still gives an editable
     /// setting, which is the least surprising way to be wrong.
     /// </summary>
+    /// <remarks>
+    /// Only names are accepted. <see cref="Enum.TryParse{TEnum}(string, bool, out TEnum)" /> also
+    /// takes the underlying numbers, so an unquoted <c>2</c> in a file would quietly become a text
+    /// box instead of being reported as the mistake it is.
+    /// </remarks>
     private SettingKind ParseKind(string? kind, string variable, string path)
     {
         if (kind is null or { Length: 0 })
@@ -189,8 +191,6 @@ public sealed class YamlSettingCatalogReader(string directory, ILogger<YamlSetti
             return SettingKind.Text;
         }
 
-        // Names only. Enum.TryParse also accepts the underlying numbers, so an unquoted 2 in a
-        // file would quietly become a text box rather than being reported as the mistake it is.
         if (!char.IsAsciiDigit(kind[0]) && Enum.TryParse<SettingKind>(kind, ignoreCase: true, out var parsed))
         {
             return parsed;

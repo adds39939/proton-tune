@@ -1,7 +1,3 @@
-/*
- * Above the configuration dialog, which sits at 10. Dimmed rather than opaque so the screen the
- * change was made on stays visible behind it.
- */
 .backdrop {
     position: fixed;
     inset: 0;

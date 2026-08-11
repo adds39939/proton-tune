@@ -51,8 +51,6 @@ public sealed partial class ProtonToolService(
 
         return new ProtonCatalogue
         {
-            // Valve's builds first, then those installed by hand, each set ordered by name. That
-            // matches how Steam presents them and keeps the list stable between scans.
             Builds = builds
                 .OrderBy(build => build.Kind)
                 .ThenBy(build => build.DisplayName, StringComparer.CurrentCultureIgnoreCase)
@@ -112,6 +110,11 @@ public sealed partial class ProtonToolService(
     /// <c>compatibilitytool.vdf</c>, where the key of the entry is the internal name Steam will
     /// use — so unlike Valve's builds, nothing has to be inferred.
     /// </summary>
+    /// <remarks>
+    /// <c>install_path</c> is <c>"."</c> when the manifest sits inside the build's own directory,
+    /// which is how anything unpacked into <c>compatibilitytools.d</c> is laid out, but a manifest
+    /// may also be dropped in on its own and point elsewhere.
+    /// </remarks>
     private async Task<IReadOnlyList<ProtonBuild>> ReadCustomBuildsAsync(
         string steamRoot,
         CancellationToken cancellationToken)
@@ -157,9 +160,6 @@ public sealed partial class ProtonToolService(
                     continue;
                 }
 
-                // install_path is "." when the manifest sits inside the tool's own directory,
-                // which is how every build unpacked into compatibilitytools.d is laid out, but the
-                // manifest may also be dropped in on its own and point elsewhere.
                 var installPath = Path.GetFullPath(tool.GetString("install_path") ?? ".", directory);
 
                 if (!await IsProtonAsync(installPath, cancellationToken).ConfigureAwait(false))
@@ -187,6 +187,12 @@ public sealed partial class ProtonToolService(
     /// <summary>
     /// Reads the deliberate tool choices from <c>config/config.vdf</c>.
     /// </summary>
+    /// <remarks>
+    /// The section is absent until a tool is first chosen in Steam, and an entry with an empty
+    /// name is a choice that has been cleared — "decide for me" rather than a tool. Neither is a
+    /// fault. The key path is walked from the same constant the writer uses so that reading and
+    /// writing cannot drift apart.
+    /// </remarks>
     private async Task<IReadOnlyDictionary<uint, ProtonToolMapping>> ReadMappingsAsync(
         string steamRoot,
         CancellationToken cancellationToken)
@@ -194,8 +200,6 @@ public sealed partial class ProtonToolService(
         var configPath = SteamCompatTools.ConfigPathIn(steamRoot);
         var document = await SteamVdf.TryReadAsync(configPath, cancellationToken).ConfigureAwait(false);
 
-        // Walked from the same key path the writer uses, so reading and writing cannot drift
-        // apart. The first segment is dropped: the parser returns the root object's contents.
         var mappings = SteamCompatTools.MappingRoot
             .Skip(1)
             .Aggregate(document, (node, key) => node?.GetObject(key));
@@ -204,7 +208,6 @@ public sealed partial class ProtonToolService(
 
         if (mappings is null)
         {
-            // Absent until the first tool is chosen in Steam, so this is not necessarily a fault.
             logger.LogInformation("No compatibility tool mappings were found in {ConfigPath}.", configPath);
 
             return result;
@@ -219,8 +222,6 @@ public sealed partial class ProtonToolService(
 
             var toolName = entry.GetString(SteamCompatTools.NameKey);
 
-            // Steam leaves the entry behind with an empty name when a choice is cleared, which
-            // means "decide for me" rather than naming a tool.
             if (string.IsNullOrWhiteSpace(toolName))
             {
                 continue;
@@ -247,7 +248,9 @@ public sealed partial class ProtonToolService(
     /// build is written into <c>CompatToolMapping</c> as — <c>proton_experimental</c> — is
     /// spelled out next to the app id that identifies the install on disk. It is a log, so Steam
     /// truncates it freely; a missing entry falls back to
-    /// <see cref="ProtonToolName.Derive" /> rather than dropping the build.
+    /// <see cref="ProtonToolName.Derive" /> rather than dropping the build. It also spans many
+    /// Steam sessions, so a build is registered in it repeatedly; the last line for an app id
+    /// wins, which matters if Valve ever renames one.
     /// </remarks>
     /// <returns>App id to internal name. Custom builds register under app id 0 and are excluded.</returns>
     private async Task<IReadOnlyDictionary<uint, string>> ReadRegisteredNamesAsync(
@@ -284,8 +287,6 @@ public sealed partial class ProtonToolService(
                     continue;
                 }
 
-                // The log spans many Steam sessions, so the same build is registered repeatedly.
-                // Later lines win, which matters if Valve ever renames one.
                 names[appId] = registration.Groups["name"].Value;
             }
         }

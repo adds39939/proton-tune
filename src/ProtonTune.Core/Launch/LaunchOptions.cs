@@ -201,8 +201,6 @@ public sealed partial record LaunchOptions
             return environment.Count;
         }
 
-        // After everything written before it and before everything written after. Variables added
-        // since have no original position, so they are not counted and stay at the end.
         return environment.Count(variable => IndexInOriginal(variable.Name) is >= 0 and var other &&
                                              other < original);
     }

@@ -8,12 +8,13 @@ namespace ProtonTune.Core.Launch;
 /// own and simply has no effect as configured — the sort of thing that otherwise costs an evening
 /// of wondering why nothing changed.
 /// </remarks>
+/// <remarks>
+/// There is deliberately no warning for a DLSS override without <c>PROTON_ENABLE_NVAPI</c>.
+/// Proton enables NVAPI by default now, so that combination is not merely valid but the normal
+/// one, and a rule for it would fire on working configurations.
+/// </remarks>
 public static class LaunchOptionsValidator
 {
-    // There is deliberately no warning for a DLSS override without PROTON_ENABLE_NVAPI. Proton
-    // enables NVAPI by default now, so that combination is not only valid but the normal one —
-    // a rule for it fires on working configurations, which is worse than having no rule at all.
-
     /// <summary>The wrapper command MangoHud's configuration variable depends on.</summary>
     private const string MangoHudCommand = "mangohud";
 

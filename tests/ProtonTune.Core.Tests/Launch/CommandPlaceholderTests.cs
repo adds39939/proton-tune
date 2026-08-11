@@ -44,8 +44,6 @@ public class CommandPlaceholderTests
     [Fact]
     public void LeavesADeliberateArgumentOnlyStringAlone()
     {
-        // Arguments with no placeholder are a legitimate thing to write, so editing one must not
-        // quietly turn it into a substitution.
         var options = LaunchOptions.Parse("-novid -console").SetEnvironment("PROTON_LOG", "1");
 
         Assert.False(options.HasCommandPlaceholder);

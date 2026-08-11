@@ -83,8 +83,6 @@ public sealed class DlssManagementServiceTests : IDisposable
     [Fact]
     public void ReportsALinkSomebodyElseMadeAsForeign()
     {
-        // Somebody's own arrangement, like a hand-made symlink to a personal DLSS folder. Worth
-        // saying rather than silently replacing.
         var elsewhere = Path.Combine(_root, "mine.dll");
         var library = Path.Combine(InstallDirectory, "nvngx_dlssg.dll");
 
@@ -107,7 +105,6 @@ public sealed class DlssManagementServiceTests : IDisposable
         Assert.True(status.IsManaged);
         Assert.All(status.Libraries, library => Assert.Equal(DlssLinkState.Managed, library.State));
 
-        // The game now reads the shipped file.
         Assert.Equal("new super resolution",
             await File.ReadAllTextAsync(Path.Combine(InstallDirectory, NestedPath, "nvngx_dlss.dll")));
     }
@@ -144,9 +141,6 @@ public sealed class DlssManagementServiceTests : IDisposable
         await service.ApplyAsync(Entry, Runtime);
         await service.RevertAsync(Entry);
 
-        // Re-link by hand, as the launch script does when it runs after a revert. It points into
-        // ProtonTune's own store, which is what makes the link managed, and backs nothing up —
-        // there is no original left to move aside.
         File.Delete(linked);
         File.CreateSymbolicLink(
             linked,
@@ -158,7 +152,6 @@ public sealed class DlssManagementServiceTests : IDisposable
         Assert.False(result.IsComplete);
         Assert.Contains(Path.Combine(NestedPath, "nvngx_dlss.dll"), result.Replaced);
 
-        // Left as a real file the game owns, rather than a link or a hole in the install.
         Assert.Null(new FileInfo(linked).LinkTarget);
         Assert.Equal("new super resolution", await File.ReadAllTextAsync(linked));
     }
@@ -217,7 +210,6 @@ public sealed class DlssManagementServiceTests : IDisposable
 
         Assert.Contains("cp -f \"$dst\" \"$bak\"", script);
 
-        // Only when what is there is the game's own file rather than a link back to the store.
         Assert.Contains("[ -f \"$dst\" ] && [ ! -L \"$dst\" ]", script);
         Assert.Contains(Path.Combine(_root, "storage", "dlss-backup", "2138720"), script);
     }
@@ -236,7 +228,6 @@ public sealed class DlssManagementServiceTests : IDisposable
         await service.ApplyAsync(Entry, Runtime);
         await service.RevertAsync(Entry);
 
-        // The game updates: a different file, under the same name.
         await File.WriteAllTextAsync(nested, "the game's own, after an update");
 
         await service.ApplyAsync(Entry, Runtime);
@@ -248,8 +239,6 @@ public sealed class DlssManagementServiceTests : IDisposable
     [Fact]
     public async Task ApplyingTwiceDoesNotDestroyTheOriginal()
     {
-        // The second pass sees links rather than files. Backing those up would replace the real
-        // original with a link and lose it for good.
         var service = CreateService();
 
         await service.ApplyAsync(Entry, Runtime);

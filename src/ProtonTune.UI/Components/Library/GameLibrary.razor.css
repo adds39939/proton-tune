@@ -1,8 +1,5 @@
-/* Grows with its content and lets the page scroll, rather than filling the window. */
 .library {
     flex: none;
-    /* Auto margins centre it, which in a flex column also stops it stretching — so the
-       width is asked for explicitly and then capped. */
     width: 100%;
     max-width: 1180px;
     margin: 0 auto;
@@ -27,10 +24,6 @@
     font-size: 13px;
 }
 
-/*
- * Stretched rather than centred, so the controls beside the search box come out the same height
- * as it whatever padding and font size each ends up with.
- */
 .library-filters {
     display: flex;
     align-items: stretch;

@@ -67,8 +67,6 @@ public sealed class GlobalProfileService(
     {
         var linked = await GetLinkedAppsAsync(cancellationToken).ConfigureAwait(false);
 
-        // With nothing following the profile there is no reason to go near Steam, and asking it
-        // to shut down for a write that would change nothing would be absurd.
         if (linked.Count == 0)
         {
             await SaveAsync(options, cancellationToken).ConfigureAwait(false);
@@ -80,8 +78,6 @@ public sealed class GlobalProfileService(
             appId => appId,
             appId =>
             {
-                // The DLSS launch script belongs to the game rather than the profile, so it is
-                // carried across rather than replaced by the shared settings.
                 var scriptPath = dlss.ScriptPathFor(appId);
 
                 return File.Exists(scriptPath)
@@ -91,8 +87,6 @@ public sealed class GlobalProfileService(
 
         var result = await launchOptions.SaveManyAsync(byApp, cancellationToken).ConfigureAwait(false);
 
-        // The profile is only stored once the games it governs actually took it. Storing first
-        // would leave the profile claiming settings the library does not have.
         if (result.IsSuccess)
         {
             await SaveAsync(options, cancellationToken).ConfigureAwait(false);
@@ -124,9 +118,6 @@ public sealed class GlobalProfileService(
         {
             var actual = await launchOptions.GetAsync(appId, cancellationToken).ConfigureAwait(false);
 
-            // A game's own DLSS script is added on top of the profile rather than coming from it,
-            // so it is set aside before comparing — otherwise every game using DLSS would look
-            // like it had drifted.
             var withoutScript = actual.WithWrapperCommand(dlss.ScriptPathFor(appId), false);
 
             if (string.Equals(withoutScript.Format(), expected.Format(), StringComparison.Ordinal))

@@ -110,8 +110,6 @@ public sealed record SettingDefinition(string Variable, SettingCategory Category
             return true;
         }
 
-        // Compiled on first use. A malformed pattern is treated as matching nothing rather than
-        // throwing out of a render: a typo in a data file should narrow a list, not break a page.
         _buildPatterns ??= ProtonBuilds.Select(Compile).OfType<Regex>().ToArray();
 
         return _buildPatterns.Any(pattern =>

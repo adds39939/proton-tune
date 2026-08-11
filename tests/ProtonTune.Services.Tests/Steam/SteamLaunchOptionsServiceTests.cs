@@ -110,8 +110,6 @@ public sealed class SteamLaunchOptionsServiceTests : IDisposable
     [Fact]
     public async Task ClosesSteamBeforeWritingAndStartsItAfter()
     {
-        // The order is the whole point. Steam flushes its in-memory copy as it exits, so writing
-        // first and restarting afterwards would discard the change moments later.
         var client = new StubSteamClient { Running = true };
 
         var result = await CreateService(client).SaveAsync(AppId, "DXVK_HDR=1 %command%");
@@ -186,8 +184,6 @@ public sealed class SteamLaunchOptionsServiceTests : IDisposable
 
         Assert.Equal(LaunchOptionsSaveStatus.NoUserConfig, result.Status);
     }
-
-    // Choosing a Proton build ------------------------------------------------
 
     /// <summary>
     /// A mapping is more than a name. Steam settles competing mappings by priority, and the ones
@@ -315,8 +311,6 @@ public sealed class SteamLaunchOptionsServiceTests : IDisposable
 
         for (var i = 0; i < 3; i++)
         {
-            // A backup is named to the second, so saves have to land in different ones to be
-            // separate files at all. Kept to the fewest that still shows old ones being removed.
             if (i > 0)
             {
                 await Task.Delay(1100);

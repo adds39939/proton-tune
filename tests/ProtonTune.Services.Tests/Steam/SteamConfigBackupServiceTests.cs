@@ -89,8 +89,6 @@ public sealed class SteamConfigBackupServiceTests : IDisposable
         Assert.Empty(await CreateService().ListAsync());
     }
 
-    // Keeping only so many --------------------------------------------------
-
     [Fact]
     public async Task KeepsTheNewestAndRemovesTheRest()
     {
@@ -146,8 +144,6 @@ public sealed class SteamConfigBackupServiceTests : IDisposable
         Assert.Equal(0, await CreateService().PruneAsync(keep: 0));
         Assert.Single(await CreateService().ListAsync());
     }
-
-    // Putting one back -------------------------------------------------------
 
     [Fact]
     public async Task PutsTheBackupBackOverTheLiveFile()

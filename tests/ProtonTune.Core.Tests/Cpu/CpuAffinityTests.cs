@@ -38,7 +38,6 @@ public class CpuAffinityMaskTests
 
     [Fact]
     public void SkipsSectionsItCannotRead() =>
-        // Hand-typed masks go wrong; the readable part should still be shown.
         Assert.Equal([0, 1, 5], CpuAffinityMask.Parse("0-1,banana,5,9-3"));
 }
 
@@ -80,7 +79,6 @@ public class LaunchOptionsWrapperTests
     [Fact]
     public void PinningAnUnpinnedGamePutsTasksetLast()
     {
-        // Last in the chain means it applies to the game, not to a wrapper that then launches it.
         var edited = LaunchOptions.Parse("mangohud %command%").WithCpuAffinity("0-7");
 
         Assert.Equal("mangohud taskset -c 0-7 %command%", edited.Format());
@@ -117,8 +115,6 @@ public class LaunchOptionsWrapperTests
     [Fact]
     public void FindsAnAbsoluteScriptItAddedItself()
     {
-        // Generated launch scripts are inserted by full path, and have to be recognised again to
-        // be removed — otherwise turning the feature off would leave the script in the chain.
         var script = "/home/adam/.local/share/proton-tune/bin/dlss-2357570.sh";
         var edited = LaunchOptions.Parse("%command%").WithWrapperCommand(script, true);
 
@@ -130,7 +126,6 @@ public class LaunchOptionsWrapperTests
     [Fact]
     public void NeverDisturbsACustomScript()
     {
-        // ow-dlss is a hand-written launcher. Nothing here should know or care what it is.
         var edited = LaunchOptions
             .Parse(Overwatch)
             .WithCpuAffinity("0-3")

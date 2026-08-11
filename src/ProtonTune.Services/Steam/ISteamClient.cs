@@ -18,6 +18,11 @@ public interface ISteamClient
     /// Asks Steam to close and waits for it to actually exit.
     /// </summary>
     /// <returns><see langword="true"/> once Steam has exited, false if it outlasted the timeout.</returns>
+    /// <remarks>
+    /// Waiting for the process to go is the point rather than a courtesy: Steam writes its
+    /// configuration on the way out, so those files are only safe to edit once it has gone, not
+    /// merely once the shutdown request has been accepted.
+    /// </remarks>
     Task<bool> ShutdownAsync(TimeSpan timeout, CancellationToken cancellationToken = default);
 
     /// <summary>Starts the Steam client without waiting for it.</summary>

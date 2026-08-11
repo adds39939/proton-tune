@@ -1,8 +1,3 @@
-/*
- * Fills the window rather than sizing to its content: the editor inside is a sidebar beside a
- * scrolling pane, and both need a bottom to stop at. Full width too — the settings are a two
- * column layout with long variable names, and a centred column wastes the room they want.
- */
 .profile {
     display: flex;
     flex-direction: column;
@@ -50,15 +45,6 @@
     color: var(--accent);
 }
 
-/*
- * The editor lays itself out as a sidebar beside a scrolling pane, so it needs a bounded height
- * to scroll within rather than growing the page.
- */
-/*
- * A flex column, not just a box with a height: the editor inside is a sidebar beside a scrolling
- * pane, and it only stretches to the bottom if this is something it can stretch within. Left as a
- * plain block, the sidebar ends where its tabs end and the panel looks cut off half way down.
- */
 .profile-editor {
     display: flex;
     flex-direction: column;

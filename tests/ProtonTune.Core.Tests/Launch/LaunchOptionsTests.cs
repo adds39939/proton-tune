@@ -61,8 +61,6 @@ public class LaunchOptionsTests
     {
         var options = LaunchOptions.Parse(OverwatchOptions);
 
-        // The DLSS debug option and the MangoHud config both carry structure inside the value.
-        // Splitting on the first '=' only, and not on ',', is what keeps them readable later.
         Assert.Equal("DLSSIndicator=1024", options.FindEnvironment("DXVK_NVAPI_SET_NGX_DEBUG_OPTIONS")?.Value);
         Assert.Equal("fps_limit=224,fps_limit_method=late", options.FindEnvironment("MANGOHUD_CONFIG")?.Value);
         Assert.Equal("RENDER_PRESET_L",
@@ -84,7 +82,6 @@ public class LaunchOptionsTests
     [Fact]
     public void TreatsAssignmentsAfterAWrapperAsArgumentsNotEnvironment()
     {
-        // Once a command has been named, NAME=value belongs to that command.
         var options = LaunchOptions.Parse("PROTON_ENABLE_HDR=1 mysetting FOO=bar %command%");
 
         Assert.Equal(["PROTON_ENABLE_HDR"], options.Environment.Select(variable => variable.Name));
@@ -103,8 +100,6 @@ public class LaunchOptionsTests
     [Fact]
     public void RecordsWhenThePlaceholderIsMissing()
     {
-        // Without %command% Steam appends rather than substitutes, so these are arguments to the
-        // game and not commands to launch it through.
         var options = LaunchOptions.Parse("PROTON_LOG=1 -novid");
 
         Assert.False(options.HasCommandPlaceholder);
@@ -131,8 +126,6 @@ public class LaunchOptionsTests
     [Fact]
     public void ReQuotesAnAssignmentOnceItsValueChanges()
     {
-        // How a value was spelled is only kept while it still says the same thing. Editing it
-        // must not leave the old text behind.
         var original = LaunchOptions.Parse("WINEDLLOVERRIDES=\"dxgi=n,b\" %command%");
 
         var edited = original with
@@ -187,8 +180,6 @@ public class LaunchOptionsTests
     [Fact]
     public void EditingOneSettingLeavesUnknownOnesAlone()
     {
-        // The behaviour the whole design exists for: ProtonTune understands HDR but nothing about
-        // ow-dlss or the NVAPI debug option, and must still hand them back untouched.
         var options = LaunchOptions.Parse(OverwatchOptions);
 
         var edited = options with

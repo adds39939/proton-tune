@@ -59,7 +59,6 @@ public class SteamConfigTextTests
     [Fact]
     public void DoesNotConfuseAppsWithTheSameKeyName()
     {
-        // Both apps have LastPlayed; the scanner must match the whole path, not just the key.
         var path = new[] { "UserLocalConfigStore", "Software", "Valve", "Steam", "apps", "440", "LastPlayed" };
 
         Assert.Equal("1700000000", SteamConfigText.GetValue(Document, path));
@@ -73,7 +72,6 @@ public class SteamConfigTextTests
         Assert.NotNull(updated);
         Assert.Equal("DXVK_HDR=1 mangohud %command%", SteamConfigText.GetValue(updated, PathTo("2357570")));
 
-        // Everything outside the edited value is identical, including the escaped JSON blob.
         Assert.Equal(
             Document.Replace("PROTON_ENABLE_HDR=1 %command%", "DXVK_HDR=1 mangohud %command%"),
             updated);
@@ -95,7 +93,6 @@ public class SteamConfigTextTests
         Assert.NotNull(updated);
         Assert.Equal("PROTON_LOG=1 %command%", SteamConfigText.GetValue(updated, PathTo("440")));
 
-        // The app that already had options is undisturbed.
         Assert.Equal("PROTON_ENABLE_HDR=1 %command%", SteamConfigText.GetValue(updated, PathTo("2357570")));
         Assert.Equal("1700000000", SteamConfigText.GetValue(
             updated, ["UserLocalConfigStore", "Software", "Valve", "Steam", "apps", "440", "LastPlayed"]));
@@ -104,8 +101,6 @@ public class SteamConfigTextTests
     [Fact]
     public void CreatesTheAppBlockForAGameThatHasNeverBeenLaunched()
     {
-        // Configuring a game before its first launch is ordinary, and Steam only writes an app
-        // block once it has something to record.
         var updated = SteamConfigText.SetValue(Document, PathTo("993090"), "MANGOHUD_CONFIG=fps_limit=60 %command%");
 
         Assert.NotNull(updated);
@@ -124,7 +119,6 @@ public class SteamConfigTextTests
 
         Assert.NotNull(updated);
 
-        // The same depth the fixture's own app block and its keys are written at.
         Assert.Contains("\n\t\t\t\t\t\"993090\"\n\t\t\t\t\t{\n", updated);
         Assert.Contains("\n\t\t\t\t\t\t\"LaunchOptions\"\t\t\"MANGOHUD_CONFIG=fps_limit=60 %command%\"\n", updated);
         Assert.Contains("%command%\"\n\t\t\t\t\t}\n", updated);

@@ -204,8 +204,6 @@ public sealed class ProtonToolServiceTests : IDisposable
         Assert.Null(catalogue.Default.ToolName);
     }
 
-    // What a build honours ---------------------------------------------------
-
     /// <summary>
     /// Read from the build's own launch script rather than from a table of version numbers, which
     /// would be stale within a month — GE adds variables with almost every release.
@@ -220,7 +218,6 @@ public sealed class ProtonToolServiceTests : IDisposable
         Assert.True(ge.Capabilities.Reads("PROTON_DLSS_UPGRADE"));
         Assert.False(valve.Capabilities.Reads("PROTON_DLSS_UPGRADE"));
 
-        // Common ground: both honour the variables they share.
         Assert.True(ge.Capabilities.Reads("PROTON_LOG"));
         Assert.True(valve.Capabilities.Reads("PROTON_LOG"));
     }
@@ -240,8 +237,6 @@ public sealed class ProtonToolServiceTests : IDisposable
         Assert.False(build.Capabilities.IsKnown);
         Assert.Null(build.Capabilities.Reads("PROTON_DLSS_UPGRADE"));
     }
-
-    // Fake installation ------------------------------------------------------
 
     private void InstallValveTool(uint appId, string name, string installDir, string layer, string version)
     {

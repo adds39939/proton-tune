@@ -18,8 +18,6 @@ public static class LibrarySortOrders
         this LibrarySortOrder order,
         IEnumerable<SteamLibraryEntry> apps) => order switch
     {
-        // Never played sorts last rather than first: no timestamp is not the same as a very old
-        // one, and a game nobody has run is the least likely to be the one being looked for.
         LibrarySortOrder.RecentlyPlayed => apps
             .OrderByDescending(app => app.LastPlayed ?? DateTimeOffset.MinValue)
             .ThenBy(app => app.Name, StringComparer.CurrentCultureIgnoreCase),
