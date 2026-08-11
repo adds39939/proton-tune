@@ -51,6 +51,18 @@ public sealed partial record LaunchOptions
     /// </summary>
     public IReadOnlyList<string> Arguments { get; init; } = [];
 
+    /// <summary>
+    /// The assignments in the order the string was read in, kept so that switching a setting off
+    /// and on again returns it to where it was written rather than moving it to the end.
+    /// </summary>
+    /// <remarks>
+    /// Not part of the string, so it does not survive <see cref="Format" /> and
+    /// <see cref="Parse" />: a variable removed, saved, and added back later really is new and
+    /// belongs wherever a new one goes. It holds for as long as one set of options is being
+    /// edited, which is exactly as long as it is worth anything.
+    /// </remarks>
+    private IReadOnlyList<string> OriginalOrder { get; init; } = [];
+
     /// <summary>Whether this represents an empty launch options string.</summary>
     public bool IsEmpty =>
         Environment.Count == 0 && Wrapper.Count == 0 && Arguments.Count == 0 && !HasCommandPlaceholder;
@@ -85,6 +97,7 @@ public sealed partial record LaunchOptions
         return new LaunchOptions
         {
             Environment = environment,
+            OriginalOrder = environment.Select(variable => variable.Name).ToList(),
             Wrapper = placeholder >= 0 ? rest[..placeholder] : [],
             HasCommandPlaceholder = placeholder >= 0,
             Arguments = placeholder >= 0 ? rest[(placeholder + 1)..] : rest
@@ -157,7 +170,7 @@ public sealed partial record LaunchOptions
         }
         else
         {
-            environment.Add(new EnvironmentVariable(name, value));
+            environment.Insert(PositionFor(name, environment), new EnvironmentVariable(name, value));
         }
 
         return this with { Environment = environment, HasCommandPlaceholder = HasCommandPlaceholder || wasEmpty };
@@ -174,6 +187,38 @@ public sealed partial record LaunchOptions
                 .Where(variable => !string.Equals(variable.Name, name, StringComparison.Ordinal))
                 .ToList()
         };
+
+    /// <summary>
+    /// Where an assignment being added belongs. One that was in the string when it was read goes
+    /// back among the ones it was written beside; anything genuinely new goes on the end.
+    /// </summary>
+    private int PositionFor(string name, IReadOnlyList<EnvironmentVariable> environment)
+    {
+        var original = IndexInOriginal(name);
+
+        if (original < 0)
+        {
+            return environment.Count;
+        }
+
+        // After everything written before it and before everything written after. Variables added
+        // since have no original position, so they are not counted and stay at the end.
+        return environment.Count(variable => IndexInOriginal(variable.Name) is >= 0 and var other &&
+                                             other < original);
+    }
+
+    private int IndexInOriginal(string name)
+    {
+        for (var index = 0; index < OriginalOrder.Count; index++)
+        {
+            if (string.Equals(OriginalOrder[index], name, StringComparison.Ordinal))
+            {
+                return index;
+            }
+        }
+
+        return -1;
+    }
 
     /// <summary>Finds an assignment by name, or returns null when it is not set.</summary>
     public EnvironmentVariable? FindEnvironment(string name) =>
