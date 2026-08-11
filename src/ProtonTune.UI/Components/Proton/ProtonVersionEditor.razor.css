@@ -12,11 +12,31 @@
     font-weight: 600;
 }
 
-.select {
+.select-shell {
+    position: relative;
+    display: flex;
     flex: 1;
     min-width: 0;
     max-width: 460px;
-    padding: 7px 10px;
+}
+
+.select-shell ::deep svg {
+    position: absolute;
+    top: 50%;
+    right: 10px;
+    transform: translateY(-50%);
+    color: var(--text-muted);
+    pointer-events: none;
+}
+
+.select-shell:has(.select:disabled) ::deep svg {
+    opacity: 0.5;
+}
+
+.select {
+    appearance: none;
+    width: 100%;
+    padding: 7px 28px 7px 10px;
     border: 1px solid var(--border);
     border-radius: 8px;
     background: var(--surface-2);
@@ -24,6 +44,11 @@
     font: inherit;
     font-size: 13px;
     cursor: pointer;
+}
+
+.select:focus {
+    outline: none;
+    border-color: var(--accent);
 }
 
 .select:disabled {

@@ -80,7 +80,24 @@
     font-size: 12px;
 }
 
+.select-shell {
+    position: relative;
+    display: flex;
+    flex: 1;
+}
+
+.select-shell ::deep svg {
+    position: absolute;
+    top: 50%;
+    right: 9px;
+    transform: translateY(-50%);
+    color: var(--text-muted);
+    pointer-events: none;
+}
+
 select.control {
+    appearance: none;
+    padding-right: 26px;
     font-family: "JetBrains Mono", ui-monospace, monospace;
     cursor: pointer;
 }

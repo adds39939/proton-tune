@@ -15,25 +15,29 @@ else
     <div class="row">
         <label class="label" for="proton-build">Proton build</label>
 
-        <select id="proton-build"
-                class="select"
-                disabled="@IsBusy"
-                value="@Value"
-                @onchange="OnSelected">
-            <option value="@InheritValue">@InheritLabel</option>
+        <span class="select-shell">
+            <select id="proton-build"
+                    class="select"
+                    disabled="@IsBusy"
+                    value="@Value"
+                    @onchange="OnSelected">
+                <option value="@InheritValue">@InheritLabel</option>
 
-            @* A build can be mapped and then deleted. Keep the name selectable so opening the
-               dialog does not quietly reassign the game to something else. *@
-            @if (ChoiceIsMissing)
-            {
-                <option value="@Value">@Value — not installed</option>
-            }
+                @* A build can be mapped and then deleted. Keep the name selectable so opening the
+                   dialog does not quietly reassign the game to something else. *@
+                @if (ChoiceIsMissing)
+                {
+                    <option value="@Value">@Value — not installed</option>
+                }
 
-            @foreach (var build in Catalogue.Builds)
-            {
-                <option value="@build.Name" @key="build.Name">@OptionLabel(build)</option>
-            }
-        </select>
+                @foreach (var build in Catalogue.Builds)
+                {
+                    <option value="@build.Name" @key="build.Name">@OptionLabel(build)</option>
+                }
+            </select>
+
+            <ChevronIcon/>
+        </span>
     </div>
 
     <p class="status">@StoredSummary</p>

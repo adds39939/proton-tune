@@ -17,16 +17,20 @@
                value="@SearchTerm"
                @oninput="OnSearchChanged"/>
 
-        <label class="sort">
-            <span class="sort-label">Sort by</span>
-
-            <select class="sort-select" value="@SortOrder" @onchange="OnSortChanged">
+        <span class="select-shell">
+            <select class="sort-select"
+                    aria-label="Sort by"
+                    title="Sort by"
+                    value="@SortOrder"
+                    @onchange="OnSortChanged">
                 @foreach (var order in SortOrders)
                 {
                     <option value="@order" @key="order">@order.Title()</option>
                 }
             </select>
-        </label>
+
+            <ChevronIcon/>
+        </span>
 
         <div class="view-toggle" role="group" aria-label="View mode">
             @foreach (var mode in ViewModes)
@@ -34,9 +38,18 @@
                 <button type="button"
                         class="view-button @(ViewMode == mode ? "is-active" : string.Empty)"
                         aria-pressed="@(ViewMode == mode)"
+                        aria-label="@mode"
+                        title="@mode"
                         @key="mode"
                         @onclick="() => SetViewMode(mode)">
-                    @mode
+                    @if (mode == LibraryViewMode.List)
+                    {
+                        <ListIcon/>
+                    }
+                    else
+                    {
+                        <GridIcon/>
+                    }
                 </button>
             }
         </div>

@@ -40,7 +40,8 @@ Components are grouped by what they are responsible for, not by what they are:
 
 ```
 Components/Game/           One game's presentation primitives — GameArtwork, GameTags.
-Components/Library/        Browsing the collection — GameLibrary, its cards, LibraryViewMode.
+Components/Icons/          One SVG each, no parameters — ListIcon, GridIcon.
+Components/Library/        Browsing the collection — GameLibrary, its cards, LibrarySortOrders.
 Components/Configuration/  Changing things — GameConfigDialog, SettingsPanel.
 Components/Proton/         The installed compatibility builds — ProtonPanel.
 ```
@@ -71,6 +72,13 @@ Consequences worth remembering:
 
 Small markup expectations: `@key` on items rendered in a loop, `title` on text that can be
 truncated by `text-overflow`, and `aria-hidden` on purely decorative elements.
+
+**Icons are components, one SVG per file, in `Components/Icons/`.** They take no parameters and
+paint in `currentColor` with `width`/`height` on the `<svg>`, so a consumer sizes and colours them
+through the button or link that holds them — `.view-button` changing colour on hover is all it
+takes. Each carries `aria-hidden="true"` and `focusable="false"`: the icon is never the name of
+anything, so a control that has lost its visible text needs `aria-label` (and `title`, since the
+tooltip is now the only way to read what it does).
 
 **Clickable cards use an overlay button, not a wrapper.** A `<button>` may only contain phrasing
 content, so it cannot wrap a card holding an `<h2>` or a `<dl>`. The cards render a transparent
@@ -113,6 +121,13 @@ it.
 Components never touch the filesystem or parse Steam files. They depend on an interface from
 `ProtonTune.Services` (e.g. `ISteamLibraryService`, `IGameArtworkService`) and render what it
 returns.
+
+**A choice that outlives the session belongs to `AppSettings`, which means its type belongs to
+`ProtonTune.Core.Settings`.** `LibraryViewMode` and `LibrarySortOrder` sit there rather than beside
+`GameLibrary`, because `Core` cannot reference the UI. What is left in `Components/Library/` is the
+presentation — `LibrarySortOrders.Title()` and `.Apply()`. Read the stored value in
+`OnInitializedAsync` and write it back when it changes; do not give the property a field
+initialiser, or a first run disagrees with a stored file that has no value for it yet.
 
 **Which settings exist is data, not code.** `SettingCatalog` is injected, read once at startup
 from the YAML files in `ProtonTune.GameConfiguration`. Never hardcode a variable name or a section

@@ -31,15 +31,19 @@
                         break;
 
                     case SettingKind.Choice:
-                        <select class="control"
-                                value="@(Current.GetValue(option.Key) ?? string.Empty)"
-                                @onchange="@(args => SetOption(option.Key, args.Value?.ToString()))">
-                            <option value="">Not set</option>
-                            @foreach (var choice in ChoicesFor(option))
-                            {
-                                <option value="@choice" @key="choice">@choice</option>
-                            }
-                        </select>
+                        <span class="select-shell">
+                            <select class="control"
+                                    value="@(Current.GetValue(option.Key) ?? string.Empty)"
+                                    @onchange="@(args => SetOption(option.Key, args.Value?.ToString()))">
+                                <option value="">Not set</option>
+                                @foreach (var choice in ChoicesFor(option))
+                                {
+                                    <option value="@choice" @key="choice">@choice</option>
+                                }
+                            </select>
+
+                            <ChevronIcon/>
+                        </span>
 
                         break;
 

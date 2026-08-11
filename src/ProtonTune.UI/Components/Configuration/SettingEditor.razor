@@ -38,13 +38,17 @@
                 break;
 
             case SettingKind.Choice:
-                <select class="control" value="@(Value ?? string.Empty)" @onchange="OnChoicePicked">
-                    <option value="">Not set</option>
-                    @foreach (var choice in Choices)
-                    {
-                        <option value="@choice" @key="choice">@choice</option>
-                    }
-                </select>
+                <span class="select-shell">
+                    <select class="control" value="@(Value ?? string.Empty)" @onchange="OnChoicePicked">
+                        <option value="">Not set</option>
+                        @foreach (var choice in Choices)
+                        {
+                            <option value="@choice" @key="choice">@choice</option>
+                        }
+                    </select>
+
+                    <ChevronIcon/>
+                </span>
 
                 break;
 
