@@ -208,11 +208,10 @@
                                    value="@variable.Value"
                                    @onchange="@(args => SetCustomVariable(variable.Name, args.Value?.ToString()))"/>
 
-                            <button type="button"
-                                    class="button button-quiet"
-                                    @onclick="() => RemoveCustomVariable(variable.Name)">
+                            <Button Variant="ButtonVariant.Quiet"
+                                    OnClick="() => RemoveCustomVariable(variable.Name)">
                                 Remove
-                            </button>
+                            </Button>
                         </div>
                     }
 
@@ -231,7 +230,7 @@
                                value="@NewVariableValue"
                                @onchange="@(args => NewVariableValue = args.Value?.ToString() ?? string.Empty)"/>
 
-                        <button type="button" class="button" @onclick="AddCustomVariable">Add</button>
+                        <Button OnClick="AddCustomVariable">Add</Button>
                     </div>
                     break;
                 }

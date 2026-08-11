@@ -8,7 +8,7 @@
                 <p class="panel-subtitle">App ID @Entry.AppId</p>
             </div>
 
-            <button type="button" class="button" @onclick="Close" autofocus>Close</button>
+            <Button OnClick="Close">Close</Button>
         </header>
 
         @if (IsLoading)
@@ -79,26 +79,21 @@
                 </div>
 
                 <div class="footer-actions">
-                    <button type="button"
-                            class="button @(ResetPending ? "button-danger" : string.Empty)"
-                            disabled="@(IsSaving || GameIsRunning || !HasAnythingToReset)"
-                            @onclick="ResetAsync">
+                    <Button Variant="@(ResetPending ? ButtonVariant.Danger : ButtonVariant.Default)"
+                            Disabled="@(IsSaving || GameIsRunning || !HasAnythingToReset)"
+                            OnClick="ResetAsync">
                         @(ResetPending ? "Confirm reset" : "Reset")
-                    </button>
+                    </Button>
 
-                    <button type="button"
-                            class="button"
-                            disabled="@(!HasChanges || IsSaving)"
-                            @onclick="Revert">
+                    <Button Disabled="@(!HasChanges || IsSaving)" OnClick="Revert">
                         Revert
-                    </button>
+                    </Button>
 
-                    <button type="button"
-                            class="button button-primary"
-                            disabled="@(!HasChanges || IsSaving || GameIsRunning)"
-                            @onclick="AskToSave">
+                    <Button Variant="ButtonVariant.Primary"
+                            Disabled="@(!HasChanges || IsSaving || GameIsRunning)"
+                            OnClick="AskToSave">
                         @(IsSaving ? "Saving…" : WillRestartSteam ? "Save and restart Steam" : "Save")
-                    </button>
+                    </Button>
                 </div>
             </footer>
         }

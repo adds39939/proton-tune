@@ -41,6 +41,7 @@ Components are grouped by what they are responsible for, not by what they are:
 ```
 Components/Game/           One game's presentation primitives — GameArtwork, GameTags.
 Components/Icons/          One SVG each, no parameters — ListIcon, GridIcon.
+Components/Controls/       Shared primitives every area uses — Button.
 Components/Library/        Browsing the collection — GameLibrary, its cards, LibrarySortOrders.
 Components/Configuration/  Changing things — GameConfigDialog, SettingsPanel.
 Components/Proton/         The installed compatibility builds — ProtonPanel.
@@ -72,6 +73,13 @@ Consequences worth remembering:
 
 Small markup expectations: `@key` on items rendered in a loop, `title` on text that can be
 truncated by `text-overflow`, and `aria-hidden` on purely decorative elements.
+
+**Every `<button>` is a `<Button>`.** `Components/Controls/Button.razor` owns the styling and
+the states — hover, disabled, primary, dangerous — so `Variant` and `Size` are how a caller asks
+for a look, never a `class`. Six panels used to copy the same `.button` rules into their own
+stylesheets and had drifted apart; a new stylesheet must not add `.button` back. A disabled button
+drops its variant colouring and has no hover rule at all — hence the only hover selector is
+`:hover:not(:disabled)` — so every unavailable action looks the same whatever it would have done.
 
 **Icons are components, one SVG per file, in `Components/Icons/`.** They take no parameters and
 paint in `currentColor` with `width`/`height` on the `<svg>`, so a consumer sizes and colours them

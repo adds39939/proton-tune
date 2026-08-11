@@ -5,9 +5,9 @@
             <p class="library-subtitle">@SubtitleText</p>
         </div>
 
-        <button class="button" @onclick="LoadAsync" disabled="@IsLoading">
+        <Button Disabled="@IsLoading" OnClick="LoadAsync">
             @(IsLoading ? "Scanning…" : "Rescan")
-        </button>
+        </Button>
     </header>
 
     <div class="library-filters">

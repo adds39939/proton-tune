@@ -70,28 +70,3 @@
     margin-top: 20px;
 }
 
-.button {
-    padding: 8px 16px;
-    border: 1px solid var(--border);
-    border-radius: 8px;
-    background: var(--surface-2);
-    color: var(--text);
-    font: inherit;
-    cursor: pointer;
-    transition: border-color 120ms ease, background 120ms ease;
-}
-
-.button:hover:not(:disabled) {
-    border-color: var(--accent);
-    background: var(--accent-soft);
-}
-
-.button:disabled {
-    opacity: 0.5;
-    cursor: default;
-}
-
-.button-primary {
-    border-color: var(--accent);
-    background: var(--accent-soft);
-}

@@ -131,7 +131,6 @@
     opacity: 0.6;
 }
 
-
 /* Warnings --------------------------------------------------------------- */
 
 .warnings {
@@ -205,13 +204,6 @@
     margin-top: 8px;
 }
 
-.button-quiet {
-    flex: none;
-    padding: 7px 12px;
-    font-size: 12px;
-    background: transparent;
-}
-
 .section-subtitle {
     margin: 24px 0 0;
     color: var(--text-muted);
@@ -219,22 +211,4 @@
     font-weight: 600;
     letter-spacing: 0.06em;
     text-transform: uppercase;
-}
-
-/* Controls ---------------------------------------------------------------- */
-
-.button {
-    padding: 8px 16px;
-    border: 1px solid var(--border);
-    border-radius: 8px;
-    background: var(--surface-2);
-    color: var(--text);
-    font: inherit;
-    cursor: pointer;
-    transition: border-color 120ms ease, background 120ms ease;
-}
-
-.button:hover {
-    border-color: var(--accent);
-    background: var(--accent-soft);
 }

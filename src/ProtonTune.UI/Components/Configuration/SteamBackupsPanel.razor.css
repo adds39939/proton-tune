@@ -118,31 +118,3 @@
     font-variant-numeric: tabular-nums;
 }
 
-.button {
-    flex: none;
-    padding: 6px 14px;
-    border: 1px solid var(--border);
-    border-radius: 8px;
-    background: var(--surface-2);
-    color: var(--text);
-    font: inherit;
-    font-size: 13px;
-    cursor: pointer;
-    transition: border-color 120ms ease, background 120ms ease;
-}
-
-.button:hover:not(:disabled) {
-    border-color: var(--accent);
-    background: var(--accent-soft);
-}
-
-.button:disabled {
-    opacity: 0.5;
-    cursor: default;
-}
-
-.button-danger {
-    border-color: var(--danger);
-    background: var(--removed-soft);
-    color: var(--danger);
-}

@@ -51,12 +51,12 @@
 
                     <span class="item-size">@Size(backup.SizeBytes)</span>
 
-                    <button type="button"
-                            class="button @(PendingRestore == backup.Path ? "button-danger" : string.Empty)"
-                            disabled="@IsBusy"
-                            @onclick="() => RestoreAsync(backup)">
+                    <Button Variant="@(PendingRestore == backup.Path ? ButtonVariant.Danger : ButtonVariant.Default)"
+                            Size="ButtonSize.Small"
+                            Disabled="@IsBusy"
+                            OnClick="() => RestoreAsync(backup)">
                         @(PendingRestore == backup.Path ? "Confirm restore" : "Restore")
-                    </button>
+                    </Button>
                 </li>
             }
         </ul>

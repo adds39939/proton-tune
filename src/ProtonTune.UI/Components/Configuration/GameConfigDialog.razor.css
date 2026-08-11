@@ -44,23 +44,6 @@
     font-variant-numeric: tabular-nums;
 }
 
-.button {
-    flex: none;
-    padding: 8px 16px;
-    border: 1px solid var(--border);
-    border-radius: 8px;
-    background: var(--surface-2);
-    color: var(--text);
-    font: inherit;
-    cursor: pointer;
-    transition: border-color 120ms ease, background 120ms ease;
-}
-
-.button:hover {
-    border-color: var(--accent);
-    background: var(--accent-soft);
-}
-
 /* Messages and footer ---------------------------------------------------- */
 
 .panel-message {
@@ -117,22 +100,6 @@
     flex: none;
 }
 
-.button:disabled {
-    opacity: 0.5;
-    cursor: default;
-}
-
-.button:disabled:hover {
-    border-color: var(--border);
-    background: var(--surface-2);
-}
-
-.button-primary {
-    border-color: var(--accent);
-    background: var(--accent-soft);
-    color: var(--text);
-}
-
 /* Global profile link ----------------------------------------------------- */
 
 .global-link {
@@ -168,8 +135,3 @@
     font-size: 12px;
 }
 
-.button-danger {
-    border-color: var(--danger);
-    background: var(--removed-soft);
-    color: var(--danger);
-}

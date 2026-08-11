@@ -8,23 +8,21 @@
         </div>
 
         <div class="profile-actions">
-            <button type="button"
-                    class="button @(ResetPending ? "button-danger" : string.Empty)"
-                    disabled="@IsSaving"
-                    @onclick="ResetAsync">
+            <Button Variant="@(ResetPending ? ButtonVariant.Danger : ButtonVariant.Default)"
+                    Disabled="@IsSaving"
+                    OnClick="ResetAsync">
                 @(ResetPending ? "Confirm reset" : "Reset")
-            </button>
+            </Button>
 
-            <button type="button" class="button" disabled="@(!HasChanges || IsSaving)" @onclick="Revert">
+            <Button Disabled="@(!HasChanges || IsSaving)" OnClick="Revert">
                 Revert
-            </button>
+            </Button>
 
-            <button type="button"
-                    class="button button-primary"
-                    disabled="@(!HasChanges || IsSaving)"
-                    @onclick="AskToSave">
+            <Button Variant="ButtonVariant.Primary"
+                    Disabled="@(!HasChanges || IsSaving)"
+                    OnClick="AskToSave">
                 @(IsSaving ? "Saving…" : WillRestartSteam ? "Save and restart Steam" : "Save")
-            </button>
+            </Button>
         </div>
     </header>
 

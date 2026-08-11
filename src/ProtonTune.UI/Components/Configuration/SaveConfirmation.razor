@@ -25,15 +25,14 @@
         }
 
         <div class="actions">
-            <button type="button" class="button" disabled="@IsBusy" @onclick="Cancel">Cancel</button>
+            <Button Disabled="@IsBusy" OnClick="Cancel">Cancel</Button>
 
-            <button type="button"
-                    class="button button-primary"
-                    disabled="@IsBusy"
-                    autofocus
-                    @onclick="Confirm">
+            <Button Variant="ButtonVariant.Primary"
+                    Disabled="@IsBusy"
+                    Autofocus="true"
+                    OnClick="Confirm">
                 @(IsBusy ? "Saving…" : WillRestartSteam ? "Save and restart Steam" : "Save")
-            </button>
+            </Button>
         </div>
     </div>
 </div>
