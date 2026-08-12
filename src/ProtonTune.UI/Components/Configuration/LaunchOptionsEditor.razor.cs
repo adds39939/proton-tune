@@ -2,7 +2,6 @@ using Microsoft.AspNetCore.Components;
 using ProtonTune.Core.Launch;
 using ProtonTune.Core.Proton;
 using ProtonTune.Core.Steam;
-using ProtonTune.Services.Dlss;
 
 namespace ProtonTune.UI.Components.Configuration;
 
@@ -28,9 +27,6 @@ public partial class LaunchOptionsEditor : ComponentBase
 
     private const string GameModeCommand = "gamemoderun";
 
-    [Inject]
-    private IDlssManagementService Dlss { get; set; } = null!;
-
     /// <summary>The settings on offer, read from the definition files at startup.</summary>
     [Inject]
     private SettingCatalog Catalog { get; set; } = null!;
@@ -46,8 +42,6 @@ public partial class LaunchOptionsEditor : ComponentBase
 
     /// <summary>
     /// The game being configured, or <see langword="null"/> when editing the global profile.
-    /// Sections that only make sense for a real install — the DLSS libraries — are hidden without
-    /// one.
     /// </summary>
     [Parameter]
     public SteamLibraryEntry? Entry { get; set; }
@@ -168,11 +162,6 @@ public partial class LaunchOptionsEditor : ComponentBase
             return true;
         }
 
-        if (category.Is(SettingCategoryIds.Nvidia) && Entry is not null)
-        {
-            return true;
-        }
-
         return DefinitionsIn(category).Any(IsVisible);
     }
 
@@ -182,9 +171,9 @@ public partial class LaunchOptionsEditor : ComponentBase
 
     /// <summary>
     /// A category's settings as the generic list renders them. For a game, Proton's own DLSS
-    /// settings are held back: they belong beside the libraries they replace, not among the driver
-    /// overrides. The global profile has no libraries section to put them next to, so it lists
-    /// them here rather than losing them.
+    /// settings are held back so they can be listed under their own heading, apart from the driver
+    /// overrides. The global profile has no such heading, so it lists them here rather than losing
+    /// them.
     /// </summary>
     private IEnumerable<SettingDefinition> ListedSettingsIn(SettingCategory category) =>
         (category.Is(SettingCategoryIds.Nvidia) && Entry is not null
@@ -211,21 +200,6 @@ public partial class LaunchOptionsEditor : ComponentBase
 
     private static bool IsProtonDlss(SettingDefinition definition) =>
         definition.Variable.StartsWith("PROTON_DLSS_", StringComparison.Ordinal);
-
-    /// <summary>
-    /// Whether the build replaces DLSS libraries itself, in which case ProtonTune's own swap is
-    /// not offered.
-    /// </summary>
-    /// <remarks>
-    /// Two mechanisms replacing the same files would fight: ProtonTune symlinks its shipped
-    /// libraries over the game's and adds a script to put them back after Steam verifies, while
-    /// Proton substitutes its own at launch without touching the install. Whichever ran last
-    /// would win, and which that was would not be visible from here.
-    /// </remarks>
-    private bool BuildUpgradesDlss => Capabilities.Reads("PROTON_DLSS_UPGRADE") is true;
-
-    /// <summary>Whether ProtonTune's swapped libraries are still in place inside the install.</summary>
-    private bool DlssIsManaged => Entry is not null && Dlss.Inspect(Entry).HasManagedLinks;
 
     /// <summary>
     /// How many of a category's settings are set, counting the flags of its command alongside its
@@ -278,13 +252,6 @@ public partial class LaunchOptionsEditor : ComponentBase
     /// <summary>Adds or removes a command from the launch chain.</summary>
     private Task ApplyWrapperCommand(string command, bool present) =>
         Publish(Options.WithWrapperCommand(command, present));
-
-    /// <summary>
-    /// Adds or removes the generated DLSS launch script. The libraries themselves have already
-    /// been changed on disk by the time this runs; the launch options entry still needs saving.
-    /// </summary>
-    private Task OnDlssScriptChanged((string ScriptPath, bool Present) change) =>
-        ApplyWrapperCommand(change.ScriptPath, change.Present);
 
     /// <summary>Pins the game to a set of threads, or removes the pinning.</summary>
     private Task ApplyCpuAffinity(string? mask) => Publish(Options.WithCpuAffinity(mask));

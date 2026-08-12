@@ -3,8 +3,8 @@ title: Nvidia
 order: 1
 
 settings:
-  # Proton's own DLSS handling. Only the GE family reads these; Valve's builds have no equivalent,
-  # which is why ProtonTune falls back to swapping the libraries itself on those.
+  # Proton's own DLSS handling, which downloads the libraries at launch and leaves the install
+  # alone. Only the GE family reads these; Valve's builds have no equivalent.
   - variable: PROTON_DLSS_UPGRADE
     label: Upgrade DLSS libraries
     description: >-

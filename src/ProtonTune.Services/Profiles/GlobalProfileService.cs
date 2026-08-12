@@ -2,7 +2,7 @@ using System.Text.Json;
 using System.Text.Json.Serialization;
 using Microsoft.Extensions.Logging;
 using ProtonTune.Core.Launch;
-using ProtonTune.Services.Dlss;
+using ProtonTune.Services.Storage;
 using ProtonTune.Services.Steam;
 
 namespace ProtonTune.Services.Profiles;
@@ -11,7 +11,6 @@ namespace ProtonTune.Services.Profiles;
 public sealed class GlobalProfileService(
     ProtonTuneStorage storage,
     ISteamLaunchOptionsService launchOptions,
-    IDlssManagementService dlss,
     ILogger<GlobalProfileService> logger) : IGlobalProfileService
 {
     private static readonly JsonSerializerOptions SerializerOptions = new()
@@ -74,16 +73,7 @@ public sealed class GlobalProfileService(
             return new LaunchOptionsSaveResult(LaunchOptionsSaveStatus.Saved);
         }
 
-        var byApp = linked.ToDictionary(
-            appId => appId,
-            appId =>
-            {
-                var scriptPath = dlss.ScriptPathFor(appId);
-
-                return File.Exists(scriptPath)
-                    ? options.WithWrapperCommand(scriptPath, true).Format()
-                    : options.Format();
-            });
+        var byApp = linked.ToDictionary(appId => appId, _ => options.Format());
 
         var result = await launchOptions.SaveManyAsync(byApp, cancellationToken).ConfigureAwait(false);
 
@@ -118,9 +108,7 @@ public sealed class GlobalProfileService(
         {
             var actual = await launchOptions.GetAsync(appId, cancellationToken).ConfigureAwait(false);
 
-            var withoutScript = actual.WithWrapperCommand(dlss.ScriptPathFor(appId), false);
-
-            if (string.Equals(withoutScript.Format(), expected.Format(), StringComparison.Ordinal))
+            if (string.Equals(actual.Format(), expected.Format(), StringComparison.Ordinal))
             {
                 stillFollowing.Add(appId);
             }

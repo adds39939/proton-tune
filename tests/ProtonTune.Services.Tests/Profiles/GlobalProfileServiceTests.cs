@@ -1,10 +1,8 @@
 using Microsoft.Extensions.Logging.Abstractions;
-using ProtonTune.Core.Dlss;
 using ProtonTune.Core.Launch;
-using ProtonTune.Core.Steam;
-using ProtonTune.Services.Dlss;
 using ProtonTune.Services.Profiles;
 using ProtonTune.Services.Steam;
+using ProtonTune.Services.Storage;
 
 namespace ProtonTune.Services.Tests.Profiles;
 
@@ -23,7 +21,6 @@ public sealed class GlobalProfileServiceTests : IDisposable
     private GlobalProfileService CreateService() =>
         new(ProtonTuneStorage.At(_root),
             _steam,
-            new StubDlssService(_root),
             NullLogger<GlobalProfileService>.Instance);
 
     [Fact]
@@ -155,20 +152,6 @@ public sealed class GlobalProfileServiceTests : IDisposable
     }
 
     [Fact]
-    public async Task CarriesAGamesOwnDlssScriptAcross()
-    {
-        var service = CreateService();
-
-        await service.SetLinkedAsync(2357570, true);
-        await File.WriteAllTextAsync(new StubDlssService(_root).ScriptPathFor(2357570), "#!/bin/sh");
-
-        await service.SaveAndApplyAsync(LaunchOptions.Parse("DXVK_HDR=1 %command%"));
-
-        Assert.Contains("dlss-2357570.sh", _steam.LastBatch[2357570]);
-        Assert.Contains("DXVK_HDR=1", _steam.LastBatch[2357570]);
-    }
-
-    [Fact]
     public async Task ResetClearsTheProfileAndEveryLink()
     {
         var service = CreateService();
@@ -270,43 +253,7 @@ public sealed class GlobalProfileServiceTests : IDisposable
         Assert.Equal([2357570u], await service.GetLinkedAppsAsync());
     }
 
-    /// <summary>
-    /// A game's own DLSS script is added on top of the profile rather than coming from it, so a
-    /// game using DLSS must not look like it has drifted.
-    /// </summary>
-    [Fact]
-    public async Task KeepsAGameWhoseOnlyDifferenceIsItsOwnDlssScript()
-    {
-        var service = CreateService();
-        var scriptPath = Path.Combine(_root, "dlss-2138720.sh");
-
-        await File.WriteAllTextAsync(scriptPath, "#!/usr/bin/env bash\n");
-        await service.SaveAsync(LaunchOptions.Parse("DXVK_HDR=1 %command%"));
-        await service.SetLinkedAsync(2138720, true);
-
-        _steam.Stored[2138720] = $"DXVK_HDR=1 {scriptPath} %command%";
-
-        Assert.Equal(0, await service.ReconcileLinksAsync());
-        Assert.Equal([2138720u], await service.GetLinkedAppsAsync());
-    }
-
     [Fact]
     public async Task HasNothingToReconcileWhenNoGameFollowsIt() =>
         Assert.Equal(0, await CreateService().ReconcileLinksAsync());
-
-    private sealed class StubDlssService(string root) : IDlssManagementService
-    {
-        public string ScriptPathFor(uint appId) => Path.Combine(root, $"dlss-{appId}.sh");
-
-        public DlssGameStatus Inspect(SteamLibraryEntry entry) => new();
-
-        public Task<string> ApplyAsync(
-            SteamLibraryEntry entry,
-            DlssRuntime runtime,
-            CancellationToken cancellationToken = default) =>
-            Task.FromResult(ScriptPathFor(entry.AppId));
-
-        public Task<DlssRevertResult> RevertAsync(SteamLibraryEntry entry, CancellationToken cancellationToken = default) =>
-            Task.FromResult(DlssRevertResult.Nothing);
-    }
 }

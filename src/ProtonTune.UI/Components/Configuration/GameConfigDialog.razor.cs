@@ -1,10 +1,8 @@
 using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.Components.Web;
 using ProtonTune.Core.Launch;
-using ProtonTune.Core.Dlss;
 using ProtonTune.Core.Proton;
 using ProtonTune.Core.Steam;
-using ProtonTune.Services.Dlss;
 using ProtonTune.Services.Profiles;
 using ProtonTune.Services.Proton;
 using ProtonTune.Services.Steam;
@@ -23,12 +21,6 @@ public partial class GameConfigDialog : ComponentBase
 
     [Inject]
     private IGlobalProfileService Profile { get; set; } = null!;
-
-    [Inject]
-    private IDlssManagementService Dlss { get; set; } = null!;
-
-    [Inject]
-    private IDlssRuntimeProvider DlssRuntimes { get; set; } = null!;
 
     [Inject]
     private IProtonToolService ProtonTools { get; set; } = null!;
@@ -145,7 +137,7 @@ public partial class GameConfigDialog : ComponentBase
 
     /// <summary>Whether there is anything to reset at all.</summary>
     private bool HasAnythingToReset =>
-        Saved.Length > 0 || SavedUsesGlobal || Dlss.Inspect(Entry).HasManagedLinks;
+        Saved.Length > 0 || SavedUsesGlobal;
 
     /// <inheritdoc />
     protected override async Task OnParametersSetAsync()
@@ -231,12 +223,7 @@ public partial class GameConfigDialog : ComponentBase
             return;
         }
 
-        var global = await Profile.GetAsync();
-
-        var scriptPath = Dlss.ScriptPathFor(Entry.AppId);
-        var hadScript = Editing.HasWrapperCommand(scriptPath);
-
-        Editing = hadScript ? global.WithWrapperCommand(scriptPath, true) : global;
+        Editing = await Profile.GetAsync();
     }
 
     /// <summary>
@@ -261,12 +248,12 @@ public partial class GameConfigDialog : ComponentBase
     }
 
     /// <summary>
-    /// Puts the game back to how it was before ProtonTune touched it: no launch options, not
-    /// following the profile, and its own DLSS libraries restored.
+    /// Puts the game back to how it was before ProtonTune touched it: no launch options, and not
+    /// following the profile.
     /// </summary>
     /// <remarks>
-    /// Asks first. This clears settings the user cannot see from here — the DLSS libraries in
-    /// particular are files inside the install — so a single mis-click should not do it.
+    /// Asks first. Everything the game has configured goes at once, so a single mis-click should
+    /// not do it.
     /// </remarks>
     /// <remarks>
     /// The choice of Proton build is deliberately left alone. It is just as likely to have been
@@ -288,8 +275,6 @@ public partial class GameConfigDialog : ComponentBase
 
         try
         {
-            var reverted = await Dlss.RevertAsync(Entry);
-
             var result = await LaunchOptionsService.SaveAsync(Entry.AppId, string.Empty);
 
             SaveFailed = !result.IsSuccess;
@@ -303,7 +288,7 @@ public partial class GameConfigDialog : ComponentBase
                 UsesGlobal = false;
                 SavedUsesGlobal = false;
 
-                SaveMessage = ResetMessage(reverted) +
+                SaveMessage = "Reset. The game has no launch options." +
                               (result.SteamWasRestarted ? " Steam was closed and started again." : string.Empty);
             }
             else
@@ -322,24 +307,6 @@ public partial class GameConfigDialog : ComponentBase
             RefreshSteamState();
         }
     }
-
-    /// <summary>
-    /// Says what the reset actually did to the libraries, rather than assuming it did everything.
-    /// </summary>
-    /// <remarks>
-    /// A library whose backup has gone cannot be put back as the game shipped it, and only Steam
-    /// can supply that file again. Saying so is the difference between a reset the user can trust
-    /// and one that quietly leaves a file inside the install pointing at ProtonTune.
-    /// </remarks>
-    private static string ResetMessage(DlssRevertResult reverted) => reverted switch
-    {
-        { Replaced.Count: > 0 } => $"Reset, but {string.Join(", ", reverted.Replaced)} could not be " +
-                                   "put back as the game shipped it — no backup was left. A copy of the " +
-                                   "version ProtonTune had linked in is in its place. Verify the game in " +
-                                   "Steam to get the original file back.",
-        { Restored.Count: > 0 } => "Reset. The game has no launch options and its own DLSS libraries.",
-        _ => "Reset. The game has no launch options."
-    };
 
     /// <summary>Re-checks Steam's state, which can change while the dialog is open.</summary>
     private void RefreshSteamState()

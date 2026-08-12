@@ -3,11 +3,11 @@ using Microsoft.Extensions.Logging;
 using ProtonTune.Core.Hosting;
 using ProtonTune.Services.Cpu;
 using ProtonTune.Services.GameConfiguration;
-using ProtonTune.Services.Dlss;
 using ProtonTune.Services.Profiles;
 using ProtonTune.Services.Proton;
 using ProtonTune.Services.Settings;
 using ProtonTune.Services.Steam;
+using ProtonTune.Services.Storage;
 
 namespace ProtonTune.Services.DependencyExtensions;
 
@@ -33,8 +33,6 @@ public static class ServiceCollectionExtensions
         services.AddSingleton<IProtonToolService, ProtonToolService>();
         services.AddSingleton<ICpuTopologyService, LinuxCpuTopologyService>();
         services.AddSingleton<ProtonTuneStorage>();
-        services.AddSingleton<IDlssRuntimeProvider, ShippedDlssRuntimeProvider>();
-        services.AddSingleton<IDlssManagementService, DlssManagementService>();
         services.AddSingleton<IGlobalProfileService, GlobalProfileService>();
         services.AddSingleton<ISteamClient, SteamClient>();
         services.AddSingleton<IAppSettingsService, AppSettingsService>();

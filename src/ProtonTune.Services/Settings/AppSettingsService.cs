@@ -2,7 +2,7 @@ using System.Text.Json;
 using System.Text.Json.Serialization;
 using Microsoft.Extensions.Logging;
 using ProtonTune.Core.Settings;
-using ProtonTune.Services.Dlss;
+using ProtonTune.Services.Storage;
 
 namespace ProtonTune.Services.Settings;
 

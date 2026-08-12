@@ -1,6 +1,6 @@
 using Microsoft.Extensions.Logging.Abstractions;
 using ProtonTune.Core.Settings;
-using ProtonTune.Services.Dlss;
+using ProtonTune.Services.Storage;
 using ProtonTune.Services.Settings;
 
 namespace ProtonTune.Services.Tests.Settings;

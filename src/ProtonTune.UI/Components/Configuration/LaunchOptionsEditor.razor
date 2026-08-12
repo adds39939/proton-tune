@@ -98,30 +98,9 @@
                                IsOnChanged="@(on => ApplyWrapperCommand(GameModeCommand, on))"/>
             }
 
-            @if (selected.Is(SettingCategoryIds.Nvidia) && Entry is { } game)
+            @if (selected.Is(SettingCategoryIds.Nvidia) && Entry is not null)
             {
                 <h4 class="section-subtitle">Libraries</h4>
-
-                @if (BuildUpgradesDlss)
-                {
-                    <p class="section-note">
-                        @BuildName replaces these libraries itself, through the setting below, and
-                        without touching the files in the install. ProtonTune's own swap is not
-                        offered here: two mechanisms over the same files would fight.
-                    </p>
-
-                    @if (DlssIsManaged)
-                    {
-                        <p class="section-warning">
-                            This game still has ProtonTune's libraries linked in from an earlier
-                            build. Reset the game to put its own back before relying on Proton's.
-                        </p>
-                    }
-                }
-                else
-                {
-                    <DlssLibraryEditor Entry="@game" ScriptChanged="OnDlssScriptChanged"/>
-                }
 
                 @foreach (var definition in ProtonDlssSettings)
                 {

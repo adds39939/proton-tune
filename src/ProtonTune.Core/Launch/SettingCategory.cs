@@ -34,10 +34,10 @@ public sealed record SettingCategory(string Id, string Title, int Order)
 /// The section identifiers the application looks for by name.
 /// </summary>
 /// <remarks>
-/// Each of these carries a control that is more than a list of variables — the DLSS library swap,
-/// the CPU affinity picker, and MangoHud's option-by-option editor. A section can be renamed in
-/// its file freely; renaming one of these identifiers removes the extra control rather than the
-/// section, so it has to be changed here at the same time.
+/// Each of these is presented as more than a list of variables — the CPU affinity picker,
+/// MangoHud's option-by-option editor, and the headings Nvidia's settings are grouped under. A
+/// section can be renamed in its file freely; renaming one of these identifiers removes the extra
+/// presentation rather than the section, so it has to be changed here at the same time.
 /// </remarks>
 public static class SettingCategoryIds
 {

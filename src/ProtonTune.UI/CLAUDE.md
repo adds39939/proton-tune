@@ -140,8 +140,8 @@ initialiser, or a first run disagrees with a stored file that has no value for i
 **Which settings exist is data, not code.** `SettingCatalog` is injected, read once at startup
 from the YAML files in `ProtonTune.GameConfiguration`. Never hardcode a variable name or a section
 in a component: adding either is an edit to those files. The exceptions are the three section ids
-in `SettingCategoryIds`, which carry a control that is more than a list of variables — the DLSS
-library swap, the CPU affinity picker, and MangoHud's option-by-option editor.
+in `SettingCategoryIds`, which are presented as more than a list of variables — the CPU affinity
+picker, MangoHud's option-by-option editor, and the headings Nvidia's settings are grouped under.
 
 Because the sections come from files, there is no section to select until they are read. A
 component that opens on one has to pick it after the catalogue is available rather than in a field

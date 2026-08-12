@@ -32,8 +32,7 @@ public interface IGlobalProfileService
     /// Stores the profile and writes it to every game following it.
     /// </summary>
     /// <remarks>
-    /// A game keeps its own DLSS launch script, which names its app id and cannot come from a
-    /// shared profile. All the games are written in one pass so Steam is restarted once.
+    /// All the games are written in one pass so Steam is restarted once.
     /// </remarks>
     Task<LaunchOptionsSaveResult> SaveAndApplyAsync(
         LaunchOptions options,
