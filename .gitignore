@@ -1,5 +1,6 @@
 [Bb]in/
 [Oo]bj/
+[Tt]est[Rr]esults/
 **/wwwroot/_framework/
 *.staticwebassets.runtime.json
 *.staticwebassets.endpoints.json
