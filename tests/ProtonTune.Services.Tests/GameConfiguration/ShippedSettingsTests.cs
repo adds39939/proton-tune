@@ -194,6 +194,102 @@ public class ShippedSettingsTests
     }
 
     /// <summary>
+    /// Gamescope is configured entirely on its own command line, so a section describing only
+    /// variables could not describe it. Losing the command block leaves a section that names a few
+    /// environment variables and cannot switch the compositor on at all.
+    /// </summary>
+    [Fact]
+    public void ShipsGamescopeAsACommandRatherThanVariables()
+    {
+        var command = Catalog.FindCategory("gamescope")?.Command;
+
+        Assert.NotNull(command);
+        Assert.Equal("gamescope", command.Command);
+        Assert.Equal("--", command.Terminator);
+        Assert.NotEmpty(command.AllFlags);
+    }
+
+    /// <summary>
+    /// Taken from gamescope 3.16.25's own --help, which is where they are written down. A flag
+    /// spelled wrongly is not rejected — gamescope stops at the first thing that is not an option
+    /// and runs the rest as the command, so the game launches with the setting quietly missing.
+    /// </summary>
+    [Theory]
+    [InlineData("-W", SettingKind.Number)]
+    [InlineData("-H", SettingKind.Number)]
+    [InlineData("-r", SettingKind.Number)]
+    [InlineData("-f", SettingKind.Toggle)]
+    [InlineData("--adaptive-sync", SettingKind.Toggle)]
+    [InlineData("--hdr-enabled", SettingKind.Toggle)]
+    [InlineData("--hdr-itm-enabled", SettingKind.Toggle)]
+    [InlineData("--hdr-itm-sdr-nits", SettingKind.Number)]
+    [InlineData("--hdr-itm-target-nits", SettingKind.Number)]
+    [InlineData("--sdr-gamut-wideness", SettingKind.Text)]
+    [InlineData("--mangoapp", SettingKind.Toggle)]
+    public void OffersTheGamescopeFlagsWorthReachingFor(string flag, SettingKind kind)
+    {
+        var found = GamescopeFlag(flag);
+
+        Assert.NotNull(found);
+        Assert.Equal(kind, found.Kind);
+        Assert.NotEmpty(found.Label);
+    }
+
+    /// <summary>
+    /// The short spellings are what the guides write and what ProtonTune writes; the long ones are
+    /// what the documentation uses. A string using either has to be recognised, or setting a width
+    /// beside a <c>--output-width</c> already there writes a second one.
+    /// </summary>
+    [Theory]
+    [InlineData("-W", "--output-width")]
+    [InlineData("-H", "--output-height")]
+    [InlineData("-r", "--nested-refresh")]
+    [InlineData("-f", "--fullscreen")]
+    [InlineData("-S", "--scaler")]
+    [InlineData("-F", "--filter")]
+    public void RecognisesBothSpellingsOfAGamescopeFlag(string flag, string alias) =>
+        Assert.Contains(alias, GamescopeFlag(flag)!.Aliases);
+
+    /// <summary>
+    /// No flag may be declared twice, or which control writes it would depend on which group
+    /// happened to be read first. Aliases count: a spelling claimed by two flags is the same fault.
+    /// </summary>
+    [Fact]
+    public void NoGamescopeFlagIsDeclaredTwice()
+    {
+        var duplicates = Gamescope.AllFlags
+            .SelectMany(flag => flag.Spellings)
+            .GroupBy(spelling => spelling, StringComparer.Ordinal)
+            .Where(group => group.Count() > 1)
+            .Select(group => group.Key);
+
+        Assert.Empty(duplicates);
+    }
+
+    /// <summary>
+    /// Neither is normally worth setting — Gamescope enables its own layer for whatever it
+    /// launches — but both turn up in guides, and a variable with a definition is shown in the
+    /// section it belongs to rather than among the custom ones.
+    /// </summary>
+    [Theory]
+    [InlineData("ENABLE_GAMESCOPE_WSI")]
+    [InlineData("DISABLE_GAMESCOPE_WSI")]
+    public void PlacesTheWaylandLayerVariablesInTheGamescopeSection(string variable)
+    {
+        var definition = Catalog.Find(variable);
+
+        Assert.NotNull(definition);
+        Assert.Equal(SettingKind.Toggle, definition.Kind);
+        Assert.Equal("gamescope", definition.Category.Id);
+    }
+
+    private static CommandDefinition Gamescope => Catalog.FindCategory("gamescope")!.Command!;
+
+    private static CommandFlagDefinition? GamescopeFlag(string flag) =>
+        Gamescope.AllFlags.FirstOrDefault(candidate =>
+            string.Equals(candidate.Flag, flag, StringComparison.Ordinal));
+
+    /// <summary>
     /// Each of these was checked against the launch scripts of the builds installed here: the GE
     /// family reads them and no Valve build mentions them at all. Restricting them is what keeps
     /// a list of features that cannot be used off the screen.

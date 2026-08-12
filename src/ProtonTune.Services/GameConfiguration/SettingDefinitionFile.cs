@@ -22,6 +22,12 @@ internal sealed class SettingDefinitionFile
 
     public List<SettingEntry> Settings { get; set; } = [];
 
+    /// <summary>
+    /// Present when the section configures a command in the launch chain rather than, or as well
+    /// as, a set of variables.
+    /// </summary>
+    public CommandBlock? Command { get; set; }
+
     /// <summary>One variable within a section.</summary>
     internal sealed class SettingEntry
     {
@@ -88,6 +94,52 @@ internal sealed class SettingDefinitionFile
         public string? Kind { get; set; }
 
         public List<string> Choices { get; set; } = [];
+
+        public string? Placeholder { get; set; }
+    }
+
+    /// <summary>A command the section can put in the launch chain, and the flags it offers.</summary>
+    internal sealed class CommandBlock
+    {
+        /// <summary>The command as it is written into the chain.</summary>
+        public string? Name { get; set; }
+
+        public string? Label { get; set; }
+
+        public string? Description { get; set; }
+
+        /// <summary>What ends the command's own arguments, such as Gamescope's <c>--</c>.</summary>
+        public string? Terminator { get; set; }
+
+        public List<FlagGroup> Groups { get; set; } = [];
+    }
+
+    /// <summary>A set of flags shown together under a heading.</summary>
+    internal sealed class FlagGroup
+    {
+        /// <summary>The heading, which a short list with no natural divisions can leave out.</summary>
+        public string? Name { get; set; }
+
+        public List<FlagEntry> Flags { get; set; } = [];
+    }
+
+    /// <summary>One flag of a command.</summary>
+    internal sealed class FlagEntry
+    {
+        /// <summary>The flag as it is written, leading dashes and all.</summary>
+        public string? Flag { get; set; }
+
+        public string? Label { get; set; }
+
+        public string? Description { get; set; }
+
+        /// <summary>Defaults to a toggle, which writes the bare flag with no value.</summary>
+        public string? Kind { get; set; }
+
+        public List<string> Choices { get; set; } = [];
+
+        /// <summary>Other spellings recognised when a string is read.</summary>
+        public List<string> Aliases { get; set; } = [];
 
         public string? Placeholder { get; set; }
     }

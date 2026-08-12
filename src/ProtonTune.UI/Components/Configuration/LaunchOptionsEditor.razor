@@ -65,6 +65,16 @@
         {
             <h3 class="section-title">@selected.Title</h3>
 
+            @if (selected.Command is { } command)
+            {
+                <CommandEditor Command="@command" Options="@Options" OptionsChanged="Publish"/>
+
+                @if (ListedSettingsIn(selected).Any())
+                {
+                    <h4 class="section-subtitle">Settings</h4>
+                }
+            }
+
             @if (selected.Is(SettingCategoryIds.MangoHud))
             {
                 <CommandToggle Label="Launch through MangoHud"

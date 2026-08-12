@@ -54,6 +54,43 @@ These lists are always partial — MangoHud alone has well over a hundred option
 listed stays editable in the free-text field beneath the controls and is carried through
 untouched, so nothing is out of reach and nothing is lost by ProtonTune not knowing about it.
 
+## Sections that configure a command
+
+Not everything worth setting is an environment variable. Gamescope is configured entirely by flags
+on the command that launches it, so a section may declare a `command` block alongside — or instead
+of — its `settings`.
+
+```yaml
+command:
+  name: gamescope           # The command written into the launch chain.
+  label: Launch through Gamescope
+  description: What running the game through it does.
+  terminator: "--"          # optional: what ends the command's own arguments.
+  groups:
+    - name: Output          # optional: a group with no name shows no heading.
+      flags:
+        - flag: "-W"                    # As it is written, leading dashes and all.
+          aliases: ["--output-width"]   # optional: other spellings, recognised when read.
+          label: Output width
+          kind: number                  # toggle | choice | text | number
+          placeholder: "3840"
+          description: One sentence on what it does.
+
+        - flag: "-f"        # no kind, so a switch: written bare, with no value.
+          label: Fullscreen
+```
+
+Only `name` and `flag` are required. As with a compound variable's options, a flag's `kind`
+defaults to `toggle` rather than `text`, because command lines are mostly switches.
+
+`terminator` is what tells ProtonTune where the command's arguments stop and the next command in
+the chain begins. Declare it for any command that takes one; a command without it — `mangohud`,
+`gamemoderun` — is treated as taking no arguments of its own rather than claiming what follows it.
+
+Setting any flag adds the command to the chain if it is not already there, and switching the
+command off takes its flags with it. Flags ProtonTune does not list survive both untouched, and
+`aliases` is what stops a flag someone wrote out in full from being duplicated rather than edited.
+
 ## `protonBuilds`
 
 A list of regular expressions matched against a build's name and its version string. If any

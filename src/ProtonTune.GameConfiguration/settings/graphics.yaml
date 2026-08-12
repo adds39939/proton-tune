@@ -1,6 +1,6 @@
 id: graphics
 title: Graphics
-order: 4
+order: 5
 
 settings:
   - variable: DXVK_FRAME_RATE

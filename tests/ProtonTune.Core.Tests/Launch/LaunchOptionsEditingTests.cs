@@ -171,6 +171,75 @@ public class LaunchOptionsValidatorTests
         Assert.DoesNotContain(warnings, warning => warning.Contains("mangohud", StringComparison.Ordinal));
     }
 
+    /// <summary>
+    /// Gamescope draws the same overlay from the same variable, so a configuration using it is not
+    /// one that has forgotten to launch through mangohud.
+    /// </summary>
+    [Fact]
+    public void AcceptsGamescopeDrawingTheOverlayInsteadOfMangoHud()
+    {
+        var warnings = LaunchOptionsValidator.Validate(
+            LaunchOptions.Parse("MANGOHUD_CONFIG=fps_limit=60 gamescope --mangoapp -- %command%"));
+
+        Assert.DoesNotContain(warnings, warning => warning.Contains("mangohud", StringComparison.Ordinal));
+    }
+
+    [Fact]
+    public void WarnsWhenGamescopeAndMangoHudAreStacked()
+    {
+        var warnings = LaunchOptionsValidator.Validate(
+            LaunchOptions.Parse("gamescope -f -- mangohud %command%"));
+
+        Assert.Contains(warnings, warning => warning.Contains("--mangoapp", StringComparison.Ordinal));
+    }
+
+    /// <summary>
+    /// Gamescope's Vulkan layer does need ENABLE_GAMESCOPE_WSI, but Gamescope sets it for whatever
+    /// it launches, so the game has it either way. A rule for it would fire on the configuration
+    /// most people are actually running.
+    /// </summary>
+    [Fact]
+    public void SaysNothingAboutGamescopeHdrWithoutTheVariableItSetsItself()
+    {
+        var warnings = LaunchOptionsValidator.Validate(
+            LaunchOptions.Parse("gamescope --hdr-enabled -- %command%"));
+
+        Assert.Empty(warnings);
+    }
+
+    [Fact]
+    public void WarnsWhenInverseToneMappingHasNoHdrToMapInto()
+    {
+        var warnings = LaunchOptionsValidator.Validate(LaunchOptions.Parse(
+            "gamescope --hdr-itm-enabled --hdr-itm-target-nits 800 -- %command%"));
+
+        Assert.Contains(warnings, warning => warning.Contains("--hdr-enabled", StringComparison.Ordinal));
+    }
+
+    /// <summary>
+    /// <c>getopt_long</c> takes any unambiguous abbreviation of a long flag, so the shorter
+    /// spelling most guides use is a working one and must be recognised as the same setting.
+    /// </summary>
+    [Fact]
+    public void RecognisesTheAbbreviatedSpellingOfInverseToneMapping()
+    {
+        var warnings = LaunchOptionsValidator.Validate(
+            LaunchOptions.Parse("gamescope --hdr-itm-enable -- %command%"));
+
+        Assert.Contains(warnings, warning => warning.Contains("--hdr-enabled", StringComparison.Ordinal));
+    }
+
+    [Fact]
+    public void HasNothingToSayAboutARealGamescopeConfiguration()
+    {
+        var warnings = LaunchOptionsValidator.Validate(LaunchOptions.Parse(
+            "DXVK_HDR=1 PROTON_ENABLE_WAYLAND=1 PROTON_ENABLE_HDR=1 " +
+            "gamescope -W 3840 -H 2160 -r 240 -f --hdr-enabled --hdr-itm-enabled " +
+            "--hdr-itm-sdr-nits 203 --hdr-itm-target-nits 800 --adaptive-sync -- %command%"));
+
+        Assert.Empty(warnings);
+    }
+
     [Fact]
     public void HasNothingToSayAboutARealConfiguration()
     {

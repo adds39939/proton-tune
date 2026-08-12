@@ -1,6 +1,6 @@
 id: cpu
 title: CPU
-order: 5
+order: 6
 
 settings:
   - variable: PROTON_NO_ESYNC

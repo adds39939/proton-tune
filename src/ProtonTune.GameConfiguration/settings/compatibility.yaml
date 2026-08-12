@@ -1,6 +1,6 @@
 id: compatibility
 title: Compatibility
-order: 7
+order: 8
 
 settings:
   - variable: WINEDLLOVERRIDES

@@ -56,7 +56,10 @@ public sealed class YamlSettingCatalogReader(string directory, ILogger<YamlSetti
                 continue;
             }
 
-            var category = new SettingCategory(id, file.Title ?? id, file.Order);
+            var category = new SettingCategory(id, file.Title ?? id, file.Order)
+            {
+                Command = Convert(file.Command, path)
+            };
 
             categories.Add(category);
             definitions.AddRange(file.Settings.Select(entry => Convert(entry, category, path)).OfType<SettingDefinition>());
@@ -172,6 +175,69 @@ public sealed class YamlSettingCatalogReader(string directory, ILogger<YamlSetti
             Choices = option.Choices,
             Placeholder = option.Placeholder,
             Description = option.Description
+        };
+    }
+
+    /// <summary>
+    /// Reads the command a section puts in the launch chain.
+    /// </summary>
+    /// <returns>
+    /// <see langword="null"/> where none is declared, or where one is declared without naming the
+    /// command to run — a toggle that inserts nothing has nothing to say.
+    /// </returns>
+    /// <remarks>
+    /// A command with no flags at all is kept, unlike a compound with no options. There the
+    /// options were the whole editor; here the command itself is a setting, and launching through
+    /// it is worth offering on its own.
+    /// </remarks>
+    private CommandDefinition? Convert(SettingDefinitionFile.CommandBlock? block, string path)
+    {
+        if (block is null)
+        {
+            return null;
+        }
+
+        if (block.Name is not { Length: > 0 } name)
+        {
+            logger.LogWarning("Skipped the command in {Path}; it names no command to run.", path);
+
+            return null;
+        }
+
+        return new CommandDefinition(name, block.Label ?? name)
+        {
+            Description = block.Description,
+            Terminator = block.Terminator is { Length: > 0 } terminator ? terminator : null,
+            Groups = block.Groups
+                .Select(group => new CommandFlagGroup(
+                    group.Name,
+                    group.Flags
+                        .Select(flag => Convert(flag, name, path))
+                        .OfType<CommandFlagDefinition>()
+                        .ToList()))
+                .Where(group => group.Flags.Count > 0)
+                .ToList()
+        };
+    }
+
+    private CommandFlagDefinition? Convert(SettingDefinitionFile.FlagEntry entry, string command, string path)
+    {
+        if (entry.Flag is not { Length: > 0 } flag)
+        {
+            logger.LogWarning("Skipped a flag of {Command} in {Path}; it names no flag.", command, path);
+
+            return null;
+        }
+
+        return new CommandFlagDefinition(flag, entry.Label ?? flag)
+        {
+            Kind = entry.Kind is { Length: > 0 }
+                ? ParseKind(entry.Kind, $"{command} {flag}", path)
+                : SettingKind.Toggle,
+            Choices = entry.Choices,
+            Aliases = entry.Aliases,
+            Placeholder = entry.Placeholder,
+            Description = entry.Description
         };
     }
 

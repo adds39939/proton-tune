@@ -1,6 +1,6 @@
 id: mangohud
 title: MangoHud
-order: 6
+order: 7
 
 settings:
   # MANGOHUD_CONFIG holds many settings in one comma-separated string, so it is described as a

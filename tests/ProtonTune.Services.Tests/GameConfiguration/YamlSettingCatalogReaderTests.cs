@@ -303,6 +303,130 @@ public sealed class YamlSettingCatalogReaderTests : IDisposable
     }
 
     [Fact]
+    public void ReadsACommandAndItsFlags()
+    {
+        Write("a.yaml", """
+            id: gamescope
+            command:
+              name: gamescope
+              label: Launch through Gamescope
+              description: Runs the game inside its own compositor.
+              terminator: "--"
+              groups:
+                - name: Output
+                  flags:
+                    - flag: "-W"
+                      aliases: ["--output-width"]
+                      label: Output width
+                      kind: number
+                      placeholder: "3840"
+                    - flag: "-f"
+                      label: Fullscreen
+            settings: []
+            """);
+
+        var command = Assert.Single(Read().Categories).Command;
+
+        Assert.NotNull(command);
+        Assert.Equal("gamescope", command.Command);
+        Assert.Equal("Launch through Gamescope", command.Label);
+        Assert.Equal("--", command.Terminator);
+        Assert.Equal("Output", Assert.Single(command.Groups).Name);
+
+        var width = command.AllFlags.First();
+
+        Assert.Equal(SettingKind.Number, width.Kind);
+        Assert.Equal(["--output-width"], width.Aliases);
+        Assert.Equal("3840", width.Placeholder);
+    }
+
+    /// <summary>
+    /// A flag with no kind is a switch, written bare. That differs from a setting, which defaults
+    /// to a text box — command lines are mostly switches.
+    /// </summary>
+    [Fact]
+    public void TreatsAFlagWithNoKindAsASwitch()
+    {
+        Write("a.yaml", """
+            id: a
+            command:
+              name: gamescope
+              groups:
+                - flags:
+                    - flag: "-f"
+                      label: Fullscreen
+            settings: []
+            """);
+
+        var flag = Assert.Single(Assert.Single(Read().Categories).Command!.AllFlags);
+
+        Assert.Equal(SettingKind.Toggle, flag.Kind);
+        Assert.False(flag.TakesValue);
+    }
+
+    /// <summary>
+    /// Only commands that take arguments of their own declare a terminator. Without one there is
+    /// no telling where a command's arguments stop, so it is treated as taking none.
+    /// </summary>
+    [Fact]
+    public void LeavesACommandWithNoTerminatorWithoutOne()
+    {
+        Write("a.yaml", "id: a\ncommand:\n  name: mangohud\nsettings: []\n");
+
+        Assert.Null(Assert.Single(Read().Categories).Command!.Terminator);
+    }
+
+    /// <summary>
+    /// Unlike a compound with no options, which loses the editor it was replacing. Here the
+    /// command itself is the setting, and launching through it is worth offering alone.
+    /// </summary>
+    [Fact]
+    public void KeepsACommandThatOffersNoFlags()
+    {
+        Write("a.yaml", "id: a\ncommand:\n  name: gamemoderun\n  label: Launch through GameMode\nsettings: []\n");
+
+        var command = Assert.Single(Read().Categories).Command;
+
+        Assert.NotNull(command);
+        Assert.Empty(command.AllFlags);
+    }
+
+    [Fact]
+    public void SkipsACommandThatNamesNothingToRun()
+    {
+        Write("a.yaml", "id: a\ncommand:\n  label: Launch through nothing\nsettings: []\n");
+
+        Assert.Null(Assert.Single(Read().Categories).Command);
+    }
+
+    [Fact]
+    public void SkipsAFlagThatNamesNoFlag()
+    {
+        Write("a.yaml", """
+            id: a
+            command:
+              name: gamescope
+              groups:
+                - flags:
+                    - label: Nothing to set
+                    - flag: "-f"
+                      label: Fullscreen
+            settings: []
+            """);
+
+        Assert.Equal(["-f"], Assert.Single(Read().Categories).Command!.AllFlags.Select(flag => flag.Flag));
+    }
+
+    /// <summary>A section is variables, a command, or both; none of the three is required.</summary>
+    [Fact]
+    public void LeavesASectionOfVariablesWithNoCommand()
+    {
+        Write("a.yaml", "id: a\nsettings:\n  - variable: DXVK_HDR\n    label: HDR\n");
+
+        Assert.Null(Assert.Single(Read().Categories).Command);
+    }
+
+    [Fact]
     public void OneBrokenFileDoesNotCostTheOthers()
     {
         Write("broken.yaml", "id: broken\nsettings:\n  - variable: [unclosed\n");

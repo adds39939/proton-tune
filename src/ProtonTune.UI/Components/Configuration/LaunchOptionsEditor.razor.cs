@@ -163,6 +163,11 @@ public partial class LaunchOptionsEditor : ComponentBase
             return true;
         }
 
+        if (category.Command is not null)
+        {
+            return true;
+        }
+
         if (category.Is(SettingCategoryIds.Nvidia) && Entry is not null)
         {
             return true;
@@ -222,11 +227,15 @@ public partial class LaunchOptionsEditor : ComponentBase
     /// <summary>Whether ProtonTune's swapped libraries are still in place inside the install.</summary>
     private bool DlssIsManaged => Entry is not null && Dlss.Inspect(Entry).HasManagedLinks;
 
-    /// <summary>How many of a category's settings are set.</summary>
+    /// <summary>
+    /// How many of a category's settings are set, counting the flags of its command alongside its
+    /// variables — both are things the user has configured there.
+    /// </summary>
     private int SetCountIn(SettingCategory category) =>
         DefinitionsIn(category)
             .Where(IsVisible)
-            .Count(definition => Options.FindEnvironment(definition.Variable) is not null);
+            .Count(definition => Options.FindEnvironment(definition.Variable) is not null) +
+        (category.Command is { } command ? command.AllFlags.Count(flag => Options.HasFlag(command, flag)) : 0);
 
     /// <summary>Opens on the first category with something set, so a configured game shows it.</summary>
     public void SelectFirstConfiguredCategory()

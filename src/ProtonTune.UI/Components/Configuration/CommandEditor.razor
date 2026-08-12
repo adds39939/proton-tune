@@ -1,0 +1,78 @@
+<CommandToggle Label="@Command.Label"
+               Command="@Command.Command"
+               Description="@Command.Description"
+               IsOn="@IsOn"
+               IsOnChanged="OnCommandToggled"/>
+
+@foreach (var group in Command.Groups)
+{
+    @if (group.Name is { Length: > 0 } name)
+    {
+        <h4 class="group" @key="name">@name</h4>
+    }
+
+    @foreach (var flag in group.Flags)
+    {
+        <div class="flag" @key="flag.Flag">
+            <div class="flag-label">
+                <span class="flag-name">@flag.Label</span>
+                @if (flag.Description is not null)
+                {
+                    <span class="flag-description">@flag.Description</span>
+                }
+                <code class="flag-token">@flag.Flag</code>
+            </div>
+
+            <div class="flag-control">
+                @switch (flag.Kind)
+                {
+                    case SettingKind.Toggle:
+                        <label class="switch">
+                            <input type="checkbox"
+                                   checked="@Options.HasFlag(Command, flag)"
+                                   @onchange="@(args => ToggleFlag(flag, args.Value is true))"/>
+                            <span>@(Options.HasFlag(Command, flag) ? "On" : "Off")</span>
+                        </label>
+
+                        break;
+
+                    case SettingKind.Choice:
+                        <span class="select-shell">
+                            <select class="control"
+                                    value="@(Options.FindFlag(Command, flag) ?? string.Empty)"
+                                    @onchange="@(args => SetFlag(flag, args.Value?.ToString()))">
+                                <option value="">Not set</option>
+                                @foreach (var choice in ChoicesFor(flag))
+                                {
+                                    <option value="@choice" @key="choice">@choice</option>
+                                }
+                            </select>
+
+                            <ChevronIcon/>
+                        </span>
+
+                        break;
+
+                    case SettingKind.Number:
+                        <input class="control"
+                               type="number"
+                               placeholder="@flag.Placeholder"
+                               value="@(Options.FindFlag(Command, flag) ?? string.Empty)"
+                               @onchange="@(args => SetFlag(flag, args.Value?.ToString()))"/>
+
+                        break;
+
+                    default:
+                        <input class="control"
+                               type="text"
+                               spellcheck="false"
+                               placeholder="@flag.Placeholder"
+                               value="@(Options.FindFlag(Command, flag) ?? string.Empty)"
+                               @onchange="@(args => SetFlag(flag, args.Value?.ToString()))"/>
+
+                        break;
+                }
+            </div>
+        </div>
+    }
+}

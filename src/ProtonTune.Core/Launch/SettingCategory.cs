@@ -16,6 +16,16 @@ namespace ProtonTune.Core.Launch;
 /// <param name="Order">Where the section sits in the list, lowest first.</param>
 public sealed record SettingCategory(string Id, string Title, int Order)
 {
+    /// <summary>
+    /// The command this section puts in the launch chain, where it configures one rather than a
+    /// set of variables. Null for the sections that are variables alone.
+    /// </summary>
+    /// <remarks>
+    /// Gamescope is the reason this exists: none of what it does is reachable through the
+    /// environment, so a section able to describe only variables could not describe it.
+    /// </remarks>
+    public CommandDefinition? Command { get; init; }
+
     /// <summary>Whether this is the section with the given identifier.</summary>
     public bool Is(string id) => string.Equals(Id, id, StringComparison.OrdinalIgnoreCase);
 }
