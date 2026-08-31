@@ -13,6 +13,7 @@ namespace ProtonTune.Services.Steam;
 public sealed class SteamLaunchOptionsService(
     ISteamInstallLocator installLocator,
     ISteamClient steamClient,
+    ISteamClientBridge bridge,
     IAppSettingsService settings,
     ILogger<SteamLaunchOptionsService> logger) : ISteamLaunchOptionsService
 {
@@ -22,35 +23,119 @@ public sealed class SteamLaunchOptionsService(
     /// </summary>
     private static readonly TimeSpan ShutdownTimeout = TimeSpan.FromSeconds(30);
 
-    /// <inheritdoc />
-    public async Task<LaunchOptions> GetAsync(uint appId, CancellationToken cancellationToken = default)
-    {
-        var configPath = FindUserConfig();
+    /// <summary>
+    /// How many times to ask Steam what it holds before deciding a change did not take, and how
+    /// long to leave between asking. Short: this only runs after Steam has already said yes, so
+    /// it is waiting on the client to catch up with itself rather than on the change.
+    /// </summary>
+    private const int SettleAttempts = 5;
 
-        if (configPath is null)
+    private static readonly TimeSpan SettleInterval = TimeSpan.FromMilliseconds(400);
+
+    /// <inheritdoc />
+    public async Task<LaunchOptions> GetAsync(uint appId, CancellationToken cancellationToken = default) =>
+        (await GetManyAsync([appId], cancellationToken).ConfigureAwait(false)).GetValueOrDefault(appId)
+        ?? new LaunchOptions();
+
+    /// <inheritdoc />
+    /// <remarks>
+    /// Asks the running client before reading the file. A Steam that is up holds the current
+    /// values in memory and writes them out on its own schedule, so the file is behind whenever
+    /// someone has just changed something — here or in Steam's own interface. Reading the file
+    /// first and writing back what it said is how someone's change gets undone.
+    /// </remarks>
+    public async Task<IReadOnlyDictionary<uint, LaunchOptions>> GetManyAsync(
+        IReadOnlyCollection<uint> appIds,
+        CancellationToken cancellationToken = default)
+    {
+        var found = new Dictionary<uint, LaunchOptions>();
+
+        if (appIds.Count == 0)
         {
-            return new LaunchOptions();
+            return found;
+        }
+
+        var outstanding = new List<uint>();
+
+        await using (var session = await bridge.ConnectAsync(cancellationToken).ConfigureAwait(false))
+        {
+            foreach (var appId in appIds)
+            {
+                if (session is not null &&
+                    await session.GetAppDetailsAsync(appId, cancellationToken).ConfigureAwait(false) is { } details)
+                {
+                    found[appId] = LaunchOptions.Parse(details.LaunchOptions);
+                }
+                else
+                {
+                    outstanding.Add(appId);
+                }
+            }
+        }
+
+        if (outstanding.Count == 0)
+        {
+            return found;
+        }
+
+        // Whatever the client could not answer for comes from the file, read once for the lot of
+        // them rather than reopened per game.
+        var document = await ReadUserConfigAsync(cancellationToken).ConfigureAwait(false);
+
+        foreach (var appId in outstanding)
+        {
+            found[appId] = document is null
+                ? new LaunchOptions()
+                : LaunchOptions.Parse(SteamConfigText.GetValue(document, PathTo(appId)));
+        }
+
+        return found;
+    }
+
+    /// <summary>
+    /// Reads the account's configuration, or <see langword="null"/> when there is none to read.
+    /// </summary>
+    /// <remarks>
+    /// An unreadable file is a warning rather than a failure. These are settings someone can set
+    /// again, and refusing to open a game's configuration because the file behind it could not be
+    /// read would be worse than opening it empty.
+    /// </remarks>
+    private async Task<string?> ReadUserConfigAsync(CancellationToken cancellationToken)
+    {
+        if (FindUserConfig() is not { } configPath)
+        {
+            return null;
         }
 
         try
         {
-            var document = await File.ReadAllTextAsync(configPath, cancellationToken).ConfigureAwait(false);
-
-            return LaunchOptions.Parse(SteamConfigText.GetValue(document, PathTo(appId)));
+            return await File.ReadAllTextAsync(configPath, cancellationToken).ConfigureAwait(false);
         }
         catch (Exception e) when (e is IOException or UnauthorizedAccessException)
         {
             logger.LogWarning(e, "Could not read {ConfigPath}.", configPath);
 
-            return new LaunchOptions();
+            return null;
         }
     }
 
     /// <inheritdoc />
-    public bool RequiresSteamRestart() => steamClient.IsRunning();
+    public async Task<SteamSaveMethod> GetSaveMethodAsync(CancellationToken cancellationToken = default)
+    {
+        if (!steamClient.IsRunning())
+        {
+            return SteamSaveMethod.Files;
+        }
 
-    /// <inheritdoc />
-    public bool IsGameRunning() => steamClient.IsGameRunning();
+        await using var session = await bridge.ConnectAsync(cancellationToken).ConfigureAwait(false);
+
+        if (session is not null)
+        {
+            return SteamSaveMethod.Live;
+        }
+
+        return steamClient.IsGameRunning() ? SteamSaveMethod.Blocked : SteamSaveMethod.Restart;
+    }
 
     /// <inheritdoc />
     public Task<LaunchOptionsSaveResult> SaveAsync(
@@ -67,10 +152,10 @@ public sealed class SteamLaunchOptionsService(
 
     /// <inheritdoc />
     /// <remarks>
-    /// The order is load bearing. Both documents are read only after Steam has gone, since it
-    /// rewrites them as it exits and anything read earlier is already stale; both are then
-    /// prepared in full before either is written, so a file that turns out not to be the document
-    /// expected stops the save while everything is still untouched.
+    /// Through the running client where it will take the change, and through its files where it
+    /// will not. The client is tried first and every failure to reach it falls through quietly:
+    /// Steam may not be running, live editing may be off, or it may be part way through starting,
+    /// and in all of those the long way round still works.
     /// </remarks>
     public async Task<LaunchOptionsSaveResult> SaveManyAsync(
         IReadOnlyDictionary<uint, string> launchOptionsByApp,
@@ -82,6 +167,167 @@ public sealed class SteamLaunchOptionsService(
             return new LaunchOptionsSaveResult(LaunchOptionsSaveStatus.Saved);
         }
 
+        await using (var session = await bridge.ConnectAsync(cancellationToken).ConfigureAwait(false))
+        {
+            if (session is not null)
+            {
+                return await SaveThroughSteamAsync(
+                    session,
+                    launchOptionsByApp,
+                    compatToolsByApp,
+                    cancellationToken).ConfigureAwait(false);
+            }
+        }
+
+        return await SaveThroughFilesAsync(launchOptionsByApp, compatToolsByApp, cancellationToken)
+            .ConfigureAwait(false);
+    }
+
+    /// <summary>
+    /// Hands the change to the running Steam client, which applies it at once and writes it out
+    /// itself.
+    /// </summary>
+    /// <remarks>
+    /// Nothing is closed and no file of Steam's is touched, so there is nothing here to undo and
+    /// no copy taken — the backups exist to protect against ProtonTune editing files it does not
+    /// own, which on this path it does not do. A game in progress is likewise no obstacle: the
+    /// change lands in the client and applies at the next launch.
+    /// </remarks>
+    private async Task<LaunchOptionsSaveResult> SaveThroughSteamAsync(
+        ISteamClientSession session,
+        IReadOnlyDictionary<uint, string> launchOptionsByApp,
+        IReadOnlyDictionary<uint, string> compatToolsByApp,
+        CancellationToken cancellationToken)
+    {
+        var refused = new List<string>();
+
+        foreach (var (appId, launchOptions) in launchOptionsByApp)
+        {
+            if (!await session.SetLaunchOptionsAsync(appId, launchOptions, cancellationToken).ConfigureAwait(false))
+            {
+                refused.Add($"the launch options of {appId}");
+            }
+        }
+
+        foreach (var (appId, toolName) in compatToolsByApp)
+        {
+            if (!await session.SetCompatToolAsync(appId, toolName, cancellationToken).ConfigureAwait(false))
+            {
+                refused.Add($"the Proton build of {appId}");
+            }
+        }
+
+        if (refused.Count > 0)
+        {
+            return new LaunchOptionsSaveResult(
+                LaunchOptionsSaveStatus.WriteFailed,
+                $"Steam did not accept {string.Join(", ", refused)}. Anything not named here was applied.");
+        }
+
+        var mismatched = await FindLiveMismatchesAsync(
+            session,
+            launchOptionsByApp,
+            compatToolsByApp,
+            cancellationToken).ConfigureAwait(false);
+
+        if (mismatched.Count > 0)
+        {
+            return new LaunchOptionsSaveResult(
+                LaunchOptionsSaveStatus.WriteFailed,
+                $"Steam took the change but reports something else for {string.Join(", ", mismatched)}.");
+        }
+
+        logger.LogInformation(
+            "Set launch options for {AppCount} apps and Proton builds for {ToolCount} through the running client.",
+            launchOptionsByApp.Count,
+            compatToolsByApp.Count);
+
+        return new LaunchOptionsSaveResult(LaunchOptionsSaveStatus.Saved);
+    }
+
+    /// <summary>
+    /// Asks Steam back for what it now holds, and reports what does not match what was asked for.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// Re-read until it settles rather than judged on the first answer. Steam accepts a change and
+    /// updates the details it reports separately, a moment later, so a read taken straight
+    /// afterwards can still be describing the state before the change. Measured against a running
+    /// client: the launch options were already current, the Proton build was not.
+    /// </para>
+    /// <para>
+    /// A cleared Proton build is not checked at all. Asked to let Steam choose, Steam chooses —
+    /// and then reports the build it picked rather than the nothing that was stored, so comparing
+    /// the two would call every successful reset a failure.
+    /// </para>
+    /// </remarks>
+    private static async Task<IReadOnlyList<string>> FindLiveMismatchesAsync(
+        ISteamClientSession session,
+        IReadOnlyDictionary<uint, string> launchOptionsByApp,
+        IReadOnlyDictionary<uint, string> compatToolsByApp,
+        CancellationToken cancellationToken)
+    {
+        var outstanding = new List<Expectation>();
+
+        foreach (var (appId, launchOptions) in launchOptionsByApp)
+        {
+            outstanding.Add(new Expectation(
+                appId,
+                $"the launch options of {appId}",
+                details => string.Equals(details.LaunchOptions, launchOptions, StringComparison.Ordinal)));
+        }
+
+        foreach (var (appId, toolName) in compatToolsByApp)
+        {
+            if (toolName.Length == 0)
+            {
+                continue;
+            }
+
+            outstanding.Add(new Expectation(
+                appId,
+                $"the Proton build of {appId}",
+                details => string.Equals(details.CompatToolName, toolName, StringComparison.OrdinalIgnoreCase)));
+        }
+
+        for (var attempt = 1; outstanding.Count > 0 && attempt <= SettleAttempts; attempt++)
+        {
+            if (attempt > 1)
+            {
+                await Task.Delay(SettleInterval, cancellationToken).ConfigureAwait(false);
+            }
+
+            var readBack = new Dictionary<uint, SteamAppDetails?>();
+
+            foreach (var appId in outstanding.Select(expectation => expectation.AppId).Distinct())
+            {
+                readBack[appId] = await session.GetAppDetailsAsync(appId, cancellationToken).ConfigureAwait(false);
+            }
+
+            outstanding.RemoveAll(expectation =>
+                readBack[expectation.AppId] is { } details && expectation.Matches(details));
+        }
+
+        return outstanding.Select(expectation => expectation.Description).ToList();
+    }
+
+    /// <summary>One thing that was asked for, and how to recognise Steam having done it.</summary>
+    private sealed record Expectation(uint AppId, string Description, Func<SteamAppDetails, bool> Matches);
+
+    /// <summary>
+    /// Writes the change into the files Steam owns, closing it first where it is running.
+    /// </summary>
+    /// <remarks>
+    /// The order is load bearing. Both documents are read only after Steam has gone, since it
+    /// rewrites them as it exits and anything read earlier is already stale; both are then
+    /// prepared in full before either is written, so a file that turns out not to be the document
+    /// expected stops the save while everything is still untouched.
+    /// </remarks>
+    private async Task<LaunchOptionsSaveResult> SaveThroughFilesAsync(
+        IReadOnlyDictionary<uint, string> launchOptionsByApp,
+        IReadOnlyDictionary<uint, string> compatToolsByApp,
+        CancellationToken cancellationToken)
+    {
         string? userConfigPath = null;
 
         if (launchOptionsByApp.Count > 0 && (userConfigPath = FindUserConfig()) is null)

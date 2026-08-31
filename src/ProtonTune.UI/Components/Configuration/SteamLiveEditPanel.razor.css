@@ -1,0 +1,109 @@
+.live-edit {
+    margin-top: 24px;
+    padding: 16px;
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    background: var(--surface-1);
+}
+
+.live-edit-row {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 32px;
+}
+
+.live-edit-label {
+    min-width: 0;
+    max-width: 68ch;
+}
+
+.live-edit-label h2 {
+    margin: 0;
+    font-size: 14px;
+    font-weight: 600;
+}
+
+.live-edit-label p {
+    margin: 3px 0 0;
+    color: var(--text-muted);
+    font-size: 12px;
+    line-height: 1.6;
+}
+
+.live-edit-control {
+    flex: none;
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    min-width: 180px;
+}
+
+.switch {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    color: var(--text-muted);
+    font-size: 12px;
+    cursor: pointer;
+    user-select: none;
+}
+
+.switch input {
+    accent-color: var(--accent);
+    width: 15px;
+    height: 15px;
+    cursor: pointer;
+}
+
+.switch input:disabled {
+    cursor: default;
+}
+
+.control-note {
+    color: var(--text-muted);
+    font-size: 12px;
+    text-align: right;
+}
+
+/* What it does to the machine ---------------------------------------------- */
+
+.explanation {
+    margin: 12px 0 0;
+    max-width: 78ch;
+    color: var(--text-muted);
+    font-size: 12px;
+    line-height: 1.6;
+}
+
+.explanation code {
+    font-family: "JetBrains Mono", ui-monospace, monospace;
+    font-size: 11px;
+}
+
+.marker-path {
+    margin: 6px 0 0;
+    color: var(--text-muted);
+    font-family: "JetBrains Mono", ui-monospace, monospace;
+    font-size: 10px;
+    overflow-wrap: anywhere;
+}
+
+.message {
+    margin: 12px 0 0;
+    color: var(--text-muted);
+    font-size: 12px;
+    line-height: 1.6;
+}
+
+.is-error {
+    color: var(--danger);
+}
+
+.is-success {
+    color: var(--accent);
+}
+
+.is-warning {
+    color: var(--warning);
+}

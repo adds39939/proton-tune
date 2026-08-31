@@ -55,9 +55,17 @@ public partial class GameConfigDialog : ComponentBase
 
     private bool SaveFailed { get; set; }
 
-    private bool WillRestartSteam { get; set; }
+    /// <summary>How a save made now would reach Steam, which is what the footer warns about.</summary>
+    private SteamSaveMethod SaveMethod { get; set; }
 
-    private bool GameIsRunning { get; set; }
+    /// <summary>Whether saving would close Steam and start it again.</summary>
+    private bool WillRestartSteam => SaveMethod == SteamSaveMethod.Restart;
+
+    /// <summary>
+    /// Whether a running game stands in the way. Only when Steam would have to be closed for the
+    /// save — with live editing the change goes into the running client and the game plays on.
+    /// </summary>
+    private bool GameIsRunning => SaveMethod == SteamSaveMethod.Blocked;
 
     /// <summary>Whether this game is following the global profile.</summary>
     private bool UsesGlobal { get; set; }
@@ -165,7 +173,7 @@ public partial class GameConfigDialog : ComponentBase
 
             CompatTool = SavedCompatTool;
 
-            RefreshSteamState();
+            await RefreshSteamStateAsync();
         }
         catch (Exception e)
         {
@@ -304,16 +312,13 @@ public partial class GameConfigDialog : ComponentBase
         finally
         {
             IsSaving = false;
-            RefreshSteamState();
+            await RefreshSteamStateAsync();
         }
     }
 
     /// <summary>Re-checks Steam's state, which can change while the dialog is open.</summary>
-    private void RefreshSteamState()
-    {
-        GameIsRunning = LaunchOptionsService.IsGameRunning();
-        WillRestartSteam = LaunchOptionsService.RequiresSteamRestart();
-    }
+    private async Task RefreshSteamStateAsync() =>
+        SaveMethod = await LaunchOptionsService.GetSaveMethodAsync();
 
     /// <summary>
     /// Opens the confirmation rather than saving. Saving closes Steam and writes to files it owns,
@@ -369,7 +374,7 @@ public partial class GameConfigDialog : ComponentBase
         {
             IsSaving = false;
             IsConfirmingSave = false;
-            RefreshSteamState();
+            await RefreshSteamStateAsync();
         }
     }
 

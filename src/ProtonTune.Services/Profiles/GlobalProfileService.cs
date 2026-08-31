@@ -104,9 +104,13 @@ public sealed class GlobalProfileService(
         var expected = LaunchOptions.Parse(stored.LaunchOptions);
         var stillFollowing = new List<uint>();
 
+        var actualByApp = await launchOptions
+            .GetManyAsync(stored.LinkedApps, cancellationToken)
+            .ConfigureAwait(false);
+
         foreach (var appId in stored.LinkedApps)
         {
-            var actual = await launchOptions.GetAsync(appId, cancellationToken).ConfigureAwait(false);
+            var actual = actualByApp.GetValueOrDefault(appId) ?? new LaunchOptions();
 
             if (string.Equals(actual.Format(), expected.Format(), StringComparison.Ordinal))
             {

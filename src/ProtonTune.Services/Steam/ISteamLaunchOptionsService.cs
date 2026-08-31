@@ -17,22 +17,38 @@ public interface ISteamLaunchOptionsService
     Task<LaunchOptions> GetAsync(uint appId, CancellationToken cancellationToken = default);
 
     /// <summary>
-    /// Whether saving right now would require closing Steam first.
+    /// Reads the launch options of several apps at once.
     /// </summary>
-    bool RequiresSteamRestart();
+    /// <returns>An entry for every app asked about, empty where the app has none set.</returns>
+    /// <remarks>
+    /// One trip for the batch, as with saving. Read one at a time this would be a connection to
+    /// Steam and a pass over its configuration file per game, which anything walking a library —
+    /// working out which games still follow the global profile, most of all — turns into a wait
+    /// proportional to how many games someone owns.
+    /// </remarks>
+    Task<IReadOnlyDictionary<uint, LaunchOptions>> GetManyAsync(
+        IReadOnlyCollection<uint> appIds,
+        CancellationToken cancellationToken = default);
 
     /// <summary>
-    /// Whether a game is currently running, in which case saving is refused outright.
+    /// How a save made right now would reach Steam.
     /// </summary>
-    bool IsGameRunning();
+    /// <remarks>
+    /// Asked rather than worked out from whether Steam is running, because the answer turns on
+    /// whether the running client is offering live editing — which cannot be known without
+    /// speaking to it.
+    /// </remarks>
+    Task<SteamSaveMethod> GetSaveMethodAsync(CancellationToken cancellationToken = default);
 
     /// <summary>
     /// Writes launch options for an app, restarting Steam around the write when it is running.
     /// </summary>
     /// <remarks>
-    /// Steam keeps its configuration in memory and writes it out as it exits, so a change made
-    /// while it is running is discarded moments later. The only order that works is to close
-    /// Steam, write, and start it again — never to write and then restart.
+    /// Where the running client offers live editing, the change is handed to Steam itself and
+    /// nothing is closed. Otherwise Steam keeps its configuration in memory and writes it out as
+    /// it exits, so a change made while it is running is discarded moments later — and the only
+    /// order that works is to close Steam, write, and start it again, never to write and then
+    /// restart.
     /// </remarks>
     Task<LaunchOptionsSaveResult> SaveAsync(
         uint appId,
@@ -43,9 +59,10 @@ public interface ISteamLaunchOptionsService
     /// Writes launch options for several apps at once.
     /// </summary>
     /// <remarks>
-    /// One shutdown, one write, one restart, however many games are involved. Saving them
-    /// individually would close and reopen Steam once per game, which a profile applied across a
-    /// library makes intolerable — and would leave the library half updated if one failed.
+    /// One trip through Steam, however many games are involved. Saving them individually would
+    /// close and reopen Steam once per game where live editing is off, which a profile applied
+    /// across a library makes intolerable — and would leave the library half updated if one
+    /// failed.
     /// </remarks>
     Task<LaunchOptionsSaveResult> SaveManyAsync(
         IReadOnlyDictionary<uint, string> launchOptionsByApp,
@@ -64,7 +81,8 @@ public interface ISteamLaunchOptionsService
     /// <c>localconfig.vdf</c>, the build in the installation's <c>config.vdf</c> — but both are
     /// held in memory by a running Steam and must be written inside the same shutdown. Saving them
     /// separately would close and reopen Steam twice for one change, and the second shutdown would
-    /// discard the first write.
+    /// discard the first write. Through live editing they are two requests to a client that is
+    /// staying up, so the same call covers both without the choreography.
     /// </remarks>
     Task<LaunchOptionsSaveResult> SaveManyAsync(
         IReadOnlyDictionary<uint, string> launchOptionsByApp,

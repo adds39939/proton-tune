@@ -38,6 +38,9 @@ public static class ServiceCollectionExtensions
         services.AddSingleton<IAppSettingsService, AppSettingsService>();
         services.AddSingleton<ISteamConfigBackupService, SteamConfigBackupService>();
         services.AddSingleton<ISteamLaunchOptionsService, SteamLaunchOptionsService>();
+        services.AddSingleton<ISteamDebugPort, SteamDebugPort>();
+        services.AddSingleton<ISteamClientBridge, SteamClientBridge>();
+        services.AddSingleton<ISteamLiveEditService, SteamLiveEditService>();
 
         return services;
     }

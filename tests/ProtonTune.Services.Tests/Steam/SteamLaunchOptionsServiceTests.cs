@@ -76,11 +76,15 @@ public sealed class SteamLaunchOptionsServiceTests : IDisposable
     /// Built with the real backup and settings services, so the pruning a save performs is
     /// exercised rather than stubbed away.
     /// </summary>
-    private SteamLaunchOptionsService CreateService(StubSteamClient client, int backupsToKeep = 10)
+    private SteamLaunchOptionsService CreateService(
+        StubSteamClient client,
+        int backupsToKeep = 10,
+        StubBridge? bridge = null)
     {
         return new SteamLaunchOptionsService(
             new StubInstallLocator(_root),
             client,
+            bridge ?? new StubBridge(),
             new StubSettings(new AppSettings { BackupsToKeep = backupsToKeep }),
             NullLogger<SteamLaunchOptionsService>.Instance);
     }
@@ -177,6 +181,7 @@ public sealed class SteamLaunchOptionsServiceTests : IDisposable
         var service = new SteamLaunchOptionsService(
             new StubInstallLocator(null),
             new StubSteamClient(),
+            new StubBridge(),
             new StubSettings(new AppSettings()),
             NullLogger<SteamLaunchOptionsService>.Instance);
 
@@ -387,5 +392,437 @@ public sealed class SteamLaunchOptionsServiceTests : IDisposable
 
             return true;
         }
+    }
+
+    // Live editing ----------------------------------------------------------
+    //
+    // Where the running client will take the change, Steam is handed it directly and the files it
+    // owns are left alone. What has to hold is that the long way round is not taken as well, that
+    // nothing is closed, and that a client which cannot do the job is noticed rather than assumed.
+
+    /// <summary>
+    /// The point of the whole thing: a running Steam keeps running, and the file it holds in
+    /// memory is left for Steam to write rather than spliced behind its back.
+    /// </summary>
+    [Fact]
+    public async Task HandsTheChangeToARunningSteamWithoutClosingIt()
+    {
+        var client = new StubSteamClient { Running = true };
+        var session = new StubSession();
+
+        var result = await CreateService(client, bridge: new StubBridge(session))
+            .SaveAsync(AppId, "DXVK_HDR=1 %command%");
+
+        Assert.True(result.IsSuccess);
+        Assert.False(result.SteamWasRestarted);
+        Assert.Equal(0, client.ShutdownCalls);
+        Assert.Equal(0, client.StartCalls);
+        Assert.Equal("DXVK_HDR=1 %command%", session.Held[AppId].LaunchOptions);
+    }
+
+    /// <summary>
+    /// And leaves the file exactly as it was. Steam writes it out itself; writing it here as well
+    /// would be two authors on one document, with Steam's copy in memory winning.
+    /// </summary>
+    [Fact]
+    public async Task DoesNotTouchTheFileWhenSteamTakesTheChange()
+    {
+        var before = await File.ReadAllTextAsync(ConfigPath);
+
+        await CreateService(new StubSteamClient { Running = true }, bridge: new StubBridge(new StubSession()))
+            .SaveAsync(AppId, "DXVK_HDR=1 %command%");
+
+        Assert.Equal(before, await File.ReadAllTextAsync(ConfigPath));
+    }
+
+    /// <summary>
+    /// Both halves of a change go through the one connection. Split across two, the second would
+    /// be a second connection for what the user did once.
+    /// </summary>
+    [Fact]
+    public async Task SendsLaunchOptionsAndProtonBuildThroughOneConnection()
+    {
+        var session = new StubSession();
+        var bridge = new StubBridge(session);
+
+        var result = await CreateService(new StubSteamClient { Running = true }, bridge: bridge)
+            .SaveManyAsync(Only(AppId, "DXVK_HDR=1 %command%"), Only(AppId, "GE-Proton11-3"));
+
+        Assert.True(result.IsSuccess);
+        Assert.Equal(1, bridge.Connections);
+        Assert.Equal("DXVK_HDR=1 %command%", session.Held[AppId].LaunchOptions);
+        Assert.Equal("GE-Proton11-3", session.Held[AppId].CompatToolName);
+    }
+
+    /// <summary>
+    /// One at a time. Two requests in flight against Steam's interface at once crash the client,
+    /// so a batch has to be a sequence rather than a fan-out.
+    /// </summary>
+    [Fact]
+    public async Task SendsABatchOneGameAtATime()
+    {
+        var session = new StubSession();
+
+        await CreateService(new StubSteamClient { Running = true }, bridge: new StubBridge(session))
+            .SaveManyAsync(new Dictionary<uint, string>
+            {
+                [AppId] = "A=1 %command%",
+                [AppId + 1] = "B=1 %command%",
+                [AppId + 2] = "C=1 %command%"
+            });
+
+        Assert.Equal(
+            [$"launch options {AppId}", $"launch options {AppId + 1}", $"launch options {AppId + 2}"],
+            session.Calls.Where(call => call.StartsWith("launch options", StringComparison.Ordinal)));
+    }
+
+    /// <summary>The connection is given up afterwards rather than held across a Steam restart.</summary>
+    [Fact]
+    public async Task ClosesTheConnectionWhenItIsDone()
+    {
+        var session = new StubSession();
+
+        await CreateService(new StubSteamClient { Running = true }, bridge: new StubBridge(session))
+            .SaveAsync(AppId, "DXVK_HDR=1 %command%");
+
+        Assert.Equal(1, session.Disposals);
+    }
+
+    /// <summary>
+    /// Nothing is closed, so a game in progress is not in the way. Refusing here would keep the
+    /// old restriction long after the reason for it had gone.
+    /// </summary>
+    [Fact]
+    public async Task SavesWhileAGameIsRunning()
+    {
+        var client = new StubSteamClient { Running = true, GameRunning = true };
+
+        var result = await CreateService(client, bridge: new StubBridge(new StubSession()))
+            .SaveAsync(AppId, "DXVK_HDR=1 %command%");
+
+        Assert.True(result.IsSuccess);
+        Assert.Equal(0, client.ShutdownCalls);
+    }
+
+    /// <summary>
+    /// A Steam that says no is reported by name rather than counted as done. Reporting a save that
+    /// did not happen is worse than reporting a failure.
+    /// </summary>
+    [Fact]
+    public async Task ReportsWhatSteamWouldNotAccept()
+    {
+        var session = new StubSession();
+
+        session.Refusing.Add(AppId);
+
+        var result = await CreateService(new StubSteamClient { Running = true }, bridge: new StubBridge(session))
+            .SaveAsync(AppId, "DXVK_HDR=1 %command%");
+
+        Assert.False(result.IsSuccess);
+        Assert.Equal(LaunchOptionsSaveStatus.WriteFailed, result.Status);
+        Assert.Contains(AppId.ToString(), result.Message);
+    }
+
+    /// <summary>
+    /// What Steam reports afterwards has to be what it was asked for. Steam accepting a request
+    /// and then holding something else is the failure this catches.
+    /// </summary>
+    [Fact]
+    public async Task ChecksWhatSteamHoldsAfterwards()
+    {
+        var session = new ContraryStubSession();
+
+        var result = await CreateService(new StubSteamClient { Running = true }, bridge: new StubBridge(session))
+            .SaveAsync(AppId, "DXVK_HDR=1 %command%");
+
+        Assert.False(result.IsSuccess);
+        Assert.Equal(LaunchOptionsSaveStatus.WriteFailed, result.Status);
+    }
+
+
+    /// <summary>
+    /// Steam accepts a change and updates what it reports separately, a moment later, so the first
+    /// read back can still describe the state before the change. Seen against a running client
+    /// with the Proton build; judged on that first answer, every such save would be reported as
+    /// having failed when it had not.
+    /// </summary>
+    [Fact]
+    public async Task WaitsForSteamToCatchUpWithItselfBeforeCallingItAMismatch()
+    {
+        var session = new LaggingStubSession(staleReads: 2);
+
+        var result = await CreateService(new StubSteamClient { Running = true }, bridge: new StubBridge(session))
+            .SaveManyAsync(new Dictionary<uint, string>(), Only(AppId, "GE-Proton11-3"));
+
+        Assert.True(result.IsSuccess);
+        Assert.True(session.Reads > 2);
+    }
+
+    /// <summary>
+    /// Asked to let Steam choose the build, Steam chooses one and reports it. Comparing that
+    /// against the nothing it was given would call every successful reset a failure.
+    /// </summary>
+    [Fact]
+    public async Task DoesNotCallASteamChosenBuildAMismatch()
+    {
+        var session = new StubSession();
+
+        var result = await CreateService(new StubSteamClient { Running = true }, bridge: new StubBridge(session))
+            .SaveManyAsync(new Dictionary<uint, string>(), Only(AppId, string.Empty));
+
+        Assert.True(result.IsSuccess);
+        Assert.Equal("proton_experimental", session.Held[AppId].CompatToolName);
+    }
+
+    /// <summary>
+    /// Read from the client rather than the file while Steam is up. Steam writes its copy out on
+    /// its own schedule, so the file is behind whenever someone has just changed something — and
+    /// the value read here is the one a save would write back.
+    /// </summary>
+    [Fact]
+    public async Task ReadsWhatTheRunningSteamHoldsRatherThanTheFile()
+    {
+        var session = new StubSession();
+
+        session.Held[AppId] = new SteamAppDetails("CHANGED_IN_STEAM=1 %command%", string.Empty);
+
+        var options = await CreateService(new StubSteamClient { Running = true }, bridge: new StubBridge(session))
+            .GetAsync(AppId);
+
+        Assert.Equal("CHANGED_IN_STEAM=1 %command%", options.Format());
+    }
+
+    /// <summary>Falling back to the file when the client has nothing to say about a game.</summary>
+    [Fact]
+    public async Task FallsBackToTheFileWhenSteamDoesNotAnswerForTheGame()
+    {
+        var options = await CreateService(new StubSteamClient { Running = true }, bridge: new StubBridge(new StubSession()))
+            .GetAsync(AppId);
+
+        Assert.Equal("PROTON_ENABLE_HDR=1 %command%", options.Format());
+    }
+
+
+    /// <summary>
+    /// One connection for the batch. Walking a library one game at a time would be a connection
+    /// to Steam and a pass over its configuration file each, which is the wait the batch exists
+    /// to avoid.
+    /// </summary>
+    [Fact]
+    public async Task ReadsAWholeBatchThroughOneConnection()
+    {
+        var session = new StubSession();
+
+        session.Held[AppId] = new SteamAppDetails("A=1 %command%", string.Empty);
+        session.Held[AppId + 1] = new SteamAppDetails("B=1 %command%", string.Empty);
+
+        var bridge = new StubBridge(session);
+
+        var found = await CreateService(new StubSteamClient { Running = true }, bridge: bridge)
+            .GetManyAsync([AppId, AppId + 1]);
+
+        Assert.Equal(1, bridge.Connections);
+        Assert.Equal("A=1 %command%", found[AppId].Format());
+        Assert.Equal("B=1 %command%", found[AppId + 1].Format());
+    }
+
+    /// <summary>
+    /// Every game asked about is answered for, whether or not anything is set. A caller matching
+    /// a library against a profile needs a value for each, not a gap to interpret.
+    /// </summary>
+    [Fact]
+    public async Task AnswersForEveryGameAskedAbout()
+    {
+        var found = await CreateService(new StubSteamClient()).GetManyAsync([AppId, 12210]);
+
+        Assert.Equal("PROTON_ENABLE_HDR=1 %command%", found[AppId].Format());
+        Assert.Equal(string.Empty, found[12210].Format());
+    }
+
+    // How a save would land -------------------------------------------------
+
+    [Fact]
+    public async Task SaysTheFilesCanBeWrittenWhenSteamIsNotRunning()
+    {
+        Assert.Equal(
+            SteamSaveMethod.Files,
+            await CreateService(new StubSteamClient()).GetSaveMethodAsync());
+    }
+
+    [Fact]
+    public async Task SaysTheChangeGoesStraightInWhenSteamWillTakeIt()
+    {
+        Assert.Equal(
+            SteamSaveMethod.Live,
+            await CreateService(new StubSteamClient { Running = true }, bridge: new StubBridge(new StubSession()))
+                .GetSaveMethodAsync());
+    }
+
+    [Fact]
+    public async Task SaysSteamHasToBeRestartedWhenItWillNotTakeTheChange()
+    {
+        Assert.Equal(
+            SteamSaveMethod.Restart,
+            await CreateService(new StubSteamClient { Running = true }).GetSaveMethodAsync());
+    }
+
+    /// <summary>
+    /// Only a Steam that would have to be closed is blocked by a game. With live editing the
+    /// question does not arise, which is what stops the screen warning about a restart that is
+    /// not going to happen.
+    /// </summary>
+    [Fact]
+    public async Task SaysNothingCanBeSavedWhileAGameRunsWithoutLiveEditing()
+    {
+        Assert.Equal(
+            SteamSaveMethod.Blocked,
+            await CreateService(new StubSteamClient { Running = true, GameRunning = true }).GetSaveMethodAsync());
+    }
+
+    /// <summary>
+    /// A Steam that cannot be reached for live editing unless given a client to answer with, which
+    /// is the state every test of the file path is describing.
+    /// </summary>
+    private sealed class StubBridge(ISteamClientSession? session = null) : ISteamClientBridge
+    {
+        public int Connections { get; private set; }
+
+        public Task<ISteamClientSession?> ConnectAsync(CancellationToken cancellationToken = default)
+        {
+            Connections++;
+
+            return Task.FromResult<ISteamClientSession?>(session);
+        }
+    }
+
+    /// <summary>A running Steam that remembers what it was asked to change.</summary>
+    private sealed class StubSession : ISteamClientSession
+    {
+        /// <summary>What Steam holds, which a write updates and a read reports.</summary>
+        public Dictionary<uint, SteamAppDetails> Held { get; } = [];
+
+        /// <summary>Games Steam refuses to change, standing in for a version that cannot.</summary>
+        public HashSet<uint> Refusing { get; } = [];
+
+        /// <summary>Recorded in order, so a batch can be shown never to overlap itself.</summary>
+        public List<string> Calls { get; } = [];
+
+        public int Disposals { get; private set; }
+
+        public Task<SteamAppDetails?> GetAppDetailsAsync(
+            uint appId,
+            CancellationToken cancellationToken = default)
+        {
+            Calls.Add($"read {appId}");
+
+            return Task.FromResult(Held.GetValueOrDefault(appId));
+        }
+
+        public Task<bool> SetLaunchOptionsAsync(
+            uint appId,
+            string launchOptions,
+            CancellationToken cancellationToken = default)
+        {
+            Calls.Add($"launch options {appId}");
+
+            if (Refusing.Contains(appId))
+            {
+                return Task.FromResult(false);
+            }
+
+            Held[appId] = (Held.GetValueOrDefault(appId) ?? new SteamAppDetails(string.Empty, string.Empty))
+                with { LaunchOptions = launchOptions };
+
+            return Task.FromResult(true);
+        }
+
+        public Task<bool> SetCompatToolAsync(
+            uint appId,
+            string toolName,
+            CancellationToken cancellationToken = default)
+        {
+            Calls.Add($"proton build {appId}");
+
+            if (Refusing.Contains(appId))
+            {
+                return Task.FromResult(false);
+            }
+
+            // An empty name asks Steam to choose, and Steam then reports the build it picked
+            // rather than the nothing it was given.
+            Held[appId] = (Held.GetValueOrDefault(appId) ?? new SteamAppDetails(string.Empty, string.Empty))
+                with { CompatToolName = toolName.Length == 0 ? "proton_experimental" : toolName };
+
+            return Task.FromResult(true);
+        }
+
+        public ValueTask DisposeAsync()
+        {
+            Disposals++;
+
+            return ValueTask.CompletedTask;
+        }
+    }
+
+    /// <summary>A Steam that accepts every request and then holds something else.</summary>
+    private sealed class ContraryStubSession : ISteamClientSession
+    {
+        public Task<SteamAppDetails?> GetAppDetailsAsync(
+            uint appId,
+            CancellationToken cancellationToken = default) =>
+            Task.FromResult<SteamAppDetails?>(new SteamAppDetails("something else entirely", string.Empty));
+
+        public Task<bool> SetLaunchOptionsAsync(
+            uint appId,
+            string launchOptions,
+            CancellationToken cancellationToken = default) =>
+            Task.FromResult(true);
+
+        public Task<bool> SetCompatToolAsync(
+            uint appId,
+            string toolName,
+            CancellationToken cancellationToken = default) =>
+            Task.FromResult(true);
+
+        public ValueTask DisposeAsync() => ValueTask.CompletedTask;
+    }
+
+    /// <summary>
+    /// A Steam that takes a change but goes on reporting the old state for the first few reads,
+    /// as the real client does.
+    /// </summary>
+    private sealed class LaggingStubSession(int staleReads) : ISteamClientSession
+    {
+        private string _held = string.Empty;
+
+        public int Reads { get; private set; }
+
+        public Task<SteamAppDetails?> GetAppDetailsAsync(
+            uint appId,
+            CancellationToken cancellationToken = default)
+        {
+            Reads++;
+
+            return Task.FromResult<SteamAppDetails?>(
+                new SteamAppDetails(string.Empty, Reads <= staleReads ? "proton_9" : _held));
+        }
+
+        public Task<bool> SetLaunchOptionsAsync(
+            uint appId,
+            string launchOptions,
+            CancellationToken cancellationToken = default) =>
+            Task.FromResult(true);
+
+        public Task<bool> SetCompatToolAsync(
+            uint appId,
+            string toolName,
+            CancellationToken cancellationToken = default)
+        {
+            _held = toolName;
+
+            return Task.FromResult(true);
+        }
+
+        public ValueTask DisposeAsync() => ValueTask.CompletedTask;
     }
 }

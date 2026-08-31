@@ -1,0 +1,56 @@
+<section class="live-edit">
+    <div class="live-edit-row">
+        <div class="live-edit-label">
+            <h2>Live edit Steam games</h2>
+            <p>
+                Writes launch options and Proton builds straight into the running Steam client, so
+                a save takes effect at once. Without it every save has to close Steam, edit the
+                files it owns, and start it again.
+            </p>
+        </div>
+
+        <div class="live-edit-control">
+            @if (IsLoading)
+            {
+                <span class="control-note">Checking…</span>
+            }
+            else if (!State.IsSteamInstalled)
+            {
+                <span class="control-note is-warning">No Steam installation found.</span>
+            }
+            else
+            {
+                <label class="switch">
+                    <input type="checkbox"
+                           checked="@State.IsEnabled"
+                           disabled="@IsBusy"
+                           @onchange="OnToggledAsync"/>
+                    <span>@StatusLabel</span>
+                </label>
+            }
+        </div>
+    </div>
+
+    <p class="explanation">
+        Steam offers this only when it finds an empty <code>.cef-enable-remote-debugging</code>
+        file in its own directory as it starts, so switching it on or off restarts Steam. It opens
+        a port on this machine that any program running as you can use to drive Steam. Other Steam
+        add-ons, such as Decky Loader, use the same file, and turning this off removes it for them
+        as well.
+    </p>
+
+    @if (State.MarkerPath is not null)
+    {
+        <p class="marker-path" title="@State.MarkerPath">@PathDisplay.Abbreviate(State.MarkerPath)</p>
+    }
+
+    @if (Unsettled is not null)
+    {
+        <p class="message is-warning">@Unsettled</p>
+    }
+
+    @if (Message is not null)
+    {
+        <p class="message @(Failed ? "is-error" : "is-success")">@Message</p>
+    }
+</section>

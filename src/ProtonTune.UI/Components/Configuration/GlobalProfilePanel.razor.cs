@@ -53,8 +53,14 @@ public partial class GlobalProfilePanel : ComponentBase
     /// <summary>Whether the reset button is waiting for a second click.</summary>
     private bool ResetPending { get; set; }
 
-    /// <summary>Whether saving would close and reopen Steam, which only cascading requires.</summary>
-    private bool WillRestartSteam => LinkedCount > 0 && Steam.RequiresSteamRestart();
+    /// <summary>How a save made now would reach Steam, refreshed alongside the linked count.</summary>
+    private SteamSaveMethod SaveMethod { get; set; }
+
+    /// <summary>
+    /// Whether saving would close and reopen Steam, which only cascading requires — and only
+    /// where the running client will not take the change directly.
+    /// </summary>
+    private bool WillRestartSteam => LinkedCount > 0 && SaveMethod == SteamSaveMethod.Restart;
 
     private bool HasChanges => !string.Equals(Editing.Format(), Saved, StringComparison.Ordinal);
 
@@ -67,6 +73,8 @@ public partial class GlobalProfilePanel : ComponentBase
             Saved = Editing.Format();
 
             await CountLinkedAsync();
+
+            SaveMethod = await Steam.GetSaveMethodAsync();
         }
         catch (Exception e)
         {
@@ -197,6 +205,7 @@ public partial class GlobalProfilePanel : ComponentBase
         {
             IsSaving = false;
             IsConfirmingSave = false;
+            SaveMethod = await Steam.GetSaveMethodAsync();
         }
     }
 }

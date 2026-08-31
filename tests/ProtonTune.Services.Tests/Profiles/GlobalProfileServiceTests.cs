@@ -200,9 +200,15 @@ public sealed class GlobalProfileServiceTests : IDisposable
         public Task<LaunchOptions> GetAsync(uint appId, CancellationToken cancellationToken = default) =>
             Task.FromResult(LaunchOptions.Parse(Stored.GetValueOrDefault(appId, string.Empty)));
 
-        public bool RequiresSteamRestart() => false;
+        public Task<IReadOnlyDictionary<uint, LaunchOptions>> GetManyAsync(
+            IReadOnlyCollection<uint> appIds,
+            CancellationToken cancellationToken = default) =>
+            Task.FromResult<IReadOnlyDictionary<uint, LaunchOptions>>(appIds.ToDictionary(
+                appId => appId,
+                appId => LaunchOptions.Parse(Stored.GetValueOrDefault(appId, string.Empty))));
 
-        public bool IsGameRunning() => false;
+        public Task<SteamSaveMethod> GetSaveMethodAsync(CancellationToken cancellationToken = default) =>
+            Task.FromResult(SteamSaveMethod.Files);
 
         public Task<LaunchOptionsSaveResult> SaveAsync(
             uint appId,
