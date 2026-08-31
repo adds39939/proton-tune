@@ -1,0 +1,82 @@
+id: upscaling
+title: Upscaling
+order: 2
+
+# The upgrade toggles substitute the build's own copy of an upscaler for whatever the game shipped
+# with, so a game built against FSR 2 can be made to run FSR 4 without patching its files. All of
+# them belong to the community builds: GE-Proton and proton-cachyos read them, and no Valve build
+# has an equivalent, so they are hidden rather than greyed out there.
+#
+# DLSS has the same pair of switches and is listed under Nvidia, beside the driver settings it
+# depends on.
+
+settings:
+  - variable: PROTON_FSR3_UPGRADE
+    label: Upgrade to FSR 3
+    description: >-
+      Runs a game that asks for an older FidelityFX Super Resolution against the build's FSR 3
+      libraries, which brings frame generation with it.
+    kind: toggle
+    protonBuilds: ["^GE-Proton", "^(proton-)?cachyos"]
+    restrictToProtonBuild: true
+
+  - variable: PROTON_FSR4_UPGRADE
+    label: Upgrade to FSR 4
+    description: >-
+      Substitutes AMD's FSR 4 upscaler, which is machine learning based and needs an RDNA 4 card
+      unless the RDNA 3 path below is on as well.
+    kind: toggle
+    protonBuilds: ["^GE-Proton", "^(proton-)?cachyos"]
+    restrictToProtonBuild: true
+
+  - variable: PROTON_FSR4_RDNA3_UPGRADE
+    label: Allow FSR 4 on RDNA 3
+    description: >-
+      Runs FSR 4 on an RDNA 3 card, which AMD does not support. Slower than FSR 3 there, and worth
+      measuring rather than assuming.
+    kind: toggle
+    protonBuilds: ["^GE-Proton"]
+    restrictToProtonBuild: true
+
+  - variable: PROTON_FSR4_INDICATOR
+    label: Show the FSR 4 indicator
+    description: An on-screen marker confirming FSR 4 is the upscaler actually running.
+    kind: toggle
+    protonBuilds: ["^GE-Proton", "^(proton-)?cachyos"]
+    restrictToProtonBuild: true
+
+  - variable: PROTON_XESS_UPGRADE
+    label: Upgrade XeSS
+    description: >-
+      Substitutes the build's own copy of Intel's XeSS, which runs on any vendor's card but is
+      fastest on Arc.
+    kind: toggle
+    protonBuilds: ["^GE-Proton", "^(proton-)?cachyos"]
+    restrictToProtonBuild: true
+
+  - variable: PROTON_MLFG_UPGRADE
+    label: Upgrade frame generation
+    description: >-
+      Substitutes AMD's machine learning frame generation for the game's own, separately from the
+      upscaler it uses.
+    kind: toggle
+    protonBuilds: ["^GE-Proton", "^(proton-)?cachyos"]
+    restrictToProtonBuild: true
+
+  - variable: PROTON_USE_OPTISCALER
+    label: Use OptiScaler
+    description: >-
+      Puts OptiScaler in front of whichever upscaler the game asks for, so a DLSS-only game can be
+      pointed at FSR or XeSS instead. Brings its own in-game menu.
+    kind: toggle
+    protonBuilds: ["^GE-Proton", "^(proton-)?cachyos"]
+    restrictToProtonBuild: true
+
+  - variable: PROTON_NATIVE_AGS
+    label: Native AMD AGS
+    description: >-
+      Loads AMD's real GPU Services library rather than Wine's stub, which some titles need before
+      they will enable their AMD-specific paths at all.
+    kind: toggle
+    protonBuilds: ["^GE-Proton", "^(proton-)?cachyos"]
+    restrictToProtonBuild: true

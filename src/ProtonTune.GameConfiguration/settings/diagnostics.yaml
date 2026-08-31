@@ -1,0 +1,98 @@
+id: diagnostics
+title: Diagnostics
+order: 13
+
+# Nothing here changes how a game runs, beyond the cost of writing what it says. It is for the
+# afternoon a game will not start and the question is which layer gave up first.
+
+groups:
+  - name: Proton
+    settings:
+      # All four read by every build installed here.
+      - variable: PROTON_LOG
+        label: Proton logging
+        description: >-
+          Writes a debug log to the home directory. Slows the game down. A value other than 1 is
+          read as a list of Wine debug channels to add or remove, such as +timestamp,-seh.
+        kind: toggle
+
+      - variable: PROTON_LOG_DIR
+        label: Log directory
+        description: Where the log is written, in place of the home directory.
+        placeholder: /home/you/proton-logs
+
+      - variable: PROTON_CRASH_REPORT_DIR
+        label: Crash report directory
+        description: Where Wine leaves a report when the game crashes, rather than discarding it.
+        placeholder: /home/you/proton-crashes
+
+      - variable: PROTON_REMOTE_DEBUG_CMD
+        label: Remote debug command
+        description: >-
+          A command Proton runs the game under, for attaching a debugger. Parsed as a shell line,
+          so it can carry its own arguments.
+        placeholder: winedbg --gdb
+
+  - name: Wine
+    settings:
+      - variable: WINEDEBUG
+        label: Wine debug channels
+        description: >-
+          Which Wine channels are logged, as a comma-separated list of +channel and -channel. The
+          usual starting point for a game that fails before it draws anything.
+        placeholder: +timestamp,+pid,+loaddll
+
+  - name: Renderers
+    settings:
+      - variable: DXVK_LOG_LEVEL
+        label: DXVK log level
+        kind: choice
+        choices: [none, error, warn, info, debug, trace]
+
+      - variable: DXVK_LOG_PATH
+        label: DXVK log directory
+        description: Where DXVK writes its log. none keeps it on standard error instead.
+        placeholder: /home/you/proton-logs
+
+      - variable: DXVK_NVAPI_LOG_LEVEL
+        label: DXVK-NVAPI log level
+        description: Logged separately from DXVK's own, which is what makes a DLSS fault findable.
+        kind: choice
+        choices: [none, error, warn, info, debug, trace]
+
+      - variable: DXVK_NVAPI_LOG_PATH
+        label: DXVK-NVAPI log directory
+        placeholder: /home/you/proton-logs
+
+      - variable: VKD3D_DEBUG
+        label: VKD3D log level
+        kind: choice
+        choices: [none, err, fixme, warn, info, trace]
+
+      - variable: VKD3D_SHADER_DEBUG
+        label: VKD3D shader log level
+        description: The shader compiler's own output, which is much noisier than the rest.
+        kind: choice
+        choices: [none, err, fixme, warn, info, trace]
+
+      - variable: VKD3D_LOG_FILE
+        label: VKD3D log file
+        placeholder: /home/you/proton-logs/vkd3d.log
+
+  - name: Layers and media
+    settings:
+      - variable: VKBASALT_LOG_LEVEL
+        label: vkBasalt log level
+        kind: choice
+        choices: [none, error, warn, info, debug, trace]
+
+      - variable: VKBASALT_LOG_FILE
+        label: vkBasalt log file
+        placeholder: /home/you/proton-logs/vkbasalt.log
+
+      - variable: GST_DEBUG
+        label: GStreamer log level
+        description: >-
+          Media pipeline logging, from 0 for silence to 9. Reach for it when a cut scene is black
+          or silent rather than when the game itself is wrong.
+        placeholder: "4"

@@ -1,0 +1,72 @@
+id: layers
+title: Vulkan layers
+order: 11
+
+# Implicit Vulkan layers sit between the game and the driver, and each is switched on by a variable
+# the loader reads rather than by anything Proton does. GE-Proton and proton-cachyos ship these
+# four and point the loader at their own copies; on another build the same variable still works if
+# the layer is installed on the system. That is why nothing here names a build: the variable is not
+# the build's to read, and a list would be claiming otherwise.
+
+groups:
+  - name: Latency
+    settings:
+      - variable: LOW_LATENCY_LAYER
+        label: Low latency layer
+        description: >-
+          Holds each frame back until the last moment before submitting it, so input is read as
+          late as possible. Shipped by GE and cachyos; elsewhere it needs installing.
+        kind: toggle
+
+      - variable: DISABLE_LOW_LATENCY_LAYER
+        label: Disable the low latency layer
+        description: Turns it off again where something else has switched it on.
+        kind: toggle
+
+      - variable: DXVK_NVAPI_VKREFLEX
+        label: Reflex layer
+        description: >-
+          Backs NVIDIA Reflex with a Vulkan layer, so a game asking for it gets a real answer.
+          Ignored where NVAPI is disabled or the driver is not NVIDIA's.
+        kind: toggle
+
+  - name: Post-processing
+    settings:
+      - variable: ENABLE_VKBASALT
+        label: Enable vkBasalt
+        description: >-
+          Applies sharpening, colour correction and Reshade-style effects on top of whatever the
+          game renders.
+        kind: toggle
+
+      - variable: VKBASALT_CONFIG_FILE
+        label: vkBasalt config file
+        description: >-
+          Path to a vkBasalt.conf, in place of the one in the home directory. This is where the
+          effect chain and its hotkey are set.
+        placeholder: /home/you/.config/vkBasalt/vkBasalt.conf
+
+  - name: Shader hacks
+    settings:
+      - variable: PYROVEIL
+        label: Enable Pyroveil
+        description: >-
+          A layer that rewrites a game's shaders at load, which is how a title broken on one driver
+          is made to render correctly without waiting for a fix.
+        kind: toggle
+
+      - variable: PYROVEIL_CONFIG
+        label: Pyroveil configuration
+        description: >-
+          The name of one of the build's own hacks, or an absolute path to a pyroveil.json. GE and
+          cachyos ship a handful named after the games they were written for.
+        placeholder: ac-shadows-nvidia-570-stable
+
+  - name: Capture
+    settings:
+      - variable: OBS_VKCAPTURE
+        label: OBS game capture
+        description: >-
+          Hands frames to OBS's Vulkan capture layer, which records the game directly rather than
+          the screen. Needs obs-vkcapture installed on the system.
+        kind: toggle

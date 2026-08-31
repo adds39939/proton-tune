@@ -1,0 +1,135 @@
+id: input
+title: Input
+order: 8
+
+groups:
+  - name: Steam Input
+    settings:
+      - variable: PROTON_NO_STEAMINPUT
+        label: Disable Steam Input
+        description: >-
+          Keeps Steam's controller layer out of the game, so the game sees the pad as the system
+          presents it. The fix for doubled inputs and for a game that sees two controllers.
+        kind: toggle
+        protonBuilds: ["^GE-Proton", "^(proton-)?cachyos"]
+        restrictToProtonBuild: true
+
+      - variable: PROTON_EMULATE_STEAMINPUT
+        label: Emulate Steam Input
+        description: >-
+          Presents Steam Input to a game that asks for it even where Steam is not driving the
+          controller itself.
+        kind: toggle
+        protonBuilds: ["^GE-Proton", "^(proton-)?cachyos"]
+        restrictToProtonBuild: true
+
+      # Read by Valve's builds and by GE, but not by proton-cachyos. Named in no list here on
+      # purpose: reading the launch script settles a PROTON_ variable exactly, so cachyos greys
+      # this out on its own. A list is only needed where hiding it outright is wanted.
+      - variable: PROTON_SPOOF_STEAMINPUT_VIDPID
+        label: Spoof the controller's identity
+        description: >-
+          Reports the pad's original vendor and product ids rather than the virtual ones Steam
+          Input hands out, for a game that recognises only hardware it knows by number.
+        kind: toggle
+
+      - variable: PROTON_STEAMINPUT_FALLBACK
+        label: Steam Input fallback
+        description: >-
+          Uses lsteamclient's own Steam Input implementation, which follows the layout across
+          hotplug rather than fixing it at launch. GE applies it to a handful of games itself.
+        kind: toggle
+        protonBuilds: ["^GE-Proton"]
+        restrictToProtonBuild: true
+
+      - variable: PROTON_STEAMINPUT_XINPUT_FALLBACK
+        label: XInput fallback
+        description: The same fallback, exposed to the game as XInput rather than as Steam Input.
+        kind: toggle
+        protonBuilds: ["^GE-Proton"]
+        restrictToProtonBuild: true
+
+  - name: Devices
+    settings:
+      # Read by every build installed here. Takes 1 or a comma-separated list of vendor/product
+      # pairs, which is how Proton disables hidraw for one controller rather than for all of them.
+      - variable: PROTON_DISABLE_HIDRAW
+        label: Disable hidraw
+        description: >-
+          Hides raw HID access from the game, either entirely with 1 or for named devices with a
+          list such as 0x054C/0x0CE6. For a game that opens a pad twice and gets confused.
+        placeholder: "1"
+
+      - variable: PROTON_USE_SDL
+        label: Use SDL for controllers
+        description: >-
+          Reads pads through SDL rather than through Wine's own backend, which is usually the
+          better of the two for anything that is not an Xbox controller. GE and cachyos also accept
+          PROTON_PREFER_SDL, the older spelling of this switch.
+        kind: toggle
+        protonBuilds: ["^GE-Proton", "^(proton-)?cachyos"]
+        restrictToProtonBuild: true
+
+  # GE ships a set of PlayStation controller fixes and applies each to the games it knows need one.
+  # They are named here for a game with the same fault that is not on GE's list.
+  - name: PlayStation controllers
+    settings:
+      - variable: PROTON_SONY_HIDRAW_XINPUT
+        label: Sony pad as XInput
+        description: >-
+          Feeds a DualShock or DualSense through the XInput path, so a game with no PlayStation
+          mappings still reads it as a controller.
+        kind: toggle
+        protonBuilds: ["^GE-Proton"]
+        restrictToProtonBuild: true
+
+      - variable: PROTON_SONY_DUALSENSE_AS_DUALSHOCK4
+        label: DualSense as DualShock 4
+        description: >-
+          Presents a DualSense as the older pad, which gets correct button glyphs and mappings out
+          of a game that supports the DualShock 4 and not its successor.
+        kind: toggle
+        protonBuilds: ["^GE-Proton"]
+        restrictToProtonBuild: true
+
+      - variable: PROTON_SONY_DUALSHOCK4_V2_AS_V1
+        label: DualShock 4 v2 as v1
+        description: The same again, for a game that supports only the first revision of the pad.
+        kind: toggle
+        protonBuilds: ["^GE-Proton"]
+        restrictToProtonBuild: true
+
+      - variable: PROTON_DEATH_STRANDING_CONTROLLER_EFFECTS
+        label: DualSense speaker and haptics
+        description: >-
+          Sets up the DualSense's USB audio device and its four-channel haptic stream. Applied to
+          Death Stranding and its sequel automatically.
+        kind: toggle
+        protonBuilds: ["^GE-Proton"]
+        restrictToProtonBuild: true
+
+      - variable: PROTON_DEATH_STRANDING_FORCE_ENVIRONMENT_EFFECTS
+        label: Force environmental speaker effects
+        description: >-
+          Turns on the environmental audio the Director's Cut has no in-game setting for. Applied
+          to that game automatically.
+        kind: toggle
+        protonBuilds: ["^GE-Proton"]
+        restrictToProtonBuild: true
+
+  - name: Keyboard and navigation
+    settings:
+      # Both read by every build installed here.
+      - variable: PROTON_NO_XIM
+        label: Disable the X input method
+        description: >-
+          Stops Wine loading XIM, which is what a non-Latin keyboard types through. Worth turning
+          off only where it causes a hang at startup.
+        kind: toggle
+
+      - variable: PROTON_USE_XALIA
+        label: Use Xalia
+        description: >-
+          Proton's gamepad interface for Windows dialogs and installers, so a launcher can be
+          driven from the pad. Proton turns it on by default where it helps; 0 takes it away.
+        kind: toggle

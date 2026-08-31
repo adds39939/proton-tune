@@ -1,0 +1,91 @@
+id: audio
+title: Audio and video
+order: 7
+
+# Proton converts a game's bundled audio and video into formats the shipped GStreamer can decode,
+# because the Windows codecs the game expects are not there. Most of what follows is about that
+# conversion, and the rest is about which sound server Wine talks to.
+
+groups:
+  - name: Sound
+    settings:
+      - variable: PROTON_USE_PIPEWIRE
+        label: Use PipeWire directly
+        description: >-
+          Talks to PipeWire rather than going through its PulseAudio compatibility layer, which
+          takes a resampling step out of the path. Without it Wine is pointed at pulse and alsa.
+        kind: toggle
+        protonBuilds: ["^(proton-)?cachyos"]
+        restrictToProtonBuild: true
+
+  - name: Media conversion
+    settings:
+      # Read by every build installed here.
+      - variable: PROTON_MEDIACONV_NO_VIDEO
+        label: Skip video entirely
+        description: >-
+          Plays a blank video in place of a game's cut scenes and logos, so a title that stalls on
+          one gets past it. The audio still plays.
+        kind: toggle
+
+      - variable: PROTON_ENABLE_MEDIACONV
+        label: Enable media conversion
+        description: >-
+          Turns the whole conversion pipeline on — video, audio, and the demuxer — rather than
+          setting each of the four below by hand.
+        kind: toggle
+        protonBuilds: ["^(proton-)?cachyos"]
+        restrictToProtonBuild: true
+
+      - variable: PROTON_VIDEO_CONVERT
+        label: Convert video
+        description: Transcodes the game's video into something the shipped decoders can play.
+        kind: toggle
+        protonBuilds: ["^(proton-)?cachyos"]
+        restrictToProtonBuild: true
+
+      - variable: PROTON_AUDIO_CONVERT
+        label: Convert audio
+        description: The same, for the game's audio streams.
+        kind: toggle
+        protonBuilds: ["^(proton-)?cachyos"]
+        restrictToProtonBuild: true
+
+      - variable: PROTON_AUDIO_CONVERT_BIN
+        label: Convert binary audio
+        description: >-
+          Extends the audio conversion to streams held in the game's own container rather than in a
+          recognised media file.
+        kind: toggle
+        protonBuilds: ["^(proton-)?cachyos"]
+        restrictToProtonBuild: true
+
+      - variable: PROTON_DEMUX
+        label: Demultiplex media
+        description: Splits interleaved audio and video apart before either is converted.
+        kind: toggle
+        protonBuilds: ["^(proton-)?cachyos"]
+        restrictToProtonBuild: true
+
+      - variable: PROTON_MEDIA_FORCE_GST
+        label: Force GStreamer
+        description: >-
+          Sends media through GStreamer even where Proton would have left it to the game's own
+          decoder.
+        kind: toggle
+        protonBuilds: ["^(proton-)?cachyos"]
+        restrictToProtonBuild: true
+
+  # One game's audio quirk, kept because GE names it and a variable with a definition is shown here
+  # rather than among the custom ones. GE sets it for Monster Hunter Wilds on its own; setting it
+  # by hand is for a game with the same fault that is not on its list.
+  - name: Game-specific
+    settings:
+      - variable: PROTON_ENABLE_MHWILDS_USB_AUDIO
+        label: USB audio workaround
+        description: >-
+          Works around a game routing its audio to a USB device that is not there. Applied to
+          Monster Hunter Wilds automatically.
+        kind: toggle
+        protonBuilds: ["^GE-Proton"]
+        restrictToProtonBuild: true
