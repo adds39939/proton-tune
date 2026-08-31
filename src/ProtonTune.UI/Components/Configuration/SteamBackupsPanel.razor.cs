@@ -74,7 +74,7 @@ public partial class SteamBackupsPanel : ComponentBase
 
         try
         {
-            Current = new AppSettings { BackupsToKeep = keep }.Sanitised();
+            Current = (Current with { BackupsToKeep = keep }).Sanitised();
 
             await Settings.SaveAsync(Current);
 
