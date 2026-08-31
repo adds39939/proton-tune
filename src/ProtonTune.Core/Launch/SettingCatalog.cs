@@ -23,7 +23,7 @@ public sealed class SettingCatalog
         IEnumerable<SettingDefinition> definitions)
     {
         Categories = categories.OrderBy(category => category.Order).ToList();
-        All = definitions.ToList();
+        All = [.. definitions];
 
         _byVariable = new Dictionary<string, SettingDefinition>(StringComparer.Ordinal);
 
