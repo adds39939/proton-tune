@@ -52,6 +52,48 @@ public sealed class SettingCatalog
     public IReadOnlyList<SettingDefinition> In(SettingCategory category) =>
         All.Where(definition => definition.Category.Is(category.Id)).ToList();
 
+    /// <summary>
+    /// A section's settings as the headings its file declares, in the order it declares them.
+    /// </summary>
+    /// <remarks>
+    /// A run rather than a lookup: a new group starts wherever the heading changes, so the file's
+    /// own order survives and a heading used twice stays two runs rather than being merged into
+    /// one somewhere up the list. A section that declares no headings comes back as a single
+    /// unnamed group, which is the flat list it was before.
+    /// </remarks>
+    public IReadOnlyList<SettingGroup> GroupsIn(SettingCategory category) =>
+        Group(In(category));
+
+    /// <summary>
+    /// The same, over a list already narrowed down — the editor hides settings that do not apply
+    /// to the build in force, and a heading whose every setting was hidden should go with them.
+    /// </summary>
+    public static IReadOnlyList<SettingGroup> Group(IEnumerable<SettingDefinition> definitions)
+    {
+        var groups = new List<SettingGroup>();
+        var current = new List<SettingDefinition>();
+        string? name = null;
+
+        foreach (var definition in definitions)
+        {
+            if (current.Count > 0 && !string.Equals(definition.Group, name, StringComparison.Ordinal))
+            {
+                groups.Add(new SettingGroup(name, current));
+                current = [];
+            }
+
+            name = definition.Group;
+            current.Add(definition);
+        }
+
+        if (current.Count > 0)
+        {
+            groups.Add(new SettingGroup(name, current));
+        }
+
+        return groups;
+    }
+
     /// <summary>Finds a section by its identifier.</summary>
     public SettingCategory? FindCategory(string id) =>
         Categories.FirstOrDefault(category => category.Is(id));

@@ -1,13 +1,60 @@
 id: display
 title: Display
-order: 3
+order: 4
 
 settings:
-  # Read by the GE family and by no Valve build installed here — their launch scripts do not
-  # mention Wayland at all — so this section disappears entirely on Valve's Proton.
-  - variable: PROTON_ENABLE_WAYLAND
+  # Read by GE-Proton and proton-cachyos; no Valve build installed here mentions Wayland in its
+  # launch script at all, so this disappears entirely there rather than filling the list.
+  #
+  # Both builds also accept PROTON_ENABLE_WAYLAND, the older spelling of the same switch. Only the
+  # current one is offered — protonfixes itself reads this name first and falls back to the other.
+  - variable: PROTON_USE_WAYLAND
     label: Run natively on Wayland
     description: Skips XWayland. Required before HDR will do anything.
     kind: toggle
+    protonBuilds: ["^GE-Proton", "^(proton-)?cachyos"]
+    restrictToProtonBuild: true
+
+  # GE only: it passes this through to winewayland as WAYLANDDRV_PRIMARY_MONITOR, and cachyos has
+  # no such line.
+  - variable: PROTON_WAYLAND_MONITOR
+    label: Primary monitor
+    description: >-
+      Which output the game treats as its primary, named as the connector the compositor calls it
+      — DP-1, HDMI-A-1. Only applies when running natively on Wayland.
+    placeholder: DP-1
     protonBuilds: ["^GE-Proton"]
     restrictToProtonBuild: true
+
+  - variable: PROTON_NO_WM_DECORATION
+    label: No window decorations
+    description: >-
+      Drops the title bar and border the desktop would draw around the game, leaving the window
+      exactly the size the game asked for.
+    kind: toggle
+    protonBuilds: ["^GE-Proton", "^(proton-)?cachyos"]
+    restrictToProtonBuild: true
+
+  # Read by every build installed here.
+  - variable: PROTON_LIMIT_RESOLUTIONS
+    label: Limit the resolution list
+    description: >-
+      Caps how many display modes are offered to the game. Old titles with a fixed-size menu drop
+      the modes that do not fit, or crash on the list itself; Proton applies 16 or 32 to a handful
+      of known ones by default.
+    kind: number
+    placeholder: "32"
+
+  - variable: WINE_DISABLE_FULLSCREEN_HACK
+    label: Disable the fullscreen hack
+    description: >-
+      Stops Wine from faking a mode change and scaling the result, so the display really switches
+      to the resolution the game asked for. Honoured by every build installed here.
+    kind: toggle
+
+  - variable: DXVK_FORCE_WINDOWED
+    label: Force windowed
+    description: >-
+      Makes DXVK present into a window whatever the game asked for, which is the way out of a game
+      that takes the display over and will not give it back.
+    kind: toggle

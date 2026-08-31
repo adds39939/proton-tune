@@ -1,6 +1,6 @@
 id: gamescope
 title: Gamescope
-order: 4
+order: 5
 
 # Gamescope is a nested compositor the game runs inside, so almost nothing here is an environment
 # variable: it is configured by flags on the command that launches it. The flags below were taken

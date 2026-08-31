@@ -36,6 +36,16 @@ public partial class CompoundEditor : ComponentBase
     private string AdditionalOptions =>
         string.Join(Schema.Separator, Current.Unrecognised.Select(entry => entry.Render(Schema)));
 
+    /// <summary>
+    /// How many of a group's options are set, shown beside its heading so a closed group still
+    /// says whether there is anything inside it.
+    /// </summary>
+    private int SetCountIn(CompoundOptionGroup group) =>
+        group.Options.Count(option => Current.Contains(option.Key));
+
+    /// <summary>The same, for the entries no group claims and the free-text field holds.</summary>
+    private int AdditionalCount => Current.Unrecognised.Count;
+
     /// <summary>An example of the format, built from the separator this variable actually uses.</summary>
     private string AdditionalPlaceholder =>
         string.Join(Schema.Separator, "round_corners" + Schema.Assignment + "5", "engine_version");

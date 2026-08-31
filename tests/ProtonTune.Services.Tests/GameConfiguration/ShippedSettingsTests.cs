@@ -1,5 +1,6 @@
 using Microsoft.Extensions.Logging.Abstractions;
 using ProtonTune.Core.Launch;
+using ProtonTune.Core.Proton;
 using ProtonTune.Services.GameConfiguration;
 
 namespace ProtonTune.Services.Tests.GameConfiguration;
@@ -63,19 +64,18 @@ public class ShippedSettingsTests
     }
 
     /// <summary>
-    /// Three sections carry a control the application looks for by identifier. Renaming one in its
+    /// Two sections carry a control the application looks for by identifier. Renaming one in its
     /// file removes that control rather than the section, which would be silent.
     /// </summary>
     [Theory]
-    [InlineData(SettingCategoryIds.Nvidia)]
     [InlineData(SettingCategoryIds.Cpu)]
     [InlineData(SettingCategoryIds.MangoHud)]
     public void KeepsTheSectionsTheApplicationLooksForByName(string id) =>
         Assert.NotNull(Catalog.FindCategory(id));
 
     [Fact]
-    public void OrdersSectionsWithDlssFirst() =>
-        Assert.Equal(SettingCategoryIds.Nvidia, Catalog.Categories[0].Id);
+    public void OrdersSectionsWithNvidiaFirst() =>
+        Assert.Equal("nvidia", Catalog.Categories[0].Id);
 
     /// <summary>
     /// These fail silently when given a value the driver does not recognise — the game just runs
@@ -290,15 +290,15 @@ public class ShippedSettingsTests
             string.Equals(candidate.Flag, flag, StringComparison.Ordinal));
 
     /// <summary>
-    /// Each of these was checked against the launch scripts of the builds installed here: the GE
-    /// family reads them and no Valve build mentions them at all. Restricting them is what keeps
-    /// a list of features that cannot be used off the screen.
+    /// Checked against the launch scripts of the builds installed here: GE-Proton reads these and
+    /// nothing else does — proton-cachyos mentions HDR nowhere, and the rest are GE's own.
+    /// Restricting them is what keeps a list of features that cannot be used off the screen.
     /// </summary>
     [Theory]
-    [InlineData("PROTON_DLSS_UPGRADE")]
-    [InlineData("PROTON_DLSS_INDICATOR")]
-    [InlineData("PROTON_ENABLE_HDR")]
-    [InlineData("PROTON_ENABLE_WAYLAND")]
+    [InlineData("PROTON_USE_HDR")]
+    [InlineData("PROTON_NO_NTSYNC")]
+    [InlineData("PROTON_USE_WRITECOPY")]
+    [InlineData("PROTON_WAYLAND_MONITOR")]
     public void RestrictsWhatOnlyTheGeFamilyReads(string variable)
     {
         var definition = Catalog.Find(variable)!;
@@ -308,6 +308,89 @@ public class ShippedSettingsTests
     }
 
     /// <summary>
+    /// The community builds read a great deal Valve's do not, and proton-cachyos reads most of
+    /// what GE does. Naming only GE would hide a working setting on cachyos, which is the mistake
+    /// this catches: the version file drops the leading "proton-", so the pattern has to match
+    /// both the tool name and the version label.
+    /// </summary>
+    [Theory]
+    [InlineData("PROTON_DLSS_UPGRADE")]
+    [InlineData("PROTON_DLSS_INDICATOR")]
+    [InlineData("PROTON_USE_WAYLAND")]
+    [InlineData("PROTON_FSR4_UPGRADE")]
+    [InlineData("PROTON_XESS_UPGRADE")]
+    [InlineData("PROTON_USE_OPTISCALER")]
+    [InlineData("PROTON_NVIDIA_LIBS")]
+    public void RestrictsWhatBothCommunityFamiliesReadToBothOfThem(string variable)
+    {
+        var definition = Catalog.Find(variable)!;
+
+        Assert.Equal(["^GE-Proton", "^(proton-)?cachyos"], definition.ProtonBuilds);
+        Assert.True(definition.RestrictToProtonBuild);
+
+        Assert.True(definition.AppliesTo(Build("GE-Proton11-6-x86_64", "GE-Proton11-6")));
+        Assert.True(definition.AppliesTo(Build("proton-cachyos-11.0-20260703-slr-x86_64_v3", "cachyos-11.0-20260703-slr")));
+        Assert.False(definition.AppliesTo(Build("proton_experimental", "experimental-11.0-20260826-x86_64")));
+    }
+
+    /// <summary>
+    /// The settings proton-cachyos added and GE has no equivalent for. Named the other way round
+    /// from the test above, and worth pinning for the same reason.
+    /// </summary>
+    [Theory]
+    [InlineData("PROTON_DXVK_SAREK")]
+    [InlineData("PROTON_DXVK_LOWLATENCY")]
+    [InlineData("PROTON_VKD3D_LOWLATENCY")]
+    [InlineData("PROTON_USE_PIPEWIRE")]
+    [InlineData("PROTON_ENABLE_MEDIACONV")]
+    public void RestrictsWhatOnlyCachyosReads(string variable)
+    {
+        var definition = Catalog.Find(variable)!;
+
+        Assert.Equal(["^(proton-)?cachyos"], definition.ProtonBuilds);
+        Assert.True(definition.RestrictToProtonBuild);
+
+        Assert.True(definition.AppliesTo(Build("proton-cachyos-11.0-20260703-slr-x86_64_v3", "cachyos-11.0-20260703-slr")));
+        Assert.False(definition.AppliesTo(Build("GE-Proton11-6-x86_64", "GE-Proton11-6")));
+    }
+
+    /// <summary>
+    /// A section long enough to need headings has to give them, or it is the twenty-line list the
+    /// headings exist to break up. These are the ones that would read worst without.
+    /// </summary>
+    [Theory]
+    [InlineData("nvidia", "DLSS")]
+    [InlineData("graphics", "Renderer")]
+    [InlineData("compatibility", "Memory")]
+    [InlineData("diagnostics", "Renderers")]
+    public void GroupsTheLongSectionsUnderHeadings(string section, string heading)
+    {
+        var groups = Catalog.GroupsIn(Catalog.FindCategory(section)!);
+
+        Assert.Contains(heading, groups.Select(group => group.Name));
+        Assert.All(groups, group => Assert.NotEmpty(group.Settings));
+    }
+
+    /// <summary>
+    /// Grouping must not lose or reorder anything: the headings are a way of reading the section,
+    /// not a second list beside it.
+    /// </summary>
+    [Fact]
+    public void EveryGroupedSettingIsStillTheSectionsOwnListInOrder() =>
+        Assert.All(Catalog.Categories, category => Assert.Equal(
+            Catalog.In(category),
+            Catalog.GroupsIn(category).SelectMany(group => group.Settings)));
+
+    private static ProtonBuild Build(string name, string version) => new()
+    {
+        Name = name,
+        DisplayName = name,
+        InstallPath = $"/tmp/{name}",
+        Kind = ProtonBuildKind.Custom,
+        Version = version
+    };
+
+    /// <summary>
     /// Read by every build installed here, so restricting them would hide settings that work.
     /// </summary>
     [Theory]
@@ -315,6 +398,11 @@ public class ShippedSettingsTests
     [InlineData("PROTON_NO_ESYNC")]
     [InlineData("PROTON_NO_FSYNC")]
     [InlineData("PROTON_FORCE_LARGE_ADDRESS_AWARE")]
+    [InlineData("PROTON_CPU_TOPOLOGY")]
+    [InlineData("PROTON_DISABLE_NVAPI")]
+    [InlineData("PROTON_LIMIT_RESOLUTIONS")]
+    [InlineData("PROTON_SET_GAME_DRIVE")]
+    [InlineData("PROTON_DISABLE_HIDRAW")]
     public void LeavesWhatEveryBuildReadsAlone(string variable) =>
         Assert.Empty(Catalog.Find(variable)!.ProtonBuilds);
 

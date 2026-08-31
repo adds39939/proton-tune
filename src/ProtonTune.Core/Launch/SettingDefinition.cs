@@ -37,6 +37,17 @@ public sealed record SettingDefinition(string Variable, SettingCategory Category
     /// <summary>One line on what the variable actually does.</summary>
     public string? Description { get; init; }
 
+    /// <summary>
+    /// The heading this setting is listed under within its section, or <see langword="null"/> when
+    /// it is listed before any of them.
+    /// </summary>
+    /// <remarks>
+    /// A section is one file, so this is not a second way of dividing them up — it is how a long
+    /// file says which of its settings are one decision. Settings sharing a name are shown
+    /// together in the order the file declares them.
+    /// </remarks>
+    public string? Group { get; init; }
+
     /// <summary>The control used to edit it.</summary>
     public SettingKind Kind { get; init; } = SettingKind.Text;
 

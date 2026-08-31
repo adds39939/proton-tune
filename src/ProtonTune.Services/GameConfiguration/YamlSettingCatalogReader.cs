@@ -62,7 +62,16 @@ public sealed class YamlSettingCatalogReader(string directory, ILogger<YamlSetti
             };
 
             categories.Add(category);
-            definitions.AddRange(file.Settings.Select(entry => Convert(entry, category, path)).OfType<SettingDefinition>());
+
+            // Ungrouped first, then each heading in the order the file gives them. The catalogue
+            // keeps declaration order, so this is what decides how the section reads.
+            definitions.AddRange(file.Settings
+                .Select(entry => Convert(entry, category, null, path))
+                .OfType<SettingDefinition>());
+
+            definitions.AddRange(file.Groups.SelectMany(group => group.Settings
+                .Select(entry => Convert(entry, category, group.Name is { Length: > 0 } name ? name : null, path))
+                .OfType<SettingDefinition>()));
         }
 
         logger.LogInformation(
@@ -98,7 +107,11 @@ public sealed class YamlSettingCatalogReader(string directory, ILogger<YamlSetti
         }
     }
 
-    private SettingDefinition? Convert(SettingDefinitionFile.SettingEntry entry, SettingCategory category, string path)
+    private SettingDefinition? Convert(
+        SettingDefinitionFile.SettingEntry entry,
+        SettingCategory category,
+        string? group,
+        string path)
     {
         if (entry.Variable is not { Length: > 0 } variable)
         {
@@ -110,6 +123,7 @@ public sealed class YamlSettingCatalogReader(string directory, ILogger<YamlSetti
         return new SettingDefinition(variable, category, entry.Label ?? variable)
         {
             Description = entry.Description,
+            Group = group,
             Kind = ParseKind(entry.Kind, variable, path),
             OnValue = entry.On is { Length: > 0 } on ? on : "1",
             Choices = entry.Choices,

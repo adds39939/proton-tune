@@ -47,6 +47,81 @@ public sealed class YamlSettingCatalogReaderTests : IDisposable
         Assert.Equal("Turns on HDR output.", definition.Description);
     }
 
+    /// <summary>
+    /// A section long enough to need headings declares them alongside its settings, so breaking one
+    /// up is an edit to the file rather than a change to the editor.
+    /// </summary>
+    [Fact]
+    public void ReadsSettingsListedUnderHeadings()
+    {
+        Write("nvidia.yaml", """
+            id: nvidia
+            groups:
+              - name: DLSS
+                settings:
+                  - variable: PROTON_DLSS_UPGRADE
+                    label: Upgrade DLSS libraries
+                  - variable: PROTON_DLSS_INDICATOR
+                    label: Show the DLSS indicator
+              - name: NVAPI
+                settings:
+                  - variable: PROTON_DISABLE_NVAPI
+                    label: Disable NVAPI
+            """);
+
+        var catalog = Read();
+        var groups = catalog.GroupsIn(catalog.FindCategory("nvidia")!);
+
+        Assert.Equal(["DLSS", "NVAPI"], groups.Select(group => group.Name));
+        Assert.Equal(
+            ["PROTON_DLSS_UPGRADE", "PROTON_DLSS_INDICATOR"],
+            groups[0].Settings.Select(setting => setting.Variable));
+    }
+
+    /// <summary>
+    /// Both forms in one file: the settings written before any heading keep their place at the top,
+    /// which is what lets a section gain headings without its first few settings moving.
+    /// </summary>
+    [Fact]
+    public void ListsUngroupedSettingsAheadOfTheHeadings()
+    {
+        Write("hdr.yaml", """
+            id: hdr
+            settings:
+              - variable: DXVK_HDR
+                label: Enable HDR in DXVK
+            groups:
+              - name: Proton
+                settings:
+                  - variable: PROTON_USE_HDR
+                    label: Enable HDR in Proton
+            """);
+
+        var catalog = Read();
+        var groups = catalog.GroupsIn(catalog.FindCategory("hdr")!);
+
+        Assert.Equal([null, "Proton"], groups.Select(group => group.Name));
+        Assert.Equal(["DXVK_HDR"], groups[0].Settings.Select(setting => setting.Variable));
+    }
+
+    /// <summary>
+    /// A group written without a name is not a heading called nothing — it is settings with no
+    /// heading, and belongs with the ones declared that way.
+    /// </summary>
+    [Fact]
+    public void TreatsAnUnnamedGroupAsUngrouped()
+    {
+        Write("cpu.yaml", """
+            id: cpu
+            groups:
+              - settings:
+                  - variable: PROTON_NO_ESYNC
+                    label: Disable esync
+            """);
+
+        Assert.Null(Assert.Single(Read().All).Group);
+    }
+
     /// <summary>Only the variable and label are required; everything else has a sensible default.</summary>
     [Fact]
     public void FallsBackToATextBoxWrittenAsOne()

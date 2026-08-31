@@ -31,6 +31,13 @@ public partial class CommandEditor : ComponentBase
     private bool IsOn => Options.HasCommand(Command);
 
     /// <summary>
+    /// How many of a group's flags are set, shown beside its heading so a closed group still says
+    /// whether there is anything inside it.
+    /// </summary>
+    private int SetCountIn(CommandFlagGroup group) =>
+        group.Flags.Count(flag => Options.HasFlag(Command, flag));
+
+    /// <summary>
     /// The offered values, plus whatever is already set if it is not among them, so a value this
     /// build of the command knows and ProtonTune does not is never dropped by opening a menu.
     /// </summary>

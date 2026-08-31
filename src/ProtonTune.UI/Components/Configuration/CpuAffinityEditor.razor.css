@@ -52,15 +52,6 @@
     font-size: 11px;
 }
 
-.group {
-    margin: 22px 0 0;
-    color: var(--text-muted);
-    font-size: 11px;
-    font-weight: 600;
-    letter-spacing: 0.06em;
-    text-transform: uppercase;
-}
-
 .group-note {
     margin: 6px 0 10px;
     color: var(--text-muted);

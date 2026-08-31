@@ -20,13 +20,30 @@ internal sealed class SettingDefinitionFile
     /// <summary>Where the section sits in the list, lowest first.</summary>
     public int Order { get; set; }
 
+    /// <summary>
+    /// The settings listed before any heading. A short section needs nothing else.
+    /// </summary>
     public List<SettingEntry> Settings { get; set; } = [];
+
+    /// <summary>
+    /// Settings listed under headings, shown after the ungrouped ones and in this order.
+    /// </summary>
+    public List<SettingGroupBlock> Groups { get; set; } = [];
 
     /// <summary>
     /// Present when the section configures a command in the launch chain rather than, or as well
     /// as, a set of variables.
     /// </summary>
     public CommandBlock? Command { get; set; }
+
+    /// <summary>A set of settings shown together under a heading.</summary>
+    internal sealed class SettingGroupBlock
+    {
+        /// <summary>The heading. A group without one is folded in with the ungrouped settings.</summary>
+        public string? Name { get; set; }
+
+        public List<SettingEntry> Settings { get; set; } = [];
+    }
 
     /// <summary>One variable within a section.</summary>
     internal sealed class SettingEntry

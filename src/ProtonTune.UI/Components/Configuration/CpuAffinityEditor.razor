@@ -31,30 +31,30 @@ else
         }
     </div>
 
-    <h4 class="group">Threads</h4>
-
-    <div class="threads">
-        @foreach (var thread in Topology.AllThreads)
-        {
-            <label class="thread @(SelectedThreads.Contains(thread) ? "is-on" : string.Empty)" @key="thread">
-                <input type="checkbox"
-                       checked="@SelectedThreads.Contains(thread)"
-                       @onchange="@(args => ToggleThread(thread, args.Value is true))"/>
-                <span>@thread</span>
-            </label>
-        }
-    </div>
+    <CollapsibleGroup Name="Threads" SetCount="@SelectedThreads.Count">
+        <div class="threads">
+            @foreach (var thread in Topology.AllThreads)
+            {
+                <label class="thread @(SelectedThreads.Contains(thread) ? "is-on" : string.Empty)" @key="thread">
+                    <input type="checkbox"
+                           checked="@SelectedThreads.Contains(thread)"
+                           @onchange="@(args => ToggleThread(thread, args.Value is true))"/>
+                    <span>@thread</span>
+                </label>
+            }
+        </div>
+    </CollapsibleGroup>
 }
 
-<h4 class="group">Mask</h4>
+<CollapsibleGroup Name="Mask">
+    <p class="group-note">
+        Passed to <code>taskset -c</code>. Clearing it removes the pinning entirely.
+    </p>
 
-<p class="group-note">
-    Passed to <code>taskset -c</code>. Clearing it removes the pinning entirely.
-</p>
-
-<input class="mask"
-       type="text"
-       spellcheck="false"
-       placeholder="0-7,16-23"
-       value="@Value"
-       @onchange="OnMaskChanged"/>
+    <input class="mask"
+           type="text"
+           spellcheck="false"
+           placeholder="0-7,16-23"
+           value="@Value"
+           @onchange="OnMaskChanged"/>
+</CollapsibleGroup>

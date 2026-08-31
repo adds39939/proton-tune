@@ -68,11 +68,6 @@
             @if (selected.Command is { } command)
             {
                 <CommandEditor Command="@command" Options="@Options" OptionsChanged="Publish"/>
-
-                @if (ListedSettingsIn(selected).Any())
-                {
-                    <h4 class="section-subtitle">Settings</h4>
-                }
             }
 
             @if (selected.Is(SettingCategoryIds.MangoHud))
@@ -89,40 +84,36 @@
                 <CpuAffinityEditor Value="@Options.CpuAffinity"
                                    ValueChanged="ApplyCpuAffinity"/>
 
-                <h4 class="section-subtitle">Scheduling</h4>
-
-                <CommandToggle Label="Launch through GameMode"
-                               Command="@GameModeCommand"
-                               Description="Asks the system to favour the game while it runs."
-                               IsOn="@Options.HasWrapperCommand(GameModeCommand)"
-                               IsOnChanged="@(on => ApplyWrapperCommand(GameModeCommand, on))"/>
+                <CollapsibleGroup Name="Scheduling"
+                                  SetCount="@(Options.HasWrapperCommand(GameModeCommand) ? 1 : 0)">
+                    <CommandToggle Label="Launch through GameMode"
+                                   Command="@GameModeCommand"
+                                   Description="Asks the system to favour the game while it runs."
+                                   IsOn="@Options.HasWrapperCommand(GameModeCommand)"
+                                   IsOnChanged="@(on => ApplyWrapperCommand(GameModeCommand, on))"/>
+                </CollapsibleGroup>
             }
 
-            @if (selected.Is(SettingCategoryIds.Nvidia) && Entry is not null)
+            foreach (var group in ListedGroupsIn(selected))
             {
-                <h4 class="section-subtitle">Libraries</h4>
+                // Keyed by the section and the first variable under the heading rather than by
+                // position, so a group that is open stays open when one above it appears or goes,
+                // and a closed group in one section never comes back as a different one in the next.
+                var key = $"{selected.Id}:{group.Settings[0].Variable}";
 
-                @foreach (var definition in ProtonDlssSettings)
-                {
-                    <SettingEditor Definition="@definition"
-                                   Value="@Options.FindEnvironment(definition.Variable)?.Value"
-                                   ValueChanged="@(value => ApplySetting(definition, value))"
-                                   IsIgnored="@IsIgnored(definition)"
-                                   BuildName="@BuildName"
-                                   @key="definition.Variable"/>
-                }
-
-                <h4 class="section-subtitle">Driver overrides</h4>
-            }
-
-            @foreach (var definition in ListedSettingsIn(selected))
-            {
-                <SettingEditor Definition="@definition"
-                               Value="@Options.FindEnvironment(definition.Variable)?.Value"
-                               ValueChanged="@(value => ApplySetting(definition, value))"
-                               IsIgnored="@IsIgnored(definition)"
-                               BuildName="@BuildName"
-                               @key="definition.Variable"/>
+                <CollapsibleGroup Name="@(group.Name ?? UnheadedGroupName(selected))"
+                                  SetCount="@SetCountIn(group)"
+                                  @key="key">
+                    @foreach (var definition in group.Settings)
+                    {
+                        <SettingEditor Definition="@definition"
+                                       Value="@Options.FindEnvironment(definition.Variable)?.Value"
+                                       ValueChanged="@(value => ApplySetting(definition, value))"
+                                       IsIgnored="@IsIgnored(definition)"
+                                       BuildName="@BuildName"
+                                       @key="definition.Variable"/>
+                    }
+                </CollapsibleGroup>
             }
         }
         else

@@ -1,19 +1,134 @@
 id: compatibility
 title: Compatibility
-order: 8
+order: 12
 
-settings:
-  - variable: WINEDLLOVERRIDES
-    label: DLL overrides
-    description: Chooses between Wine's built-in DLLs and the game's own.
-    placeholder: dxgi=n,b
+groups:
+  - name: Libraries
+    settings:
+      - variable: WINEDLLOVERRIDES
+        label: DLL overrides
+        description: Chooses between Wine's built-in DLLs and the game's own.
+        placeholder: dxgi=n,b
 
-  - variable: PROTON_FORCE_LARGE_ADDRESS_AWARE
-    label: Large address aware
-    description: Gives 32-bit games access to more than 2 GB of address space.
-    kind: toggle
+      # Read by every build installed here. The default is a long list of redistributable DLLs;
+      # setting this replaces that list rather than adding to it.
+      - variable: PROTON_DLL_COPY
+        label: DLLs to copy into the prefix
+        description: >-
+          Comma-separated patterns, replacing Proton's own list of redistributables. Copies rather
+          than symlinks them, which is what a game that rewrites its own DLLs needs.
+        placeholder: d3dcompiler_*.dll,xinput*.dll
 
-  - variable: PROTON_LOG
-    label: Proton logging
-    description: Writes a debug log to the home directory. Slows the game down.
-    kind: toggle
+      - variable: PROTON_ADD_CONFIG
+        label: Extra compatibility flags
+        description: >-
+          Comma-separated entries added to the build's own compatibility configuration, for a flag
+          with no variable of its own.
+        placeholder: forcelgadd
+        protonBuilds: ["^GE-Proton"]
+        restrictToProtonBuild: true
+
+  - name: Memory
+    settings:
+      # All four read by every build installed here.
+      - variable: PROTON_FORCE_LARGE_ADDRESS_AWARE
+        label: Large address aware
+        description: Gives 32-bit games access to more than 2 GB of address space.
+        kind: toggle
+
+      - variable: PROTON_LIMIT_ADDRESS_SPACE
+        label: Limit the address space
+        description: >-
+          Takes that back again, for an old game whose own pointer arithmetic cannot survive an
+          allocation above 2 GB. Proton applies it to a few games by default.
+        kind: toggle
+
+      - variable: PROTON_HEAP_DELAY_FREE
+        label: Delay freeing heap memory
+        description: >-
+          Holds freed allocations back rather than returning them at once, which keeps a game that
+          reads memory it has already released from reading someone else's.
+        kind: toggle
+
+      - variable: PROTON_HEAP_ZERO_MEMORY
+        label: Zero heap memory
+        description: >-
+          Hands out cleared memory, so a game relying on a fresh allocation being empty gets what
+          it assumed rather than what was there before.
+        kind: toggle
+
+  - name: Execution
+    settings:
+      - variable: PROTON_USE_WOW64
+        label: New WoW64 mode
+        description: >-
+          Runs 32-bit games through the new WoW64 layer rather than a 32-bit Wine, which needs no
+          32-bit libraries on the system. Still the newer of the two paths, and not yet the quieter.
+        kind: toggle
+
+      - variable: PROTON_USE_ARM64
+        label: ARM64EC translation
+        description: >-
+          On an ARM machine, runs x86 code through FEX inside an ARM64EC prefix. On by default
+          there and irrelevant on an x86 one.
+        kind: toggle
+
+      - variable: PROTON_USE_WRITECOPY
+        label: Simulate copy-on-write
+        description: >-
+          Gives Windows' copy-on-write page protection its real behaviour rather than Wine's
+          approximation, which some anti-tamper systems check for.
+        kind: toggle
+        protonBuilds: ["^GE-Proton"]
+        restrictToProtonBuild: true
+
+  - name: Drives
+    settings:
+      # Both read by every build installed here.
+      - variable: PROTON_SET_GAME_DRIVE
+        label: Map the game to a drive letter
+        description: >-
+          Gives the library the game lives in its own drive letter, which is what a game checking
+          for its files by absolute path expects to find.
+        kind: toggle
+
+      - variable: PROTON_SET_STEAM_DRIVE
+        label: Map Steam to a drive letter
+        description: The same, for the Steam installation itself.
+        kind: toggle
+
+  # Hiding a GPU is how a game that picks the wrong one, or refuses to run beside one, is pointed
+  # at the card you meant. The PROTON_ names are read by every build here; WINE_HIDE_AMD_GPU has no
+  # PROTON_ spelling and is honoured by the Wine in all of them.
+  - name: Hiding hardware
+    settings:
+      - variable: PROTON_HIDE_NVIDIA_GPU
+        label: Hide the NVIDIA GPU
+        kind: toggle
+
+      - variable: WINE_HIDE_AMD_GPU
+        label: Hide the AMD GPU
+        kind: toggle
+
+      - variable: PROTON_HIDE_INTEL_GPU
+        label: Hide the Intel GPU
+        kind: toggle
+
+      - variable: PROTON_HIDE_APU
+        label: Hide the integrated GPU
+        description: For a laptop or desktop where the game keeps choosing the APU over the card.
+        kind: toggle
+
+      - variable: PROTON_HIDE_VANGOGH_GPU
+        label: Hide the Steam Deck GPU
+        description: Van Gogh is the Deck's own APU; this hides it specifically.
+        kind: toggle
+
+  - name: Older games
+    settings:
+      - variable: PROTON_OLD_GL_STRING
+        label: Short OpenGL version string
+        description: >-
+          Reports a shorter list of OpenGL extensions, for an old game with a fixed-size buffer
+          that the real one overruns.
+        kind: toggle

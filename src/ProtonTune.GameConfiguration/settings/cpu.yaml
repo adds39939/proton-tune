@@ -1,14 +1,40 @@
 id: cpu
 title: CPU
-order: 6
+order: 9
 
-settings:
-  - variable: PROTON_NO_ESYNC
-    label: Disable esync
-    description: Turns off eventfd synchronisation. Costs performance; fixes some games.
-    kind: toggle
+# The affinity picker above these reads the machine's own topology and writes taskset into the
+# launch chain. That pins the game to a set of threads; PROTON_CPU_TOPOLOGY below changes how many
+# it is told about, which is a different question and often the one an old game needs answered.
 
-  - variable: PROTON_NO_FSYNC
-    label: Disable fsync
-    description: Turns off futex synchronisation, the faster successor to esync.
-    kind: toggle
+groups:
+  - name: Synchronisation
+    settings:
+      # Every build installed here reads the first two. NTSync is newer and only GE consults it.
+      - variable: PROTON_NO_ESYNC
+        label: Disable esync
+        description: Turns off eventfd synchronisation. Costs performance; fixes some games.
+        kind: toggle
+
+      - variable: PROTON_NO_FSYNC
+        label: Disable fsync
+        description: Turns off futex synchronisation, the faster successor to esync.
+        kind: toggle
+
+      - variable: PROTON_NO_NTSYNC
+        label: Disable ntsync
+        description: >-
+          Turns off the kernel's own Windows-style synchronisation, the fastest of the three where
+          the driver is loaded, falling back to fsync.
+        kind: toggle
+        protonBuilds: ["^GE-Proton"]
+        restrictToProtonBuild: true
+
+  - name: Cores
+    settings:
+      - variable: PROTON_CPU_TOPOLOGY
+        label: Reported core count
+        description: >-
+          How many cores the game is told it has, optionally with the ones to use — 8 on its own,
+          or 8:0,1,2,3,4,5,6,7 to name them. For an old game that divides work badly across a
+          large processor, or refuses to start above a certain count.
+        placeholder: "8"

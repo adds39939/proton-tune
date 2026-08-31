@@ -1,16 +1,3 @@
-.group {
-    margin: 24px 0 0;
-    color: var(--text-muted);
-    font-size: 11px;
-    font-weight: 600;
-    letter-spacing: 0.06em;
-    text-transform: uppercase;
-}
-
-.group:first-of-type {
-    margin-top: 4px;
-}
-
 .group-note {
     margin: 6px 0 10px;
     color: var(--text-muted);

@@ -22,6 +22,38 @@ settings:
 
 Only `variable` and `label` are required. `kind` defaults to `text`, and `on` to `1`.
 
+## Headings within a section
+
+A section of twenty variables is a section nobody reads. Give it `groups` and each one is listed
+under a heading, in the order the file declares them.
+
+```yaml
+settings:                       # optional: listed first, under no heading at all.
+  - variable: DXVK_HDR
+    label: Enable HDR in DXVK
+
+groups:
+  - name: DLSS                  # the heading, shown above the settings beneath it.
+    settings:
+      - variable: PROTON_DLSS_UPGRADE
+        label: Upgrade DLSS libraries
+```
+
+A file may use either form or both. `settings` is what a section short enough to need no headings
+writes on its own, and where both appear the ungrouped ones come first — so a section can gain
+headings without its opening few settings moving.
+
+Every heading collapses, and every one starts open. A closed group shows the number of settings
+configured inside it beside its name, so closing one never hides that something is set. The same
+goes for a compound variable's option groups and a command's flag groups — Gamescope's and
+MangoHud's headings behave exactly like these.
+
+Headings are presentation and nothing else. A setting belongs to the section its file names, and
+grouping never changes that, so moving one between headings does not change where it is found or
+how it is written. A group is a run rather than a lookup: naming the same heading twice leaves two
+runs where they were written rather than merging them somewhere up the list. A heading whose every
+setting is hidden on the build in force is hidden with them rather than standing over nothing.
+
 ## Variables that hold several settings at once
 
 Some variables are really lists — `MANGOHUD_CONFIG`, `DXVK_HUD`. Give one a `compound` block and
@@ -96,6 +128,23 @@ command off takes its flags with it. Flags ProtonTune does not list survive both
 A list of regular expressions matched against a build's name and its version string. If any
 matches, the setting applies; if the list is absent, the setting is offered for every build.
 
+The patterns the shipped files use are:
+
+| Pattern | Matches |
+| --- | --- |
+| `^GE-Proton` | `GE-Proton11-6-x86_64` by name, `GE-Proton11-6` by version |
+| `^(proton-)?cachyos` | `proton-cachyos-…-x86_64_v3` by name, `cachyos-11.0-…` by version |
+
+Both spellings are needed for CachyOS because the `version` file drops the leading `proton-`, and
+a build unpacked under a different directory name is then still recognised. Valve's builds —
+`proton_experimental`, `proton_hotfix`, `proton_9` — are deliberately named by no pattern: they are
+the family that reads none of the settings these lists guard.
+
+Naming builds is only worth doing where the answer cannot be read. For a `PROTON_` variable the
+build's own launch script settles it exactly, so a list adds nothing unless
+`restrictToProtonBuild` is also set — greying out is already handled, and hiding is the only thing
+left for a declaration to ask for.
+
 Use it for a setting that only ever exists in one family of builds. It is a declaration, not a
 guess — separately from this, ProtonTune reads each installed build's own launch script and dims
 anything that build does not consult. The two agree in the usual case, and where a variable is
@@ -108,11 +157,14 @@ not a set of choices to reconsider, it is noise in a list someone is trying to r
 that already has a value stays visible whatever this says, or it could neither be seen nor
 removed.
 
-## Three ids the application knows by name
+## Two ids the application knows by name
 
-`dlss`, `cpu`, and `mangohud` each carry a control that is more than a text box — the library
-swap, the affinity picker, and the option-by-option MangoHud editor. Renaming those ids removes
-the control rather than the section, so rename them only alongside the code that looks for them.
+`cpu` and `mangohud` each carry a control that is more than a text box — the affinity picker, and
+the toggle that puts `mangohud` in the launch chain. Renaming those ids removes the control rather
+than the section, so rename them only alongside the code that looks for them.
+
+Nothing else is known by name. Nvidia's DLSS settings used to be, held back by the editor so they
+could be listed under their own heading; that heading is now declared in the file like any other.
 
 ## Variables ProtonTune does not know
 

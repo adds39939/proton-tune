@@ -169,20 +169,17 @@ public partial class LaunchOptionsEditor : ComponentBase
     private IReadOnlyList<SettingDefinition> DefinitionsIn(SettingCategory category) =>
         Catalog.In(category);
 
-    /// <summary>
-    /// A category's settings as the generic list renders them. For a game, Proton's own DLSS
-    /// settings are held back so they can be listed under their own heading, apart from the driver
-    /// overrides. The global profile has no such heading, so it lists them here rather than losing
-    /// them.
-    /// </summary>
+    /// <summary>A category's settings, less the ones the build in force will never read.</summary>
     private IEnumerable<SettingDefinition> ListedSettingsIn(SettingCategory category) =>
-        (category.Is(SettingCategoryIds.Nvidia) && Entry is not null
-            ? DefinitionsIn(category).Where(definition => !IsProtonDlss(definition))
-            : DefinitionsIn(category))
-        .Where(IsVisible);
+        DefinitionsIn(category).Where(IsVisible);
 
-    private IReadOnlyList<SettingDefinition> ProtonDlssSettings =>
-        Catalog.All.Where(IsProtonDlss).Where(IsVisible).ToList();
+    /// <summary>
+    /// The same, under the headings the section's file declares. Grouped after the hiding rather
+    /// than before it, so a heading whose every setting belongs to a build the game does not run
+    /// goes with them instead of standing over nothing.
+    /// </summary>
+    private IReadOnlyList<SettingGroup> ListedGroupsIn(SettingCategory category) =>
+        SettingCatalog.Group(ListedSettingsIn(category));
 
     /// <summary>
     /// Whether a setting is worth showing at all on the build in force.
@@ -198,9 +195,6 @@ public partial class LaunchOptionsEditor : ComponentBase
         definition.AppliesTo(Build) ||
         Options.FindEnvironment(definition.Variable) is not null;
 
-    private static bool IsProtonDlss(SettingDefinition definition) =>
-        definition.Variable.StartsWith("PROTON_DLSS_", StringComparison.Ordinal);
-
     /// <summary>
     /// How many of a category's settings are set, counting the flags of its command alongside its
     /// variables — both are things the user has configured there.
@@ -210,6 +204,25 @@ public partial class LaunchOptionsEditor : ComponentBase
             .Where(IsVisible)
             .Count(definition => Options.FindEnvironment(definition.Variable) is not null) +
         (category.Command is { } command ? command.AllFlags.Count(flag => Options.HasFlag(command, flag)) : 0);
+
+    /// <summary>
+    /// What to head the run a section's file declares before any group of its own.
+    /// </summary>
+    /// <remarks>
+    /// Usually nothing: those settings are the section, and a heading repeating its name says
+    /// less than no heading at all. A section whose tab is mostly a command is the exception —
+    /// Gamescope's two variables listed straight after the compositor's flags read as more of
+    /// them, so there they are headed and collapse like everything else.
+    /// </remarks>
+    private static string? UnheadedGroupName(SettingCategory category) =>
+        category.Command is null ? null : "Settings";
+
+    /// <summary>
+    /// How many of a group's settings are set, shown beside its heading. A closed group hides its
+    /// controls, so without this a setting could be configured and invisible at the same time.
+    /// </summary>
+    private int SetCountIn(SettingGroup group) =>
+        group.Settings.Count(definition => Options.FindEnvironment(definition.Variable) is not null);
 
     /// <summary>Opens on the first category with something set, so a configured game shows it.</summary>
     public void SelectFirstConfiguredCategory()

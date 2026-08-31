@@ -139,9 +139,16 @@ initialiser, or a first run disagrees with a stored file that has no value for i
 
 **Which settings exist is data, not code.** `SettingCatalog` is injected, read once at startup
 from the YAML files in `ProtonTune.GameConfiguration`. Never hardcode a variable name or a section
-in a component: adding either is an edit to those files. The exceptions are the three section ids
-in `SettingCategoryIds`, which are presented as more than a list of variables — the CPU affinity
-picker, MangoHud's option-by-option editor, and the headings Nvidia's settings are grouped under.
+in a component: adding either is an edit to those files. That goes for the headings inside a
+section too — a section's file declares its own groups, and `SettingCatalog.GroupsIn` returns them
+in the order it wrote them. `CollapsibleGroup` draws one, and everything with headings inside a
+configuration tab uses it: the settings list, a command's flag groups, and a compound variable's
+option groups. It is a `details` element, so the open state belongs to the browser rather than to
+a field — the render tree always says `open`, which is what keeps a re-render from reopening a
+group somebody closed. Key it wherever the list it sits in can change, or a closed group comes
+back as a different one. The exceptions are the two section ids in `SettingCategoryIds`, which
+carry a control that is not a list of variables — the CPU affinity picker and MangoHud's
+launch-chain toggle.
 
 Because the sections come from files, there is no section to select until they are read. A
 component that opens on one has to pick it after the catalogue is available rather than in a field
