@@ -15,7 +15,7 @@ internal class Program
         WebKitEnvironment.EnsureOsIsLinux();
         WebKitEnvironment.DisableDmaBufRenderer();
 
-        var appBuilder = PhotinoBlazorAppBuilder.CreateDefault();
+        var appBuilder = PhotinoBlazorApp.CreateBuilder();
 
         appBuilder.Services
             .AddLogging(logging => logging.AddConsole())
