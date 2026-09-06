@@ -29,7 +29,14 @@ cover art loads here too.
 
 ## Driving it
 
-Chrome DevTools drives the page. With Node available:
+Chrome DevTools drives the page, and needs Node on the path.
+
+The `chrome-devtools` MCP server is the way in: navigate a page to the address above, take a
+snapshot for element identifiers, then click, fill and screenshot against those. It launches a
+browser of its own and returns screenshots directly, so nothing has to be saved and reopened.
+
+The same package ships a CLI, which needs no MCP connection and is the fallback when that server
+cannot start:
 
 ```sh
 npx -p chrome-devtools-mcp chrome-devtools start --headless=false
@@ -39,7 +46,12 @@ npx -p chrome-devtools-mcp chrome-devtools click 1 <uid>
 npx -p chrome-devtools-mcp chrome-devtools take_screenshot 1 --filePath shot.png
 ```
 
-`--headless=false` is what puts the browser on screen; without it the same commands work unseen.
+The CLI daemon is headless unless told otherwise, which `--headless=false` is for. It keeps a
+browser separate from the MCP server's, so running both leaves two.
+
+One trap either way: filling a field with an empty string types nothing, so the box empties
+without the page hearing about it and the component keeps the old value. Type a character and
+delete it to clear a field.
 
 ## Writing
 
