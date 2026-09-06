@@ -114,6 +114,14 @@ does own when that is genuinely needed, and prefer moving the rule into the chil
 `MainLayout.razor.css` shows the legitimate case — `NavLink` renders its own anchor, which never
 carries the layout's scope attribute, so the tab styles hang off `.nav ::deep`.
 
+`MainLayout`'s `.content` is a full-height flex column that scrolls, so a short page needs to do
+nothing. A page that should instead pin its chrome and scroll only one region claims the height —
+`flex: 1; min-height: 0` on itself, `flex: none` on the parts that stay put, and
+`flex: 1; min-height: 0; overflow-y: auto` on the region that scrolls. `GameLibrary` does this so
+the header, search and view toggle never leave the window. Omitting either `min-height: 0` makes
+the region grow to its content instead, and the whole page scrolls again. An overflow container
+clips a focused card's `outline-offset`, so the scroll region carries a few pixels of padding.
+
 A component that renders its own `<li>` keeps its item styling in its own stylesheet, leaving the
 container to do nothing but lay children out. That is why `GameGridCard` and `GameListCard` own
 the list item rather than `GameLibrary` wrapping them in one.

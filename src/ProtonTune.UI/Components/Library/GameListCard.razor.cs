@@ -4,8 +4,8 @@ using ProtonTune.Core.Steam;
 namespace ProtonTune.UI.Components.Library;
 
 /// <summary>
-/// A library entry as a compact row, which fits more games on screen and lines their metadata up
-/// into scannable columns.
+/// A library entry as a compact row, with its metadata in fixed columns that line up down the
+/// list.
 /// </summary>
 /// <remarks>Renders the list item itself, so the list container only has to lay out its children.</remarks>
 public partial class GameListCard : ComponentBase

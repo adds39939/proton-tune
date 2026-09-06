@@ -45,7 +45,8 @@
 }
 
 .row-meta {
-    display: flex;
+    display: grid;
+    grid-template-columns: 68px 80px 112px;
     flex: none;
     gap: 22px;
     margin: 0;
