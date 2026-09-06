@@ -22,6 +22,12 @@ Photino renders in WebKitGTK and this renders in whatever browser is pointed at 
 rendering difference between the two engines will not show up here. Everything about layout,
 styling, state and behaviour does.
 
+Interactive Server is what the window's own hosting is closest to: components run in this
+process with the real services, reading the real Steam installation, rather than in a browser
+sandbox that would need every one of them proxied over HTTP first. Prerendering is off, because
+the window does not prerender either — left on, a component would initialise twice here and once
+there, which is the sort of difference a second host exists to avoid rather than introduce.
+
 The window answers the private `artwork://` scheme itself through a registered handler, which no
 browser knows about. `HttpArtworkService` rewrites those addresses to `/scheme/artwork/…` and
 `CustomSchemeEndpoints` answers them from the very same `ICustomSchemeHandler` implementations, so
