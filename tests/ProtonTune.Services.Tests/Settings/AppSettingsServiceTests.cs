@@ -6,8 +6,8 @@ using ProtonTune.Services.Settings;
 namespace ProtonTune.Services.Tests.Settings;
 
 /// <summary>
-/// Storing preferences between sessions. The whole point of remembering how the library was left
-/// is that it comes back that way, which only shows up when the file is written and read again.
+/// Storing preferences between sessions, which only shows up when the file is written and read
+/// again.
 /// </summary>
 public sealed class AppSettingsServiceTests : IDisposable
 {
@@ -49,9 +49,8 @@ public sealed class AppSettingsServiceTests : IDisposable
     }
 
     /// <summary>
-    /// Written by name, not by number. A number would tie the file to the order the members are
-    /// declared in, and that order is the order the buttons and the menu appear in — so putting
-    /// the list first would silently turn everyone's stored grid into a list.
+    /// Written by name, not by number: a number would tie the file to declaration order, which is
+    /// also the button and menu order, so reordering would reinterpret a stored choice.
     /// </summary>
     [Fact]
     public async Task WritesThePreferencesByName()

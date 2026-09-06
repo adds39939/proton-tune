@@ -4,10 +4,9 @@ namespace ProtonTune.Services.GameConfiguration;
 /// One setting definition file, as it is written on disk.
 /// </summary>
 /// <remarks>
-/// Kept separate from the model the application uses. This shape belongs to the file format and
-/// has to tolerate anything a person might type — missing fields, an unknown kind — whereas
-/// <see cref="ProtonTune.Core.Launch.SettingDefinition" /> is only ever built once those have
-/// been dealt with.
+/// Kept separate from the model the application uses: this shape belongs to the file format and
+/// tolerates anything a person might type, whereas
+/// <see cref="ProtonTune.Core.Launch.SettingDefinition" /> is built only once that is dealt with.
 /// </remarks>
 internal sealed class SettingDefinitionFile
 {

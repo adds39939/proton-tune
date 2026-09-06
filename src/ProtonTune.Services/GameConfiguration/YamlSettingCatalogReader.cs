@@ -11,8 +11,7 @@ namespace ProtonTune.Services.GameConfiguration;
 /// </summary>
 /// <remarks>
 /// One unreadable file costs its own section and nothing else. These are edited by hand, so a
-/// mistake in one is expected — refusing to start, or dropping every setting because a single
-/// file has a stray character, would turn a typo into an unusable application.
+/// typo in one must not take the rest of the catalogue with it.
 /// </remarks>
 public sealed class YamlSettingCatalogReader(string directory, ILogger<YamlSettingCatalogReader> logger)
 {
@@ -63,8 +62,6 @@ public sealed class YamlSettingCatalogReader(string directory, ILogger<YamlSetti
 
             categories.Add(category);
 
-            // Ungrouped first, then each heading in the order the file gives them. The catalogue
-            // keeps declaration order, so this is what decides how the section reads.
             definitions.AddRange(file.Settings
                 .Select(entry => Convert(entry, category, null, path))
                 .OfType<SettingDefinition>());
@@ -138,9 +135,8 @@ public sealed class YamlSettingCatalogReader(string directory, ILogger<YamlSetti
     /// Reads the shape of a variable that packs several settings into one string.
     /// </summary>
     /// <returns>
-    /// <see langword="null"/> where none is declared, and also where one is declared with no
-    /// options at all — an empty compound would replace the text box with an editor offering
-    /// nothing, which is worse than the text box.
+    /// <see langword="null"/> where none is declared, and where one is declared with no options:
+    /// an empty compound would replace the text box with an editor offering nothing.
     /// </returns>
     private CompoundSchema? Convert(SettingDefinitionFile.CompoundBlock? block, string variable, string path)
     {
@@ -200,9 +196,8 @@ public sealed class YamlSettingCatalogReader(string directory, ILogger<YamlSetti
     /// command to run — a toggle that inserts nothing has nothing to say.
     /// </returns>
     /// <remarks>
-    /// A command with no flags at all is kept, unlike a compound with no options. There the
-    /// options were the whole editor; here the command itself is a setting, and launching through
-    /// it is worth offering on its own.
+    /// A command with no flags is kept, unlike a compound with no options: the command itself is a
+    /// setting, so launching through it is worth offering on its own.
     /// </remarks>
     private CommandDefinition? Convert(SettingDefinitionFile.CommandBlock? block, string path)
     {
@@ -256,13 +251,13 @@ public sealed class YamlSettingCatalogReader(string directory, ILogger<YamlSetti
     }
 
     /// <summary>
-    /// Reads the kind, falling back to a text box. An unrecognised kind still gives an editable
-    /// setting, which is the least surprising way to be wrong.
+    /// Reads the kind, falling back to a text box so an unrecognised kind still gives an editable
+    /// setting.
     /// </summary>
     /// <remarks>
     /// Only names are accepted. <see cref="Enum.TryParse{TEnum}(string, bool, out TEnum)" /> also
-    /// takes the underlying numbers, so an unquoted <c>2</c> in a file would quietly become a text
-    /// box instead of being reported as the mistake it is.
+    /// takes the underlying numbers, so an unquoted <c>2</c> would quietly become a text box
+    /// instead of being reported.
     /// </remarks>
     private SettingKind ParseKind(string? kind, string variable, string path)
     {

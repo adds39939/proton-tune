@@ -10,10 +10,9 @@ namespace ProtonTune.UI.Components.Configuration;
 /// text.
 /// </summary>
 /// <remarks>
-/// Shared by the per-game dialog and the global profile, which offer the same settings and differ
-/// only in what they are attached to. The options passed in are the single source of truth: typed
-/// controls edit them and the raw text is regenerated, editing the raw text parses straight back,
-/// and both routes end at the same string.
+/// Shared by the per-game dialog and the global profile. The options passed in are the single
+/// source of truth: typed controls edit them and the raw text is regenerated, editing the raw text
+/// parses straight back, and both routes end at the same string.
 /// </remarks>
 public partial class LaunchOptionsEditor : ComponentBase
 {
@@ -73,10 +72,9 @@ public partial class LaunchOptionsEditor : ComponentBase
     /// Whether the build in force does nothing with a setting.
     /// </summary>
     /// <remarks>
-    /// Two sources, and they are not equals. Reading the build's own launch script is exact, so
-    /// where it has an opinion it decides. The definition file's declaration speaks only where it
-    /// cannot — the renderer variables, whose names are assembled at runtime and never appear
-    /// whole in the shipped libraries.
+    /// Two sources, and not equals: reading the build's own launch script is exact, so it decides
+    /// where it has an opinion. The definition file speaks only for the renderer variables, whose
+    /// names are assembled at runtime and never appear whole.
     /// </remarks>
     private bool IsIgnored(SettingDefinition definition) => Capabilities.Reads(definition.Variable) switch
     {
@@ -119,8 +117,8 @@ public partial class LaunchOptionsEditor : ComponentBase
 
     /// <summary>
     /// Opens on a section rather than on nothing. Which sections exist comes from the definition
-    /// files, so there is nothing to pick until they have been read — and without this the editor
-    /// renders with no section selected, which falls through to the raw text box.
+    /// files, so there is nothing to pick until they are read; without this the editor falls
+    /// through to the raw text box.
     /// </summary>
     protected override void OnInitialized() => SelectedCategory = VisibleCategories.FirstOrDefault();
 
@@ -143,8 +141,7 @@ public partial class LaunchOptionsEditor : ComponentBase
 
     /// <summary>
     /// The sections worth listing. One whose every setting belongs to a build the game does not
-    /// run is not a section with nothing chosen in it — it cannot be used at all, and a tab that
-    /// opens onto nothing is worse than no tab.
+    /// run cannot be used at all, and a tab opening onto nothing is worse than no tab.
     /// </summary>
     private IReadOnlyList<SettingCategory> VisibleCategories =>
         Catalog.Categories.Where(HasAnythingToShow).ToList();
@@ -174,9 +171,8 @@ public partial class LaunchOptionsEditor : ComponentBase
         DefinitionsIn(category).Where(IsVisible);
 
     /// <summary>
-    /// The same, under the headings the section's file declares. Grouped after the hiding rather
-    /// than before it, so a heading whose every setting belongs to a build the game does not run
-    /// goes with them instead of standing over nothing.
+    /// The same, under the headings the section's file declares. Grouped after the hiding, so a
+    /// heading whose settings were all hidden goes with them instead of standing over nothing.
     /// </summary>
     private IReadOnlyList<SettingGroup> ListedGroupsIn(SettingCategory category) =>
         SettingCatalog.Group(ListedSettingsIn(category));
@@ -185,10 +181,9 @@ public partial class LaunchOptionsEditor : ComponentBase
     /// Whether a setting is worth showing at all on the build in force.
     /// </summary>
     /// <remarks>
-    /// A setting the definition files restrict to a family of builds is hidden elsewhere, so the
-    /// GE-only features do not fill a list against a build that will never read them. Never when
-    /// it already has a value, though: hiding one that is set would leave it invisible and
-    /// unremovable except by editing the raw text.
+    /// A setting restricted to a family of builds is hidden elsewhere, so GE-only features do not
+    /// fill a list against a build that will never read them — but never when it already has a
+    /// value, which would leave it invisible and unremovable outside the raw text.
     /// </remarks>
     private bool IsVisible(SettingDefinition definition) =>
         !definition.RestrictToProtonBuild ||
@@ -196,8 +191,8 @@ public partial class LaunchOptionsEditor : ComponentBase
         Options.FindEnvironment(definition.Variable) is not null;
 
     /// <summary>
-    /// How many of a category's settings are set, counting the flags of its command alongside its
-    /// variables — both are things the user has configured there.
+    /// How many of a category's settings are set, counting its command's flags alongside its
+    /// variables.
     /// </summary>
     private int SetCountIn(SettingCategory category) =>
         DefinitionsIn(category)
@@ -209,17 +204,16 @@ public partial class LaunchOptionsEditor : ComponentBase
     /// What to head the run a section's file declares before any group of its own.
     /// </summary>
     /// <remarks>
-    /// Usually nothing: those settings are the section, and a heading repeating its name says
-    /// less than no heading at all. A section whose tab is mostly a command is the exception —
-    /// Gamescope's two variables listed straight after the compositor's flags read as more of
-    /// them, so there they are headed and collapse like everything else.
+    /// Usually nothing, since a heading repeating the section's name says less than none. The
+    /// exception is a section that is mostly a command: Gamescope's two variables listed after the
+    /// compositor's flags would otherwise read as more of them.
     /// </remarks>
     private static string? UnheadedGroupName(SettingCategory category) =>
         category.Command is null ? null : "Settings";
 
     /// <summary>
-    /// How many of a group's settings are set, shown beside its heading. A closed group hides its
-    /// controls, so without this a setting could be configured and invisible at the same time.
+    /// How many of a group's settings are set, shown beside its heading so a closed group cannot
+    /// hide one.
     /// </summary>
     private int SetCountIn(SettingGroup group) =>
         group.Settings.Count(definition => Options.FindEnvironment(definition.Variable) is not null);
@@ -292,8 +286,8 @@ public partial class LaunchOptionsEditor : ComponentBase
     }
 
     /// <summary>
-    /// Parses the raw editor back into the model. The editor keeps the user's literal text so
-    /// their cursor is not thrown around mid-word by reformatting.
+    /// Parses the raw editor back into the model, keeping the literal text so reformatting does
+    /// not move the cursor mid-word.
     /// </summary>
     private Task OnRawInput(ChangeEventArgs args)
     {

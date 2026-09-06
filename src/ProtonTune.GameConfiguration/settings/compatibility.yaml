@@ -10,8 +10,6 @@ groups:
         description: Chooses between Wine's built-in DLLs and the game's own.
         placeholder: dxgi=n,b
 
-      # Read by every build installed here. The default is a long list of redistributable DLLs;
-      # setting this replaces that list rather than adding to it.
       - variable: PROTON_DLL_COPY
         label: DLLs to copy into the prefix
         description: >-
@@ -30,7 +28,6 @@ groups:
 
   - name: Memory
     settings:
-      # All four read by every build installed here.
       - variable: PROTON_FORCE_LARGE_ADDRESS_AWARE
         label: Large address aware
         description: Gives 32-bit games access to more than 2 GB of address space.
@@ -84,7 +81,6 @@ groups:
 
   - name: Drives
     settings:
-      # Both read by every build installed here.
       - variable: PROTON_SET_GAME_DRIVE
         label: Map the game to a drive letter
         description: >-
@@ -97,9 +93,6 @@ groups:
         description: The same, for the Steam installation itself.
         kind: toggle
 
-  # Hiding a GPU is how a game that picks the wrong one, or refuses to run beside one, is pointed
-  # at the card you meant. The PROTON_ names are read by every build here; WINE_HIDE_AMD_GPU has no
-  # PROTON_ spelling and is honoured by the Wine in all of them.
   - name: Hiding hardware
     settings:
       - variable: PROTON_HIDE_NVIDIA_GPU

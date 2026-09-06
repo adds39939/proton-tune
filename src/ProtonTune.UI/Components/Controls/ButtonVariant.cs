@@ -15,8 +15,7 @@ public enum ButtonVariant
     Danger,
 
     /// <summary>
-    /// An action beside the thing it acts on — removing one row of a list — where a full button
-    /// would carry more weight than the action deserves.
+    /// An action beside the thing it acts on, such as removing one row of a list.
     /// </summary>
     Quiet
 }

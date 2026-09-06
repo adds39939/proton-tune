@@ -7,9 +7,8 @@ namespace ProtonTune.Services.Profiles;
 /// A set of launch options kept once and applied to any game that wants them.
 /// </summary>
 /// <remarks>
-/// Steam has no concept of a global profile and nowhere to store one, so this lives in
-/// ProtonTune's own directory. Applying it writes ordinary per-game launch options — a game
-/// following the profile is indistinguishable to Steam from one configured by hand.
+/// Steam has no such concept, so this lives in ProtonTune's own directory. Applying it writes
+/// ordinary per-game launch options, indistinguishable to Steam from ones set by hand.
 /// </remarks>
 public interface IGlobalProfileService
 {
@@ -48,11 +47,9 @@ public interface IGlobalProfileService
     /// Drops games whose stored launch options no longer match the profile.
     /// </summary>
     /// <remarks>
-    /// Which games follow the profile is ProtonTune's own belief, held separately from the launch
-    /// options themselves. Anything that changes those options behind ProtonTune's back — Steam
-    /// itself, an edit made elsewhere, a configuration file restored from a backup — can leave
-    /// that belief false, and a game shown as following a profile it does not match would be
-    /// rewritten the next time the profile is saved.
+    /// Which games follow the profile is ProtonTune's own belief, held separately from the options
+    /// themselves, so anything editing them behind its back can leave it false. A game shown as
+    /// following a profile it does not match would be rewritten on the next save.
     /// </remarks>
     /// <returns>How many games stopped following the profile.</returns>
     Task<int> ReconcileLinksAsync(CancellationToken cancellationToken = default);

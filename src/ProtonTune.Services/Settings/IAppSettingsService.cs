@@ -9,8 +9,7 @@ public interface IAppSettingsService
 {
     /// <summary>
     /// The current settings, or their defaults where none have been stored or the file cannot be
-    /// read. These are preferences rather than a record of anything, so an unreadable file costs
-    /// a re-choice and never fails the application.
+    /// read. These are preferences, so an unreadable file costs a re-choice and never fails.
     /// </summary>
     Task<AppSettings> GetAsync(CancellationToken cancellationToken = default);
 

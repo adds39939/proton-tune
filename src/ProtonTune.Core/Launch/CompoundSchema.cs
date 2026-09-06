@@ -13,16 +13,9 @@ public sealed record CompoundOptionGroup(string? Name, IReadOnlyList<CompoundOpt
 /// offers as controls.
 /// </summary>
 /// <remarks>
-/// <para>
-/// Several of the variables worth setting are really lists — <c>MANGOHUD_CONFIG</c>,
-/// <c>DXVK_HUD</c>, <c>VKD3D_CONFIG</c>. Describing the shape here rather than in code means a
-/// variable of that sort is added by writing it down, the same as any other.
-/// </para>
-/// <para>
-/// Always partial. MangoHud alone has well over a hundred options; listing the ones worth reaching
-/// for while tuning a game is the point, and everything else stays editable as text so nothing is
-/// out of reach.
-/// </para>
+/// Several variables worth setting are really lists — <c>MANGOHUD_CONFIG</c>, <c>DXVK_HUD</c>,
+/// <c>VKD3D_CONFIG</c>. Describing the shape in a definition file means adding one is an edit to
+/// data. Always partial; everything not listed stays editable as text.
 /// </remarks>
 /// <param name="Separator">What sits between entries, usually a comma.</param>
 /// <param name="Assignment">What joins a key to its value, usually an equals sign.</param>

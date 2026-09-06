@@ -8,9 +8,8 @@ namespace ProtonTune.UI.Components.Configuration;
 /// command line rather than through the environment.
 /// </summary>
 /// <remarks>
-/// Setting any flag adds the command where it is not already there, and the toggle at the top says
-/// so as it happens. The alternative was to lock the flags until the command was switched on, which
-/// makes the first thing anyone tries do nothing at all.
+/// Setting any flag adds the command where it is not already there, rather than locking the flags
+/// until the command is switched on.
 /// </remarks>
 public partial class CommandEditor : ComponentBase
 {
@@ -38,8 +37,8 @@ public partial class CommandEditor : ComponentBase
         group.Flags.Count(flag => Options.HasFlag(Command, flag));
 
     /// <summary>
-    /// The offered values, plus whatever is already set if it is not among them, so a value this
-    /// build of the command knows and ProtonTune does not is never dropped by opening a menu.
+    /// The offered values, plus whatever is already set if it is not among them, so opening a menu
+    /// cannot drop a value ProtonTune does not know.
     /// </summary>
     private IEnumerable<string> ChoicesFor(CommandFlagDefinition flag) =>
         Options.FindFlag(Command, flag) is { Length: > 0 } current && !flag.Choices.Contains(current)

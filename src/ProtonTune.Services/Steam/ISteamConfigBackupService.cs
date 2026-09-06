@@ -14,8 +14,8 @@ public interface ISteamConfigBackupService
     /// Removes the oldest backups of each file, keeping the newest few.
     /// </summary>
     /// <remarks>
-    /// Counted per file rather than across all of them, or a busy day of editing launch options
-    /// would push every copy of the installation's own configuration out of reach.
+    /// Counted per file, or a busy day of editing launch options would push every copy of the
+    /// installation's own configuration out of reach.
     /// </remarks>
     /// <returns>How many were removed.</returns>
     Task<int> PruneAsync(int keep, CancellationToken cancellationToken = default);
@@ -23,10 +23,7 @@ public interface ISteamConfigBackupService
     /// <summary>
     /// Puts a backup back, with Steam closed so the restored file survives.
     /// </summary>
-    /// <remarks>
-    /// The file being replaced is itself backed up first, so restoring the wrong one is no more
-    /// final than the save that prompted it.
-    /// </remarks>
+    /// <remarks>The file being replaced is backed up first, so a wrong restore is undoable.</remarks>
     Task<SteamConfigRestoreResult> RestoreAsync(
         SteamConfigBackup backup,
         CancellationToken cancellationToken = default);

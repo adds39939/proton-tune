@@ -9,9 +9,8 @@ namespace ProtonTune.UI.Components.Configuration;
 /// Lists the copies ProtonTune has taken of Steam's configuration files, and puts one back.
 /// </summary>
 /// <remarks>
-/// These files are changed by splicing single values into text Steam owns. That is deliberately
-/// narrow, but it is still an edit to a file holding an entire Steam configuration — so every
-/// write keeps a copy first, and this is where one is reached for when a change turns out wrong.
+/// Every write keeps a copy first, since even a narrow splice edits a file holding an entire Steam
+/// configuration. This is where one is reached for when a change turns out wrong.
 /// </remarks>
 public partial class SteamBackupsPanel : ComponentBase
 {
@@ -59,8 +58,7 @@ public partial class SteamBackupsPanel : ComponentBase
     private async Task RefreshAsync() => Available = await Backups.ListAsync();
 
     /// <summary>
-    /// Changes how many are kept, and applies it at once. Choosing a smaller number and finding
-    /// the old copies still there would leave it unclear whether anything had happened.
+    /// Changes how many are kept, and applies it at once so the list reflects the new number.
     /// </summary>
     private async Task OnRetentionChanged(ChangeEventArgs args)
     {
@@ -138,9 +136,9 @@ public partial class SteamBackupsPanel : ComponentBase
     }
 
     /// <summary>
-    /// Says what the restore did, including what it had to correct afterwards. A restored file can
-    /// hold launch options from before a game followed the global profile, and leaving ProtonTune
-    /// claiming otherwise would mean the next profile save quietly rewrote that game.
+    /// Says what the restore did, including what it corrected afterwards: a restored file can hold
+    /// launch options from before a game followed the global profile, and leaving that link in
+    /// place would have the next profile save rewrite the game.
     /// </summary>
     private static string Restored(SteamConfigBackup backup, SteamConfigRestoreResult result)
     {

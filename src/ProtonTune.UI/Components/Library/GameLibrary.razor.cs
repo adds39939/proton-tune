@@ -29,9 +29,8 @@ public partial class GameLibrary : ComponentBase
     private static readonly LibrarySortOrder[] SortOrders = Enum.GetValues<LibrarySortOrder>();
 
     /// <summary>
-    /// How the library is being shown and ordered. Both are read from the stored settings when the
-    /// page opens and written back as soon as either changes, so the library reopens as it was
-    /// left. Until the read finishes they hold the defaults, which is what a first run shows.
+    /// How the library is being shown and ordered. Read from the stored settings when the page
+    /// opens and written back as either changes; they hold the defaults until that read finishes.
     /// </summary>
     private LibraryViewMode ViewMode { get; set; }
 
@@ -48,9 +47,8 @@ public partial class GameLibrary : ComponentBase
     /// The games matching the current search.
     /// </summary>
     /// <remarks>
-    /// Compatibility tools are never listed. Proton and the Steam runtimes are installed as apps
-    /// and share the library, but they are not launched and have nothing to configure, so showing
-    /// them is only ever noise.
+    /// Compatibility tools are never listed: Proton and the Steam runtimes share the library but
+    /// are not launched and have nothing to configure.
     /// </remarks>
     private IReadOnlyList<SteamLibraryEntry> VisibleApps => SortOrder
         .Apply(Apps.Where(app => app.Kind == SteamAppKind.Game).Where(MatchesSearch))
@@ -132,9 +130,8 @@ public partial class GameLibrary : ComponentBase
     /// settings page has put there is carried through rather than overwritten.
     /// </summary>
     /// <remarks>
-    /// A preference that fails to save is not worth interrupting anyone over: the library is
-    /// already showing what was asked for, and the only cost is opening on the other view next
-    /// time. The service logs what went wrong.
+    /// A preference that fails to save is not worth interrupting over — the library already shows
+    /// what was asked for — and the service logs what went wrong.
     /// </remarks>
     private async Task RememberAsync(Func<AppSettings, AppSettings> change)
     {

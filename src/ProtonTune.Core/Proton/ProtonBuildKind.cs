@@ -2,7 +2,7 @@ namespace ProtonTune.Core.Proton;
 
 /// <summary>
 /// Where a Proton build came from. The two kinds are installed and described differently, and
-/// they support different settings, so the distinction is worth keeping.
+/// support different settings.
 /// </summary>
 public enum ProtonBuildKind
 {

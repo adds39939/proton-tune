@@ -6,9 +6,8 @@ namespace ProtonTune.UI.Components.Controls;
 /// Every button in the application.
 /// </summary>
 /// <remarks>
-/// Exists so that the states a button can be in — hovered, disabled, primary, dangerous — are
-/// decided once. The styles were previously copied into each panel that had a button, and had
-/// drifted: a disabled primary button repainted itself on hover in one place and not in another.
+/// Exists so the states a button can be in — hovered, disabled, primary, dangerous — are decided
+/// once rather than copied into each panel and left to drift.
 /// </remarks>
 public partial class Button : ComponentBase
 {
@@ -26,8 +25,8 @@ public partial class Button : ComponentBase
     public ButtonSize Size { get; set; }
 
     /// <summary>
-    /// Whether the action is unavailable. A disabled button drops its variant colouring and shows
-    /// no hover response, so an unavailable action never draws the eye or invites a click.
+    /// Whether the action is unavailable. A disabled button drops its variant colouring and has no
+    /// hover response.
     /// </summary>
     [Parameter]
     public bool Disabled { get; set; }

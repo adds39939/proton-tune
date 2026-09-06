@@ -16,8 +16,6 @@
     line-height: 1.6;
 }
 
-/* How many are kept ------------------------------------------------------- */
-
 .retention {
     display: flex;
     align-items: center;
@@ -61,8 +59,6 @@
 .is-success {
     color: var(--accent);
 }
-
-/* The backups themselves --------------------------------------------------- */
 
 .list {
     display: flex;

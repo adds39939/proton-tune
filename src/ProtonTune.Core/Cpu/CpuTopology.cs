@@ -16,9 +16,8 @@ public sealed record CpuCacheGroup(IReadOnlyList<int> Threads, long CacheBytes)
 /// of it.
 /// </summary>
 /// <remarks>
-/// The useful distinction on a modern desktop is which threads share which cache. On AMD's X3D
-/// parts one die carries stacked cache and the other does not, and games generally want the one
-/// that does; the split is visible as two cache groups of very different sizes.
+/// Which threads share a cache is the distinction that matters: on AMD's X3D parts only one die
+/// carries stacked cache, showing up as two cache groups of very different sizes.
 /// </remarks>
 public sealed record CpuTopology
 {
@@ -37,8 +36,7 @@ public sealed record CpuTopology
     public bool HasSimultaneousMultithreading => PhysicalCoreThreads.Count < AllThreads.Count;
 
     /// <summary>
-    /// Whether the cache groups differ in size, which is what makes one of them worth singling
-    /// out. On a uniform processor every group is equivalent and the distinction is noise.
+    /// Whether the cache groups differ in size, which is what makes one worth singling out.
     /// </summary>
     public bool HasAsymmetricCache =>
         CacheGroups.Count > 1 &&

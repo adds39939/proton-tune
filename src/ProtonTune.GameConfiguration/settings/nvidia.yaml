@@ -2,18 +2,7 @@ id: nvidia
 title: Nvidia
 order: 1
 
-# Build patterns used throughout these files:
-#
-#   ^GE-Proton              matches GE-Proton11-6-x86_64 by name and GE-Proton11-6 by version.
-#   ^(proton-)?cachyos      matches proton-cachyos-…-x86_64_v3 by name and cachyos-11.0-… by
-#                           version, since the version file drops the leading "proton-".
-#
-# Valve's builds — proton_experimental, proton_hotfix, proton_9 and the rest — are named by
-# nothing here, which is the point: they are the family that reads none of these.
-
 groups:
-  # Proton's own DLSS handling, which downloads the libraries at launch and leaves the install
-  # alone. GE and CachyOS both read these; Valve's builds have no equivalent.
   - name: DLSS
     settings:
       - variable: PROTON_DLSS_UPGRADE
@@ -39,12 +28,6 @@ groups:
         kind: toggle
         on: DLSSIndicator=1024
 
-      # The render preset overrides all accept the same values, so the list is written once and
-      # referred to. Taken from the value table inside nvapi64.dll, which spells them exactly like
-      # this: twenty-six single-letter presets, then Default and Latest in mixed case rather than
-      # the shouting case of the rest. The casing is reproduced verbatim because the name has to
-      # match the table for the override to take effect, and a value that does not match fails
-      # silently — the game simply runs with whatever preset it chose for itself.
       - variable: DXVK_NVAPI_DRS_NGX_DLSS_SR_OVERRIDE_RENDER_PRESET_SELECTION
         label: SR override preset
         description: Forces a super-resolution render preset regardless of what the game asks for.
@@ -91,10 +74,8 @@ groups:
         kind: choice
         choices: *renderPresets
 
-  # NVAPI is what a game asks for DLSS, Reflex and G-Sync.
   - name: NVAPI
     settings:
-      # Both of these are read by every build installed here, so neither is restricted.
       - variable: PROTON_DISABLE_NVAPI
         label: Disable NVAPI
         description: >-
@@ -109,10 +90,6 @@ groups:
           not recognise.
         kind: toggle
 
-      # Neither of the next two is read by any build installed here, but both were real in older
-      # Proton — NVAPI is on by default in recent ones. Left unrestricted rather than guessed at: a
-      # restriction has to name the builds a setting works on, and that cannot be checked against
-      # builds that are not present. They are shown greyed out instead, saying they do nothing.
       - variable: PROTON_ENABLE_NVAPI
         label: Enable NVAPI
         description: >-
@@ -125,9 +102,6 @@ groups:
         description: Lets Proton keep NVIDIA's NGX runtime current.
         kind: toggle
 
-      # DXVK-NVAPI's own settings, which live in the shipped nvapi64.dll rather than in the build's
-      # launch script. Nothing here is restricted — see the README on why reading a binary cannot
-      # settle what a renderer variable does.
       - variable: DXVK_ENABLE_NVAPI
         label: Enable DXVK-NVAPI
         description: >-
@@ -162,9 +136,6 @@ groups:
           be taken away without taking the rest of NVAPI with it.
         placeholder: NvAPI_D3D12_CreateGraphicsPipelineState
 
-  # The driver libraries GE and CachyOS can substitute for Wine's own, so a Windows game reaches
-  # the real CUDA, NVENC, NVML and OptiX rather than a stub. Turning the group on turns each of the
-  # four on with it; the individual switches are there to take one back out.
   - name: Driver libraries
     settings:
       - variable: PROTON_NVIDIA_LIBS

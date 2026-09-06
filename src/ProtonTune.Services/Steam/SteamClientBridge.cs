@@ -7,19 +7,15 @@ namespace ProtonTune.Services.Steam;
 public sealed class SteamClientBridge(ILogger<SteamClientBridge> logger) : ISteamClientBridge
 {
     /// <summary>How long to spend finding and connecting to Steam's interface.</summary>
-    /// <remarks>
-    /// Short on purpose. Every failure here ends in doing the work the long way instead, so a
-    /// caller waiting on this is a caller not yet getting on with it.
-    /// </remarks>
+    /// <remarks>Short on purpose: every failure here just falls back to the long way.</remarks>
     private static readonly TimeSpan ConnectTimeout = TimeSpan.FromSeconds(5);
 
     private static readonly HttpClient Http = new() { Timeout = ConnectTimeout };
 
     /// <summary>
-    /// Held across every session, so that no two expressions are ever in flight against Steam's
-    /// interface at once. Two at once crashes the interface and takes the client down with it,
-    /// and the sessions that would collide belong to separate callers, so one lock per session
-    /// would not be a lock at all.
+    /// Held across every session, so no two expressions are ever in flight against Steam's
+    /// interface at once — two crashes the interface and takes the client with it. Static because
+    /// the sessions that would collide belong to separate callers.
     /// </summary>
     private readonly SemaphoreSlim _turns = new(1, 1);
 
@@ -53,8 +49,6 @@ public sealed class SteamClientBridge(ILogger<SteamClientBridge> logger) : IStea
         }
         catch (Exception e) when (e is HttpRequestException or WebSocketException or UriFormatException)
         {
-            // Steam not running, live editing not switched on, or an interface that is not the one
-            // expected. All of them mean the same thing to the caller, so none of them is thrown.
             logger.LogDebug(e, "Steam could not be reached for live editing.");
 
             socket?.Dispose();

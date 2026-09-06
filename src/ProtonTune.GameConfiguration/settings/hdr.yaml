@@ -2,18 +2,7 @@ id: hdr
 title: HDR
 order: 3
 
-# HDR needs three things agreeing: a Wayland session, Proton advertising HDR to the game, and the
-# renderer handing over an HDR swapchain. Under Gamescope the compositor owns the last of those
-# instead, which is why its own --hdr-enabled lives in that section rather than this one.
-
 settings:
-  # Read by GE-Proton only. proton-cachyos mentions HDR nowhere in its launch script, and neither
-  # does any Valve build, so this is the one setting here restricted to a single family.
-  #
-  # GE accepts PROTON_ENABLE_HDR as well, checked just before this one and setting the same flag.
-  # Only the newer spelling is offered: two controls writing one switch is a way to end up with
-  # both set and neither obviously in charge. An older string that already has the other name is
-  # still parsed and still written back — it appears under custom variables.
   - variable: PROTON_USE_HDR
     label: Enable HDR in Proton
     description: Lets Proton advertise HDR support to the game. Needs a Wayland session.
@@ -21,10 +10,6 @@ settings:
     protonBuilds: ["^GE-Proton"]
     restrictToProtonBuild: true
 
-  # DXVK's own switches live in the shipped renderer rather than in the build, which is not
-  # something reading the launch script can settle. DXVK_HDR is in every build installed here;
-  # DXVK_NO_HDR is in proton-cachyos's DXVK and in no other, so it is named rather than hidden —
-  # it is a renderer variable, and the README's rule is that those are never restricted outright.
   - variable: DXVK_HDR
     label: Enable HDR in DXVK
     description: Turns on HDR output in the D3D-to-Vulkan layer.

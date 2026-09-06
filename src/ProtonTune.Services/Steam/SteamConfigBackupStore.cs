@@ -6,10 +6,9 @@ namespace ProtonTune.Services.Steam;
 /// Finding and tidying the copies ProtonTune takes of Steam's configuration files.
 /// </summary>
 /// <remarks>
-/// Depends on nothing but a path, deliberately. Both the writer — which prunes after every save —
-/// and the service the settings screen uses need this, and the latter also reaches the global
-/// profile, which in turn reaches the writer. Keeping the file handling here is what stops that
-/// becoming a circle.
+/// Depends on nothing but a path. Both the writer and the settings screen's service need this, and
+/// the latter reaches the global profile, which reaches the writer; keeping the file handling here
+/// is what stops that becoming a circle.
 /// </remarks>
 internal static class SteamConfigBackupStore
 {
@@ -21,8 +20,8 @@ internal static class SteamConfigBackupStore
     /// Keeps the newest few backups of each file and removes the rest.
     /// </summary>
     /// <remarks>
-    /// Counted within each file rather than across all of them, or a busy session editing launch
-    /// options would push every copy of the installation's own configuration out of reach.
+    /// Counted within each file, or a busy session editing launch options would push every copy of
+    /// the installation's own configuration out of reach.
     /// </remarks>
     /// <returns>How many were removed.</returns>
     public static int Prune(string steamRoot, int keep, ILogger logger)

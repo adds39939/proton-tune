@@ -11,9 +11,9 @@ namespace ProtonTune.Core.Launch;
 public sealed record EnvironmentVariable(string Name, string Value)
 {
     /// <summary>
-    /// The assignment exactly as it was written, when it came from parsing. It is used only while
-    /// it still spells out this exact name and value, so copying the record with a new
-    /// <see cref="Value" /> discards it automatically and the assignment is re-quoted.
+    /// The assignment exactly as it was written, when it came from parsing. Used only while it
+    /// still spells out this exact name and value, so copying with a new <see cref="Value" />
+    /// discards it and the assignment is re-quoted.
     /// </summary>
     public string? OriginalText { get; init; }
 }

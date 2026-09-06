@@ -17,8 +17,8 @@ public sealed record CompoundEntry(string Key, string? Value)
 /// The contents of a compound variable, read apart into its entries.
 /// </summary>
 /// <remarks>
-/// Entries keep their original order, and anything ProtonTune has no definition for is carried
-/// through untouched — the same rule the launch options parser follows, for the same reason.
+/// Entries keep their original order, and anything with no definition is carried through
+/// untouched — the same rule the launch options parser follows.
 /// </remarks>
 public sealed record CompoundValue
 {
@@ -33,9 +33,8 @@ public sealed record CompoundValue
 
     /// <summary>Reads a variable's value.</summary>
     /// <remarks>
-    /// A bare number continues the entry before it rather than standing alone: these formats take
-    /// lists inside the separated string — MangoHud's <c>fps_limit=0,30,60</c> — and none of them
-    /// has a numeric flag.
+    /// A bare number continues the entry before it: these formats take lists inside the separated
+    /// string — MangoHud's <c>fps_limit=0,30,60</c> — and none has a numeric flag.
     /// </remarks>
     public static CompoundValue Parse(CompoundSchema schema, string? value)
     {
@@ -120,9 +119,8 @@ public sealed record CompoundValue
         Entries.Where(entry => Schema.Find(entry.Key) is null).ToList();
 
     /// <summary>
-    /// Replaces every entry ProtonTune has no definition for with the given list, leaving the
-    /// recognised ones where they are. This is what backs the free-text field for anything the
-    /// editor does not cover.
+    /// Replaces every entry with no definition with the given list, leaving recognised ones where
+    /// they are. Backs the free-text field for anything the editor does not cover.
     /// </summary>
     public CompoundValue ReplaceUnrecognised(IEnumerable<CompoundEntry> replacements)
     {

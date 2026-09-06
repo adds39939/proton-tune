@@ -5,8 +5,8 @@ namespace ProtonTune.Services.Tests.Steam;
 
 /// <summary>
 /// Reading cover art out of Steam's own cache. Steam has rearranged this directory more than once
-/// and an upgraded install holds every arrangement at the same time, so the search has to be
-/// exercised against a real directory rather than trusted to a single remembered layout.
+/// and an upgraded install holds every arrangement at once, so the search runs against a real
+/// directory rather than one remembered layout.
 /// </summary>
 public sealed class SteamLibraryCacheArtworkTests : IDisposable
 {
@@ -94,8 +94,8 @@ public sealed class SteamLibraryCacheArtworkTests : IDisposable
         Assert.Null(SteamLibraryCache.Find(_root, 1493710, GameArtworkKind.Capsule));
 
     /// <summary>
-    /// One app's artwork is not another's, and the directory names are numbers that would sort
-    /// into each other's way if the search ever widened past the app it was given.
+    /// One app's artwork is not another's, and the directory names are numbers that would collide
+    /// if the search ever widened past the app it was given.
     /// </summary>
     [Fact]
     public void DoesNotReachIntoAnotherAppsDirectory()

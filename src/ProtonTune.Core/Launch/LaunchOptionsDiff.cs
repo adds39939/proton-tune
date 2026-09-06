@@ -22,9 +22,8 @@ public sealed record LaunchDiffToken(string Text, LaunchDiffKind Kind);
 /// Compares what is saved against what would be written, token by token.
 /// </summary>
 /// <remarks>
-/// Launch options are a single long line, and telling what changed by reading two of them is
-/// genuinely hard. Comparing tokens rather than characters keeps the result meaningful: a setting
-/// is added or it is not, rather than a run of letters differing somewhere in the middle.
+/// Compared token by token rather than character by character, so the result reads as a setting
+/// added or removed rather than a run of letters differing somewhere in the middle.
 /// </remarks>
 public static class LaunchOptionsDiff
 {

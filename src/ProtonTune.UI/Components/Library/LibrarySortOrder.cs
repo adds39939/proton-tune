@@ -10,9 +10,8 @@ public static class LibrarySortOrders
     /// Orders a set of games.
     /// </summary>
     /// <remarks>
-    /// Name is the tie-break in every case, so games that have never been played — or were played
-    /// within the same minute — come out in a stable, readable order rather than whatever the
-    /// filesystem happened to hand over.
+    /// Name is the tie-break in every case, so games never played, or played within the same
+    /// minute, still come out in a stable order.
     /// </remarks>
     public static IOrderedEnumerable<SteamLibraryEntry> Apply(
         this LibrarySortOrder order,

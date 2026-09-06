@@ -6,8 +6,7 @@ namespace ProtonTune.Services.Tests.GameConfiguration;
 
 /// <summary>
 /// These files are edited by hand, so the contract is that a mistake in one costs that file and
-/// nothing else. Refusing to start, or dropping every setting because one file has a stray
-/// character, would turn a typo into an unusable application.
+/// nothing else.
 /// </summary>
 public sealed class YamlSettingCatalogReaderTests : IDisposable
 {

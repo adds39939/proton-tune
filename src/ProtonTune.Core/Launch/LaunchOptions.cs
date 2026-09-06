@@ -15,9 +15,8 @@ namespace ProtonTune.Core.Launch;
 /// </code>
 /// </para>
 /// <para>
-/// Nothing is discarded. Assignments and wrapper tokens ProtonTune knows nothing about survive
-/// parsing and reappear in <see cref="Format" /> in their original order, so editing one setting
-/// can never silently drop another.
+/// Nothing is discarded: assignments and wrapper tokens ProtonTune does not know survive parsing
+/// and reappear in <see cref="Format" /> in their original order.
 /// </para>
 /// </remarks>
 public sealed partial record LaunchOptions
@@ -57,9 +56,8 @@ public sealed partial record LaunchOptions
     /// </summary>
     /// <remarks>
     /// Not part of the string, so it does not survive <see cref="Format" /> and
-    /// <see cref="Parse" />: a variable removed, saved, and added back later really is new and
-    /// belongs wherever a new one goes. It holds for as long as one set of options is being
-    /// edited, which is exactly as long as it is worth anything.
+    /// <see cref="Parse" />: a variable removed, saved, and added back later is genuinely new. It
+    /// lasts as long as one editing session.
     /// </remarks>
     private IReadOnlyList<string> OriginalOrder { get; init; } = [];
 
@@ -69,7 +67,7 @@ public sealed partial record LaunchOptions
 
     /// <summary>
     /// Reads a launch options string. Never throws: a malformed string parses to whatever can be
-    /// made of it, because the alternative is a game the user cannot inspect or repair.
+    /// made of it, so the user can still inspect and repair it.
     /// </summary>
     public static LaunchOptions Parse(string? launchOptions)
     {
@@ -114,9 +112,8 @@ public sealed partial record LaunchOptions
     /// Renders to the individual tokens <see cref="Format" /> joins with spaces.
     /// </summary>
     /// <remarks>
-    /// Exposed separately so a change can be compared token by token. Splitting the formatted
-    /// string back apart would not do: a quoted value containing a space is one token, and naive
-    /// splitting would tear it in half.
+    /// Exposed separately so a change can be compared token by token; splitting the formatted
+    /// string back apart would tear a quoted value containing a space in half.
     /// </remarks>
     public IReadOnlyList<string> FormatTokens()
     {
@@ -178,7 +175,7 @@ public sealed partial record LaunchOptions
 
     /// <summary>
     /// Returns a copy without a variable. Switching a setting off removes it rather than writing
-    /// a zero, which is what these variables mean by absent and keeps the string short.
+    /// a zero, which is what these variables mean by absent.
     /// </summary>
     public LaunchOptions RemoveEnvironment(string name) =>
         this with

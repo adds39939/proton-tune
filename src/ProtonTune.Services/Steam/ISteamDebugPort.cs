@@ -4,10 +4,9 @@ namespace ProtonTune.Services.Steam;
 /// Reports whether Steam's debugging interface is currently accepting connections.
 /// </summary>
 /// <remarks>
-/// Steam decides whether to open this port as it starts, so the presence of the file that asks
-/// for it says what Steam will do next time rather than what it is doing now. The two disagree
-/// for as long as it takes to restart Steam, and telling someone live editing is on while the
-/// client it would talk to is not listening is the one thing this has to avoid.
+/// Steam opens the port as it starts, so the file asking for it describes the next run rather than
+/// this one. The two disagree until Steam is restarted, and reporting live editing as on while
+/// nothing is listening is what this exists to avoid.
 /// </remarks>
 public interface ISteamDebugPort
 {
@@ -28,9 +27,8 @@ public interface ISteamDebugPort
     /// simply still be coming up — so callers report what they find rather than failing.
     /// </returns>
     /// <remarks>
-    /// Here rather than in the caller so that how often to look, and how long to keep looking, are
-    /// decisions belonging to the thing that knows the port. It also keeps the waiting out of
-    /// services that are otherwise instant, which is what lets them be tested without sleeping.
+    /// Here rather than in the caller, so the polling interval belongs to the thing that knows the
+    /// port and the otherwise instant services stay testable without sleeping.
     /// </remarks>
     Task<bool> WaitUntilListeningAsync(TimeSpan timeout, CancellationToken cancellationToken = default);
 }

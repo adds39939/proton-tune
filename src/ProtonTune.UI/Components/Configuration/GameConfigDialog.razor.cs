@@ -74,9 +74,9 @@ public partial class GameConfigDialog : ComponentBase
     private bool SavedUsesGlobal { get; set; }
 
     /// <summary>
-    /// The Proton build the game is pointed at, empty when it has none of its own. Held here
-    /// rather than applied on selection so it is written in the same trip through Steam as the
-    /// launch options — the two are separate files, but one shutdown.
+    /// The Proton build the game is pointed at, empty when it has none of its own. Held rather
+    /// than applied on selection, so it is written in the same trip through Steam as the launch
+    /// options: separate files, one shutdown.
     /// </summary>
     private string CompatTool { get; set; } = ProtonVersionEditor.InheritValue;
 
@@ -91,8 +91,7 @@ public partial class GameConfigDialog : ComponentBase
     /// </summary>
     /// <remarks>
     /// Follows the pending choice rather than the stored one, so switching build immediately
-    /// re-judges every setting. Choosing GE-Proton is often the answer to "why does this setting
-    /// do nothing", and it would be a poor answer if the screen only agreed after saving.
+    /// re-judges every setting instead of waiting for a save.
     /// </remarks>
     private ProtonBuild? EffectiveBuild => CompatTool.Length > 0
         ? ProtonBuilds.FindBuild(CompatTool)
@@ -112,9 +111,8 @@ public partial class GameConfigDialog : ComponentBase
     private bool IsConfirmingSave { get; set; }
 
     /// <summary>
-    /// What the save would do beyond writing the launch options, so the confirmation can account
-    /// for all of it. These land in other files, or in ProtonTune's own storage, and none of them
-    /// show up in the line being previewed.
+    /// What the save would do beyond writing the launch options. These land in other files or in
+    /// ProtonTune's own storage, so none appear in the line being previewed.
     /// </summary>
     private IReadOnlyList<string> PendingSideEffects
     {
@@ -201,9 +199,8 @@ public partial class GameConfigDialog : ComponentBase
     }
 
     /// <summary>
-    /// Takes a change from the editor. Editing anything by hand stops the game following the
-    /// global profile, but keeps whatever the profile had already put there — the settings are
-    /// the game's own from that point on.
+    /// Takes a change from the editor. Editing by hand stops the game following the global
+    /// profile but keeps what the profile had already put there.
     /// </summary>
     private void OnOptionsChanged(LaunchOptions options)
     {
@@ -217,9 +214,8 @@ public partial class GameConfigDialog : ComponentBase
     /// Replaces the game's settings with the global profile's, or stops following it.
     /// </summary>
     /// <remarks>
-    /// Turning it off leaves the settings exactly as they are. The profile is a starting point
-    /// rather than an owner: unlinking should not silently undo a configuration the user can see
-    /// in front of them.
+    /// Turning it off leaves the settings as they are: the profile is a starting point rather than
+    /// an owner.
     /// </remarks>
     private async Task OnUseGlobalChanged(bool useGlobal)
     {
@@ -236,8 +232,7 @@ public partial class GameConfigDialog : ComponentBase
 
     /// <summary>
     /// Takes a change of Proton build. Unlike a launch option this does not stop the game
-    /// following the global profile: the profile carries settings, not a build, so the two do not
-    /// contradict each other.
+    /// following the global profile, which carries settings rather than a build.
     /// </summary>
     private void OnCompatToolChanged(string toolName)
     {
@@ -260,13 +255,8 @@ public partial class GameConfigDialog : ComponentBase
     /// following the profile.
     /// </summary>
     /// <remarks>
-    /// Asks first. Everything the game has configured goes at once, so a single mis-click should
-    /// not do it.
-    /// </remarks>
-    /// <remarks>
-    /// The choice of Proton build is deliberately left alone. It is just as likely to have been
-    /// made in Steam's own interface as here, and undoing someone's Steam setting is not what
-    /// resetting ProtonTune's own changes should mean.
+    /// Asks first, since everything the game has configured goes at once. The choice of Proton
+    /// build is left alone: it is as likely to have been made in Steam's own interface as here.
     /// </remarks>
     private async Task ResetAsync()
     {
@@ -321,8 +311,8 @@ public partial class GameConfigDialog : ComponentBase
         SaveMethod = await LaunchOptionsService.GetSaveMethodAsync();
 
     /// <summary>
-    /// Opens the confirmation rather than saving. Saving closes Steam and writes to files it owns,
-    /// which is worth showing in full before it happens rather than explaining afterwards.
+    /// Opens the confirmation rather than saving, since saving closes Steam and writes to files it
+    /// owns.
     /// </summary>
     private void AskToSave()
     {
@@ -381,9 +371,8 @@ public partial class GameConfigDialog : ComponentBase
     private Task Close() => OnClose.InvokeAsync();
 
     /// <summary>
-    /// Dismisses on Escape, unless a save is in flight — Steam is mid-restart at that point and
-    /// closing the dialog would hide what is happening — or the confirmation is open, which backs
-    /// out of itself rather than taking the dialog with it.
+    /// Dismisses on Escape, unless a save is in flight — Steam is mid-restart — or the
+    /// confirmation is open, which backs out of itself rather than taking the dialog with it.
     /// </summary>
     private Task OnKeyDown(KeyboardEventArgs args) =>
         args.Key == "Escape" && !IsSaving && !IsConfirmingSave ? Close() : Task.CompletedTask;

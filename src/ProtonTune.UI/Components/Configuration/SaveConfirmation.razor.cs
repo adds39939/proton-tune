@@ -8,9 +8,8 @@ namespace ProtonTune.UI.Components.Configuration;
 /// Asks to confirm a save, showing exactly what it would write.
 /// </summary>
 /// <remarks>
-/// Saving is not a quiet action: it closes Steam, writes to files Steam owns, and starts it again.
-/// Seeing the line that is about to be written, rather than trusting that the controls added up to
-/// what was meant, is the point of stopping here first.
+/// Saving closes Steam, writes to files it owns, and starts it again, so the line about to be
+/// written is shown rather than assumed from the controls.
 /// </remarks>
 public partial class SaveConfirmation : ComponentBase
 {
@@ -55,8 +54,7 @@ public partial class SaveConfirmation : ComponentBase
     private Task Cancel() => IsBusy ? Task.CompletedTask : OnCancel.InvokeAsync();
 
     /// <summary>
-    /// Escape backs out, unless the save is already running — Steam is mid-restart at that point
-    /// and closing this would hide what is happening.
+    /// Escape backs out, unless the save is already running and Steam is mid-restart.
     /// </summary>
     private Task OnKeyDown(KeyboardEventArgs args) =>
         args.Key == "Escape" ? Cancel() : Task.CompletedTask;

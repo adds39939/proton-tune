@@ -28,8 +28,6 @@
     color: var(--text-muted);
 }
 
-/* Navigation ------------------------------------------------------------- */
-
 .nav {
     display: flex;
     gap: 4px;

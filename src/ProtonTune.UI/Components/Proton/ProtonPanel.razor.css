@@ -43,8 +43,6 @@
     color: var(--danger);
 }
 
-/* Builds ----------------------------------------------------------------- */
-
 .builds {
     display: flex;
     flex-direction: column;
@@ -141,8 +139,6 @@
     font-size: 12px;
     line-height: 1.5;
 }
-
-/* Mappings with nothing behind them --------------------------------------- */
 
 .missing {
     margin: 18px 0 0;

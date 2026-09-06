@@ -9,8 +9,7 @@ namespace ProtonTune.Core.Tests.Settings;
 public class AppSettingsTests
 {
     /// <summary>
-    /// What a first run opens on, before anything has been chosen or stored. Rows rather than
-    /// cover art: the list fits more games on screen and reads better when scanning.
+    /// What a first run opens on, before anything has been chosen or stored.
     /// </summary>
     [Fact]
     public void OpensOnTheListOrderedByName()

@@ -4,10 +4,9 @@ namespace ProtonTune.Core.Launch;
 /// Editing the chain of commands a game is launched through.
 /// </summary>
 /// <remarks>
-/// The chain is a flat list of tokens because each command consumes its own arguments and there
-/// is no way to know how many without knowing the command. So rather than parsing it into a tree,
-/// these operate on the commands ProtonTune actually understands and step over everything else
-/// untouched.
+/// The chain is a flat list of tokens, since knowing how many arguments a command consumes means
+/// knowing the command. These operate on the commands ProtonTune understands and step over
+/// everything else untouched.
 /// </remarks>
 public sealed partial record LaunchOptions
 {
@@ -38,8 +37,8 @@ public sealed partial record LaunchOptions
     /// <see langword="null"/> or empty.
     /// </summary>
     /// <remarks>
-    /// A new <c>taskset</c> goes last in the chain, immediately before the game, so it applies to
-    /// the game rather than to a wrapper that would go on to launch it differently.
+    /// A new <c>taskset</c> goes last, immediately before the game, so it applies to the game
+    /// rather than to a wrapper that would go on to launch it differently.
     /// </remarks>
     public LaunchOptions WithCpuAffinity(string? mask)
     {

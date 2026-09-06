@@ -7,10 +7,9 @@ namespace ProtonTune.UI.Components.Configuration;
 /// Switches on the Steam interface that lets a save take effect without closing Steam.
 /// </summary>
 /// <remarks>
-/// Worth a group of its own rather than a line in a list. It changes a file inside the Steam
-/// directory, it restarts Steam to take effect, and it opens a port other programs on the machine
-/// can reach — none of which should be discovered after the fact, so the screen says all three
-/// before the switch is touched.
+/// A group of its own rather than a line in a list: it writes a file inside the Steam directory,
+/// restarts Steam, and opens a port other programs can reach, all of which the screen says before
+/// the switch is touched.
 /// </remarks>
 public partial class SteamLiveEditPanel : ComponentBase
 {
@@ -38,7 +37,7 @@ public partial class SteamLiveEditPanel : ComponentBase
 
     /// <summary>
     /// Said when what was asked for and what Steam is doing have come apart, so a switch reading
-    /// "on" beside launch options that still close Steam is explained rather than puzzling.
+    /// "on" beside a save that still closes Steam is explained.
     /// </summary>
     private string? Unsettled
     {
@@ -76,8 +75,8 @@ public partial class SteamLiveEditPanel : ComponentBase
     }
 
     /// <summary>
-    /// Applies the change straight away rather than waiting for a save button. There is nothing
-    /// else on this screen to save it alongside, and the switch reads as done the moment it moves.
+    /// Applies the change straight away: there is nothing else on this screen to save it
+    /// alongside, and the switch reads as done the moment it moves.
     /// </summary>
     private async Task OnToggledAsync(ChangeEventArgs args)
     {
@@ -114,8 +113,7 @@ public partial class SteamLiveEditPanel : ComponentBase
     }
 
     /// <summary>
-    /// Re-reads the state after a failure, so the switch shows where things were actually left
-    /// rather than where the click was headed.
+    /// Re-reads the state after a failure, so the switch shows where things were left.
     /// </summary>
     private async Task RefreshAsync()
     {
@@ -125,7 +123,6 @@ public partial class SteamLiveEditPanel : ComponentBase
         }
         catch
         {
-            // Already reporting the failure that brought us here; a second one adds nothing.
         }
     }
 

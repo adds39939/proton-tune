@@ -3,8 +3,8 @@ using ProtonTune.UI.Formatting;
 namespace ProtonTune.UI.Tests.Formatting;
 
 /// <summary>
-/// The label under every game in the library. It reports elapsed time in the largest unit that
-/// still says something useful, so the boundaries between those units are where it can go wrong.
+/// The label under every game in the library. It reports elapsed time in the largest useful unit,
+/// so the boundaries between units are where it can go wrong.
 /// </summary>
 public class LastPlayedDisplayTests
 {
@@ -62,8 +62,7 @@ public class LastPlayedDisplayTests
         Assert.Equal("29 days ago", Ago(TimeSpan.FromDays(29)));
 
     /// <summary>
-    /// A timestamp in the future means the clock moved, not that the game is played tomorrow.
-    /// Reporting a negative count would be worse than saying nothing.
+    /// A timestamp in the future means the clock moved, so it must not report a negative count.
     /// </summary>
     [Fact]
     public void TreatsAFutureTimestampAsNow() =>

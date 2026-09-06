@@ -3,9 +3,8 @@ using ProtonTune.Services.Steam;
 namespace ProtonTune.Services.Tests.Steam;
 
 /// <summary>
-/// Picking the page to drive Steam through out of the dozen or so it publishes. Choosing the
-/// wrong one is not a visible error — it is a page that reports Steam's own object as missing, so
-/// live editing would quietly never work.
+/// Picking the page to drive Steam through out of the dozen or so it publishes. The wrong one
+/// reports Steam's own object as missing, so live editing would quietly never work.
 /// </summary>
 public sealed class SteamDevToolsTargetTests
 {
@@ -48,8 +47,8 @@ public sealed class SteamDevToolsTargetTests
     }
 
     /// <summary>
-    /// Matched on where the page is served from rather than what it is called. The name has been
-    /// several different things across Steam versions and branches; the host has not.
+    /// Matched on where the page is served from rather than its name, which differs across Steam
+    /// versions and branches.
     /// </summary>
     [Fact]
     public void FindsThePageOnAVersionThatNamesItSomethingElse()
@@ -61,8 +60,8 @@ public sealed class SteamDevToolsTargetTests
     }
 
     /// <summary>
-    /// Several pages of Steam's own interface are published at once. The named one is the one that
-    /// matters, and taking whichever came first would be a coin toss.
+    /// Several pages of Steam's own interface are published at once, so taking whichever came
+    /// first would be a coin toss.
     /// </summary>
     [Fact]
     public void PrefersTheNamedPageWhereSeveralOfSteamsOwnAreListed()
@@ -87,8 +86,8 @@ public sealed class SteamDevToolsTargetTests
     }
 
     /// <summary>
-    /// Steam publishes an empty list while it is starting and while it changes between its desktop
-    /// and Big Picture interfaces. Neither is an error — there is simply nothing to talk to yet.
+    /// Steam publishes an empty list while starting and while changing between its desktop and Big
+    /// Picture interfaces. Neither is an error.
     /// </summary>
     [Fact]
     public void ReportsNothingWhenSteamIsBetweenInterfaces()

@@ -4,18 +4,17 @@ namespace ProtonTune.Core.Settings;
 /// How the library orders its entries.
 /// </summary>
 /// <remarks>
-/// Declared here rather than beside the component because it is remembered between sessions, and
-/// <see cref="AppSettings" /> cannot reach into the UI. The order is the order the menu lists
-/// them in, and the first is what a fresh installation opens on.
+/// Declared here rather than beside the component because <see cref="AppSettings" /> remembers it
+/// and cannot reach into the UI. Declaration order is menu order; the first is the default.
 /// </remarks>
 public enum LibrarySortOrder
 {
-    /// <summary>Alphabetical, which is the order to reach for when looking something up.</summary>
+    /// <summary>Alphabetical.</summary>
     Name,
 
     /// <summary>
-    /// Most recently played first, which puts the games worth configuring at the top. Games never
-    /// played come last rather than first: no timestamp is not the same as a very old one.
+    /// Most recently played first. Games never played come last rather than first: no timestamp is
+    /// not the same as a very old one.
     /// </summary>
     RecentlyPlayed
 }

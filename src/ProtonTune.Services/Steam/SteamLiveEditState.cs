@@ -4,10 +4,8 @@ namespace ProtonTune.Services.Steam;
 /// Where live editing stands: what Steam has been asked to do, and what it is actually doing.
 /// </summary>
 /// <remarks>
-/// The two are reported separately rather than folded into one answer because they genuinely come
-/// apart. Switching live editing on while Steam is running leaves it asked for but not yet in
-/// effect; switching it off leaves the port open until Steam next closes. A single flag would
-/// have to pick one of those to lie about.
+/// Reported separately because they come apart: switching on while Steam runs leaves it asked for
+/// but not in effect, and switching off leaves the port open until Steam next closes.
 /// </remarks>
 public sealed record SteamLiveEditState
 {
@@ -27,8 +25,7 @@ public sealed record SteamLiveEditState
     public bool IsSettled => IsEnabled == IsActive;
 
     /// <summary>
-    /// Where the file lives, shown so it is clear what ProtonTune is putting in the Steam
-    /// directory and what to remove by hand if it ever has to be.
+    /// Where the file lives, shown so it is clear what ProtonTune puts in the Steam directory.
     /// </summary>
     public string? MarkerPath { get; init; }
 }

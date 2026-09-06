@@ -8,9 +8,8 @@ using ProtonTune.Services.Steam;
 namespace ProtonTune.Services.Tests.DependencyExtensions;
 
 /// <summary>
-/// The container is only exercised when the application runs, and a service that cannot be built
-/// shows up as a blank screen rather than a failed build. Asking the container to prove itself
-/// here turns that into a failing test.
+/// The container is only exercised when the application runs, so a service that cannot be built
+/// shows up as a blank screen rather than a failed build. This turns that into a failing test.
 /// </summary>
 public class ServiceRegistrationTests
 {
@@ -51,10 +50,9 @@ public class ServiceRegistrationTests
     }
 
     /// <summary>
-    /// The host registers scheme handlers by asking the container for them and nothing else, so a
-    /// handler that is written but never registered is a feature that silently does not work. The
-    /// artwork one is the reason the extension point exists; if it stops arriving, covers stop
-    /// loading and nothing else complains.
+    /// The host registers scheme handlers by asking the container and nothing else, so one written
+    /// but never registered silently does not work — and if the artwork handler stops arriving,
+    /// covers stop loading with nothing else to complain.
     /// </summary>
     [Fact]
     public void OffersItsCustomSchemeHandlersToTheHost()
@@ -67,9 +65,8 @@ public class ServiceRegistrationTests
     }
 
     /// <summary>
-    /// The application registers logging separately, so the container needs it before any of these
-    /// can be built. Silenced rather than wired to a console: the question here is only whether
-    /// they can be constructed.
+    /// The application registers logging separately, so the container needs it first. Silenced,
+    /// since the question is only whether these can be constructed.
     /// </summary>
     private static ServiceCollection WithLogging()
     {

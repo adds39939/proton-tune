@@ -128,10 +128,9 @@ public sealed class SteamClient(ILogger<SteamClient> logger) : ISteamClient
     /// client and returns immediately either way.
     /// </summary>
     /// <remarks>
-    /// Detached where possible, falling back to a plain launch on a system without
-    /// <see cref="DetachCommand" />. Going straight to the fallback would leave Steam tied to
-    /// ProtonTune, which is the bug this exists to avoid, so it is only reached when the first
-    /// attempt cannot start at all.
+    /// Detached where possible, falling back to a plain launch only when
+    /// <see cref="DetachCommand" /> cannot start at all — the fallback leaves Steam tied to
+    /// ProtonTune, which is the bug this exists to avoid.
     /// </remarks>
     private bool TryRun(params string[] arguments) =>
         TryStart(BuildStartInfo(detached: true, arguments)) ||
@@ -158,17 +157,12 @@ public sealed class SteamClient(ILogger<SteamClient> logger) : ISteamClient
     /// </summary>
     /// <remarks>
     /// <para>
-    /// Steam is started in a session of its own. A process started the ordinary way inherits
-    /// ProtonTune's process group, so anything that signals that group — a terminal closing, a
-    /// desktop session ending ProtonTune, a stop sent to the whole group — reaches Steam as well
-    /// and takes it down with the app that restarted it. Measured directly: with the plain launch
-    /// the child dies on a group signal, and in its own session it survives.
+    /// Steam gets a session of its own: a child in ProtonTune's process group dies with it on any
+    /// group signal, which was measured directly.
     /// </para>
     /// <para>
-    /// Nothing is redirected either. The output used to be captured into pipes that were never
-    /// read, so Steam would block once the buffer filled — it is talkative on startup — and then
-    /// take a broken pipe when ProtonTune exited. Steam does its own logging, so letting the
-    /// streams alone is both simpler and safer than draining pipes nobody wants.
+    /// Nothing is redirected. Output captured into pipes nobody reads blocks Steam once the buffer
+    /// fills, and Steam does its own logging anyway.
     /// </para>
     /// <para>
     /// <c>--fork</c> is what guarantees the new session: <c>setsid</c> without it is a no-op when

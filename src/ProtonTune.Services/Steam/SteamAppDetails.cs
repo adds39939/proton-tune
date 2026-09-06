@@ -5,8 +5,7 @@ namespace ProtonTune.Services.Steam;
 /// </summary>
 /// <param name="LaunchOptions">The launch options Steam would use for the next launch.</param>
 /// <param name="CompatToolName">
-/// The Proton build the game runs under, named as Steam knows it. This is the build in effect
-/// rather than the one chosen — a game left to Steam's judgement reports whatever Steam picked,
-/// not the empty string that was stored.
+/// The Proton build the game runs under, named as Steam knows it. The build in effect rather than
+/// the one chosen: a game left to Steam reports what Steam picked, not the stored empty string.
 /// </param>
 public sealed record SteamAppDetails(string LaunchOptions, string CompatToolName);

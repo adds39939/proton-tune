@@ -3,8 +3,8 @@ using Microsoft.AspNetCore.Components;
 namespace ProtonTune.UI.Components.Configuration;
 
 /// <summary>
-/// One setting as it is currently configured. Read-only: the variable name is shown next to the
-/// value so what ProtonTune understood can be checked against what Steam actually holds.
+/// One setting as it is currently configured. Read-only, with the variable name beside the value
+/// so what ProtonTune understood can be checked against what Steam holds.
 /// </summary>
 public partial class SettingRow : ComponentBase
 {

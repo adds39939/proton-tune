@@ -2,7 +2,6 @@
     margin: 20px 0 0;
 }
 
-/* The disclosure triangle the browser draws is replaced by the chevron in the summary. */
 .group-summary {
     display: flex;
     align-items: center;
@@ -41,7 +40,6 @@
     font-variant-numeric: tabular-nums;
 }
 
-/* Points down when open and along the row when closed, which is the way round a reader expects. */
 .group-marker {
     display: flex;
     flex: none;

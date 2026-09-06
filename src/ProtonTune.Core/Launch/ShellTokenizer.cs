@@ -16,14 +16,15 @@ public readonly record struct ShellToken(string Text, string RawText);
 /// Splits and rebuilds command lines using the quoting rules Steam applies to launch options.
 /// </summary>
 /// <remarks>
-/// Tokens carry both their logical value and their original spelling. Quoting in these strings is
-/// often redundant — <c>WINEDLLOVERRIDES="dxgi=n,b"</c> means exactly what the unquoted form
-/// means — but it is how the guides write it, so re-quoting from the logical value alone would
-/// hand users back a string that differs from the one they wrote for no reason they can see.
-/// </remarks>
-/// <remarks>
+/// <para>
+/// Tokens carry both their logical value and their original spelling, since quoting here is often
+/// redundant — <c>WINEDLLOVERRIDES="dxgi=n,b"</c> means what the unquoted form means — but it is
+/// how the guides write it, and re-quoting would hand the user back a different string.
+/// </para>
+/// <para>
 /// Inside double quotes a backslash only escapes <c>"</c>, <c>\</c>, <c>$</c> and <c>`</c>;
 /// before anything else it stands for itself.
+/// </para>
 /// </remarks>
 public static class ShellTokenizer
 {
@@ -43,9 +44,8 @@ public static class ShellTokenizer
     /// Splits a command line, keeping each token's original text alongside its value.
     /// </summary>
     /// <remarks>
-    /// An unterminated quote is treated as though it closed at the end of the input rather than
-    /// raising: these strings come from a hand-edited Steam text box, and refusing to read a
-    /// malformed one would leave the user unable to see or repair it.
+    /// An unterminated quote is treated as closing at the end of the input rather than raising:
+    /// these strings are hand-edited, and refusing to read one would leave it unrepairable.
     /// </remarks>
     public static IReadOnlyList<ShellToken> TokenizeWithSource(string commandLine)
     {

@@ -9,9 +9,8 @@ namespace ProtonTune.UI.Components.Configuration;
 /// Edits the global profile — the same settings a game gets, kept once and applied where wanted.
 /// </summary>
 /// <remarks>
-/// Saving here writes only to ProtonTune's own storage, so Steam does not have to be restarted.
-/// Games already following the profile are not rewritten: doing so would mean editing several
-/// games' launch options behind a save the user made on a different screen.
+/// Saving writes only to ProtonTune's own storage, so Steam is not restarted. Games already
+/// following the profile are not rewritten behind a save made on a different screen.
 /// </remarks>
 public partial class GlobalProfilePanel : ComponentBase
 {
@@ -43,8 +42,8 @@ public partial class GlobalProfilePanel : ComponentBase
     private bool IsConfirmingSave { get; set; }
 
     /// <summary>
-    /// What saving does beyond storing the profile. Cascading is the part worth confirming: it
-    /// rewrites the launch options of games the user is not looking at.
+    /// What saving does beyond storing the profile. Cascading is the part worth confirming, since
+    /// it rewrites the launch options of games the user is not looking at.
     /// </summary>
     private IReadOnlyList<string> PendingSideEffects => LinkedCount == 0
         ? []
@@ -122,8 +121,7 @@ public partial class GlobalProfilePanel : ComponentBase
     }
 
     /// <summary>
-    /// Asks first, then clears. Wiping a profile and unlinking every game that follows it is not
-    /// something to do on a mis-click.
+    /// Asks first, since this wipes the profile and unlinks every game following it.
     /// </summary>
     private async Task ResetAsync()
     {
@@ -159,8 +157,8 @@ public partial class GlobalProfilePanel : ComponentBase
     }
 
     /// <summary>
-    /// Opens the confirmation rather than saving. A profile save can rewrite several games' launch
-    /// options at once, which is worth agreeing to rather than discovering.
+    /// Opens the confirmation rather than saving, since a profile save can rewrite several games'
+    /// launch options at once.
     /// </summary>
     private void AskToSave()
     {

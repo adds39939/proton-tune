@@ -6,9 +6,8 @@ using ProtonTune.Services.Steam;
 namespace ProtonTune.Services.Tests.Steam;
 
 /// <summary>
-/// Backups are the only thing standing between a bad splice and a Steam configuration the user
-/// cannot get back, so finding them, keeping enough of them, and putting one back all have to
-/// work on a real directory rather than in principle.
+/// Backups are all that stands between a bad splice and a Steam configuration the user cannot get
+/// back, so finding, pruning and restoring them are exercised on a real directory.
 /// </summary>
 public sealed class SteamConfigBackupServiceTests : IDisposable
 {
@@ -174,8 +173,8 @@ public sealed class SteamConfigBackupServiceTests : IDisposable
     }
 
     /// <summary>
-    /// The same order a save follows: Steam holds these files in memory and writes them out as it
-    /// exits, so anything restored underneath a running Steam is discarded moments later.
+    /// The same order a save follows: Steam writes these files out as it exits, so anything
+    /// restored underneath a running client is discarded moments later.
     /// </summary>
     [Fact]
     public async Task ClosesSteamAroundTheRestore()

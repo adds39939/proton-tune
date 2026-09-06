@@ -18,11 +18,9 @@ public sealed partial class ProtonToolService(
     ILogger<ProtonToolService> logger) : IProtonToolService
 {
     /// <summary>
-    /// The layer name a Proton build declares in its <c>toolmanifest.vdf</c>. Steam's container
-    /// runtimes are compatibility tools too and sit in the same directories, but declare
-    /// <c>container-runtime</c> — so this is what separates a build a game runs under from the
-    /// scaffolding around it. Tools such as Luxtorpeda declare their own names and are likewise
-    /// left out: they are not Proton and none of ProtonTune's settings apply to them.
+    /// The layer name a Proton build declares in its <c>toolmanifest.vdf</c>. Container runtimes
+    /// and tools such as Luxtorpeda sit in the same directories but declare their own names, so
+    /// this is what separates a build a game runs under from the scaffolding around it.
     /// </summary>
     private const string ProtonLayerName = "proton";
 
@@ -107,8 +105,8 @@ public sealed partial class ProtonToolService(
 
     /// <summary>
     /// Reads the builds unpacked into <c>compatibilitytools.d</c>. Each declares itself in a
-    /// <c>compatibilitytool.vdf</c>, where the key of the entry is the internal name Steam will
-    /// use — so unlike Valve's builds, nothing has to be inferred.
+    /// <c>compatibilitytool.vdf</c> whose entry key is the internal name Steam will use, so unlike
+    /// Valve's builds nothing has to be inferred.
     /// </summary>
     /// <remarks>
     /// <c>install_path</c> is <c>"."</c> when the manifest sits inside the build's own directory,
@@ -188,10 +186,9 @@ public sealed partial class ProtonToolService(
     /// Reads the deliberate tool choices from <c>config/config.vdf</c>.
     /// </summary>
     /// <remarks>
-    /// The section is absent until a tool is first chosen in Steam, and an entry with an empty
-    /// name is a choice that has been cleared — "decide for me" rather than a tool. Neither is a
-    /// fault. The key path is walked from the same constant the writer uses so that reading and
-    /// writing cannot drift apart.
+    /// The section is absent until a tool is first chosen, and an empty name is a cleared choice
+    /// rather than a tool; neither is a fault. The key path comes from the same constant the
+    /// writer uses, so reading and writing cannot drift apart.
     /// </remarks>
     private async Task<IReadOnlyDictionary<uint, ProtonToolMapping>> ReadMappingsAsync(
         string steamRoot,
@@ -244,13 +241,10 @@ public sealed partial class ProtonToolService(
     /// compatibility log.
     /// </summary>
     /// <remarks>
-    /// The log is the only place outside Steam's binary metadata cache where the name a Valve
-    /// build is written into <c>CompatToolMapping</c> as — <c>proton_experimental</c> — is
-    /// spelled out next to the app id that identifies the install on disk. It is a log, so Steam
-    /// truncates it freely; a missing entry falls back to
-    /// <see cref="ProtonToolName.Derive" /> rather than dropping the build. It also spans many
-    /// Steam sessions, so a build is registered in it repeatedly; the last line for an app id
-    /// wins, which matters if Valve ever renames one.
+    /// The only place outside Steam's binary metadata cache where a Valve build's
+    /// <c>CompatToolMapping</c> name is spelled out beside its app id. Steam truncates the log
+    /// freely, so a missing entry falls back to <see cref="ProtonToolName.Derive" />; it also
+    /// spans many sessions, so the last line for an app id wins.
     /// </remarks>
     /// <returns>App id to internal name. Custom builds register under app id 0 and are excluded.</returns>
     private async Task<IReadOnlyDictionary<uint, string>> ReadRegisteredNamesAsync(
@@ -316,10 +310,8 @@ public sealed partial class ProtonToolService(
     /// Works out which variables a build honours by reading the script that honours them.
     /// </summary>
     /// <remarks>
-    /// <c>proton</c> is Python source, so every variable it consults is in there as a literal.
-    /// That makes this exact rather than a guess, and it stays right across releases — GE adds
-    /// variables with almost every one, and a table written into ProtonTune would be stale within
-    /// a month.
+    /// <c>proton</c> is Python source, so every variable it consults appears as a literal. That
+    /// makes the answer exact, and right across releases that a hardcoded table would not survive.
     /// </remarks>
     private async Task<ProtonCapabilities> ProbeAsync(string installPath, CancellationToken cancellationToken)
     {

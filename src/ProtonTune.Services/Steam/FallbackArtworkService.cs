@@ -4,11 +4,9 @@ namespace ProtonTune.Services.Steam;
 
 /// <inheritdoc cref="IGameArtworkService" />
 /// <remarks>
-/// Asks each provider in turn and takes the first that offers something. Neither source covers
-/// everything on its own: the local cache only holds games Steam has drawn in its own library,
-/// and the CDN's predictable URLs stop at titles released before Steam moved to content-hashed
-/// asset paths. Between them almost every game is covered, and the lettered tile is left to the
-/// things that genuinely have no artwork, such as Proton builds and the runtimes.
+/// Asks each provider in turn and takes the first that offers something. Neither covers
+/// everything: the local cache holds only what Steam has drawn, and the CDN's predictable URLs
+/// stop at titles from before Steam moved to content-hashed asset paths.
 /// </remarks>
 public sealed class FallbackArtworkService(IEnumerable<IGameArtworkService> providers) : IGameArtworkService
 {

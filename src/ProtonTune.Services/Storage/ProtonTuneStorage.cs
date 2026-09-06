@@ -4,15 +4,9 @@ namespace ProtonTune.Services.Storage;
 /// Where ProtonTune keeps the things it manages on the user's behalf.
 /// </summary>
 /// <remarks>
-/// <para>
-/// Deliberately outside the application directory, so that what the user has configured survives
-/// ProtonTune being updated, moved, or reinstalled.
-/// </para>
-/// <para>
-/// The root is a property rather than a constant so tests can be pointed at a temporary
-/// directory. Without that they write real files into the user's home, over the profile the
-/// application later reads.
-/// </para>
+/// Outside the application directory, so what the user has configured survives an update or
+/// reinstall. The root is a property rather than a constant so tests can be pointed at a temporary
+/// directory instead of writing over the real profile.
 /// </remarks>
 public sealed class ProtonTuneStorage
 {

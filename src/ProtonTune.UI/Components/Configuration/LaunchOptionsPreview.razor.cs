@@ -7,9 +7,8 @@ namespace ProtonTune.UI.Components.Configuration;
 /// Shows what saving would write, with the difference from what is stored marked up.
 /// </summary>
 /// <remarks>
-/// Used twice: alongside the editor as live feedback while settings are changed, and again in the
-/// dialog that asks to confirm a save. Both need to say exactly the same thing, which is the
-/// reason it is a component rather than markup in either.
+/// Used twice — as live feedback beside the editor, and in the save confirmation — which is why it
+/// is a component rather than markup in either.
 /// </remarks>
 public partial class LaunchOptionsPreview : ComponentBase
 {
@@ -27,15 +26,14 @@ public partial class LaunchOptionsPreview : ComponentBase
     public string Label { get; set; } = "Will be written as";
 
     /// <summary>
-    /// The pending string broken into what is staying, arriving, and going, so the change can be
-    /// read at a glance rather than by comparing two long lines.
+    /// The pending string broken into what is staying, arriving, and going.
     /// </summary>
     private IReadOnlyList<LaunchDiffToken> Diff =>
         LaunchOptionsDiff.Compare(LaunchOptions.Parse(Saved), Options);
 
     /// <summary>
-    /// Whether the options would leave the game with nothing set. Worth saying outright: an empty
-    /// line reads as a rendering fault rather than as the change it is.
+    /// Whether the options would leave the game with nothing set, which is said outright so an
+    /// empty line does not read as a rendering fault.
     /// </summary>
     private bool WritesNothing => Options.IsEmpty;
 }

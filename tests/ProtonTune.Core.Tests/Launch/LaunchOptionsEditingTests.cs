@@ -35,9 +35,8 @@ public class LaunchOptionsEditingTests
     }
 
     /// <summary>
-    /// Switching a setting off and on again is one of the commonest things anyone does here, and
-    /// appending it on the way back moves it away from the settings it was written beside — which
-    /// reads, in the change preview, as removing one thing and adding another.
+    /// Appending a setting on the way back would move it away from the ones it was written beside,
+    /// which reads in the change preview as one removal and one addition.
     /// </summary>
     [Fact]
     public void SwitchingAVariableOffAndOnAgainLeavesItWhereItWas()
@@ -93,8 +92,8 @@ public class LaunchOptionsEditingTests
     }
 
     /// <summary>
-    /// The memory of where something sat belongs to one editing session. Once the string has been
-    /// written out and read back, a variable that is no longer in it really is new.
+    /// The memory of where something sat lasts one editing session: once written out and read
+    /// back, a variable no longer in the string really is new.
     /// </summary>
     [Fact]
     public void ForgetsWhereAVariableSatOnceTheStringHasBeenSaved()
@@ -194,9 +193,8 @@ public class LaunchOptionsValidatorTests
     }
 
     /// <summary>
-    /// Gamescope's Vulkan layer does need ENABLE_GAMESCOPE_WSI, but Gamescope sets it for whatever
-    /// it launches, so the game has it either way. A rule for it would fire on the configuration
-    /// most people are actually running.
+    /// Gamescope's Vulkan layer needs ENABLE_GAMESCOPE_WSI, but Gamescope sets it for whatever it
+    /// launches, so a rule for it would fire on working configurations.
     /// </summary>
     [Fact]
     public void SaysNothingAboutGamescopeHdrWithoutTheVariableItSetsItself()

@@ -5,9 +5,8 @@ using ProtonTune.Services.Steam;
 namespace ProtonTune.UI.Components.Game;
 
 /// <summary>
-/// Cover art for an app, falling back to a lettered tile. Steam publishes no artwork for
-/// compatibility tools, and a game can be missing a given shape, so the fallback is the normal
-/// path rather than an error case.
+/// Cover art for an app, falling back to a lettered tile. Steam publishes none for compatibility
+/// tools and a game can be missing a shape, so the fallback is normal rather than an error.
 /// </summary>
 public partial class GameArtwork : ComponentBase
 {

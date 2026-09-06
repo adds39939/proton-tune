@@ -4,9 +4,8 @@ namespace ProtonTune.Services.Steam;
 /// The Steam configuration files ProtonTune edits.
 /// </summary>
 /// <remarks>
-/// Two kinds, and they belong to different things: launch options are per signed-in account, and
-/// the choice of Proton build is per installation. Anything that backs them up has to know about
-/// both, or half the edits would be recoverable.
+/// Two kinds: launch options are per signed-in account, the choice of Proton build per
+/// installation. Anything backing them up has to know both, or half the edits are recoverable.
 /// </remarks>
 internal static class SteamConfigFiles
 {

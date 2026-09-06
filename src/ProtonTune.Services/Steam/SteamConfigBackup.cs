@@ -4,9 +4,8 @@ namespace ProtonTune.Services.Steam;
 /// A copy of a Steam configuration file, taken before ProtonTune changed it.
 /// </summary>
 /// <remarks>
-/// Kept beside the file it came from, named after the moment it was taken. These files are edited
-/// by splicing single values into text Steam owns; a backup is what makes a splice that goes
-/// wrong recoverable rather than final.
+/// Kept beside the file it came from, named after the moment it was taken, so a splice into text
+/// Steam owns is recoverable rather than final.
 /// </remarks>
 public sealed record SteamConfigBackup
 {

@@ -59,16 +59,9 @@ public sealed record CommandFlagDefinition(string Flag, string Label)
 /// setting.
 /// </summary>
 /// <remarks>
-/// <para>
-/// Declared by a setting definition file, the same as the variables beside it. Not everything worth
-/// configuring is an environment variable: Gamescope is set entirely through flags, so a section
-/// that could only describe variables could not describe it at all.
-/// </para>
-/// <para>
-/// Always partial, as the variable lists are. Gamescope alone has flags for VR overlays and mura
-/// compensation that nobody tuning a game will reach for, and anything not listed here still
-/// survives being read and written back.
-/// </para>
+/// Declared by a setting definition file, like the variables beside it: Gamescope is configured
+/// entirely through flags, which a variables-only section could not describe. Always partial —
+/// anything not listed still survives being read and written back.
 /// </remarks>
 /// <param name="Command">The command as it is written into the chain.</param>
 /// <param name="Label">A readable name for what launching through it does.</param>
@@ -82,9 +75,9 @@ public sealed record CommandDefinition(string Command, string Label)
     /// token belongs to it and after which none does.
     /// </summary>
     /// <remarks>
-    /// Null for a command that takes no arguments of its own, such as <c>mangohud</c>. Without a
-    /// terminator there is no way to tell where one command's arguments stop and the next command
-    /// begins, so such a command is treated as having none rather than claiming what follows it.
+    /// Null for a command that takes no arguments of its own, such as <c>mangohud</c>: without a
+    /// terminator there is no way to tell where its arguments stop, so it is treated as having
+    /// none rather than claiming what follows.
     /// </remarks>
     public string? Terminator { get; init; }
 

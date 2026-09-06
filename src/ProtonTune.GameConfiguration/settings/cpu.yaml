@@ -2,14 +2,9 @@ id: cpu
 title: CPU
 order: 9
 
-# The affinity picker above these reads the machine's own topology and writes taskset into the
-# launch chain. That pins the game to a set of threads; PROTON_CPU_TOPOLOGY below changes how many
-# it is told about, which is a different question and often the one an old game needs answered.
-
 groups:
   - name: Synchronisation
     settings:
-      # Every build installed here reads the first two. NTSync is newer and only GE consults it.
       - variable: PROTON_NO_ESYNC
         label: Disable esync
         description: Turns off eventfd synchronisation. Costs performance; fixes some games.

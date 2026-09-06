@@ -5,7 +5,7 @@ namespace ProtonTune.Services.Tests.Steam;
 
 /// <summary>
 /// Which artwork source wins. Neither covers every game, so the order they are asked in is the
-/// whole behaviour: get it backwards and recent titles quietly lose their covers again.
+/// whole behaviour.
 /// </summary>
 public class FallbackArtworkServiceTests
 {

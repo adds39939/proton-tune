@@ -2,13 +2,9 @@ id: diagnostics
 title: Diagnostics
 order: 13
 
-# Nothing here changes how a game runs, beyond the cost of writing what it says. It is for the
-# afternoon a game will not start and the question is which layer gave up first.
-
 groups:
   - name: Proton
     settings:
-      # All four read by every build installed here.
       - variable: PROTON_LOG
         label: Proton logging
         description: >-

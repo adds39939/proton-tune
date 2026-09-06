@@ -22,10 +22,9 @@ public sealed class SteamLiveEditService(
     /// How long to keep watching for the debugging interface after starting Steam.
     /// </summary>
     /// <remarks>
-    /// Steam answers on the port a second or two after the process appears, not immediately, so
-    /// reading the state the moment it is started would report live editing as off directly after
-    /// switching it on. Generous, because a cold start is slower than a warm one and reporting it
-    /// as off is worse than the screen taking a moment longer to settle.
+    /// Steam answers on the port a second or two after the process appears, so reading the state
+    /// immediately would report live editing as off just after switching it on. Generous, since a
+    /// cold start is slower than a warm one.
     /// </remarks>
     private static readonly TimeSpan ActivationTimeout = TimeSpan.FromSeconds(30);
 
@@ -110,10 +109,8 @@ public sealed class SteamLiveEditService(
     /// Closes Steam and starts it again, since the file is only read as Steam starts.
     /// </summary>
     /// <remarks>
-    /// A running game is checked for first and stops the restart rather than the whole change.
-    /// The file is already correct by this point and costs nothing sitting there, so ending
-    /// someone's session to make it take effect a few minutes sooner would be the wrong trade —
-    /// it takes effect the next time Steam starts either way.
+    /// A running game stops the restart rather than the whole change: the file is already correct
+    /// and takes effect the next time Steam starts either way.
     /// </remarks>
     private async Task<SteamRestartOutcome> RestartSteamAsync(CancellationToken cancellationToken)
     {

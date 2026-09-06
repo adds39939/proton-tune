@@ -7,11 +7,9 @@ namespace ProtonTune.Services.Steam;
 
 /// <inheritdoc cref="ISteamClientSession" />
 /// <remarks>
-/// Works by evaluating JavaScript inside Steam's own interface, which is the only way in: the
-/// object that can change a game's configuration exists there and nowhere else. Every expression
-/// is written to answer with a small tagged object rather than a bare value, so "Steam does not
-/// offer this" and "Steam did it" cannot be confused with each other or with a page that returned
-/// nothing.
+/// Evaluates JavaScript inside Steam's own interface, which is the only place the object that can
+/// change a game's configuration exists. Every expression answers with a small tagged object, so
+/// "Steam does not offer this", "Steam did it" and a page returning nothing stay distinct.
 /// </remarks>
 internal sealed class SteamClientSession(
     ClientWebSocket socket,
@@ -22,8 +20,8 @@ internal sealed class SteamClientSession(
     /// How long to wait for Steam to answer one expression.
     /// </summary>
     /// <remarks>
-    /// Long, because reading a game's details waits on Steam to call back with them, and a client
-    /// busy starting up or shutting a game down can take its time about it.
+    /// Long, because reading a game's details waits on Steam to call back, which a client busy
+    /// starting up can take its time about.
     /// </remarks>
     private static readonly TimeSpan EvaluateTimeout = TimeSpan.FromSeconds(20);
 
@@ -37,10 +35,6 @@ internal sealed class SteamClientSession(
         uint appId,
         CancellationToken cancellationToken = default)
     {
-        // Steam does not return a game's details; it calls back with them, and keeps calling back
-        // as they change. So the callback is turned into something that can be awaited once, and
-        // the registration is given up straight afterwards — left in place, every game ever opened
-        // would go on being reported for the life of the Steam session.
         var expression = $$"""
             (async () => {
               const apps = window.SteamClient?.Apps;
@@ -118,9 +112,8 @@ internal sealed class SteamClientSession(
     /// made here happen to be.
     /// </summary>
     /// <remarks>
-    /// The argument is written into the expression as JSON rather than quoted by hand. Launch
-    /// options are full of quotes, backslashes and percent signs, and a string built by
-    /// concatenation would eventually produce an expression that is no longer the one intended.
+    /// The argument goes in as JSON rather than being quoted by hand: launch options are full of
+    /// quotes, backslashes and percent signs.
     /// </remarks>
     private async Task<bool> ApplyAsync(
         string method,
@@ -156,15 +149,10 @@ internal sealed class SteamClientSession(
     /// Evaluates one expression inside Steam's interface and hands back what it answered with.
     /// </summary>
     /// <remarks>
-    /// <para>
-    /// One at a time, across every session. Steam's interface crashes outright — taking the whole
-    /// client with it — when two evaluations against the same page are in flight together, which
-    /// is exactly what applying a profile to a library would otherwise do.
-    /// </para>
-    /// <para>
-    /// The reply is matched by the number sent with the request. Steam also sends messages of its
-    /// own accord, which carry no such number and are passed over.
-    /// </para>
+    /// One at a time across every session: two evaluations in flight against the same page crash
+    /// Steam's interface outright, which is what applying a profile to a library would otherwise
+    /// do. The reply is matched by the number sent with the request; Steam's own unsolicited
+    /// messages carry none and are passed over.
     /// </remarks>
     private async Task<JsonElement?> EvaluateAsync(string expression, CancellationToken cancellationToken)
     {
@@ -300,8 +288,6 @@ internal sealed class SteamClientSession(
         }
         catch (Exception e) when (e is WebSocketException or OperationCanceledException or ObjectDisposedException)
         {
-            // Closing politely is a courtesy to Steam, not something worth reporting: the work is
-            // already done and the socket is about to go either way.
         }
         finally
         {

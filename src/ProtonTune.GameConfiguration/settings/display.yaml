@@ -3,11 +3,6 @@ title: Display
 order: 4
 
 settings:
-  # Read by GE-Proton and proton-cachyos; no Valve build installed here mentions Wayland in its
-  # launch script at all, so this disappears entirely there rather than filling the list.
-  #
-  # Both builds also accept PROTON_ENABLE_WAYLAND, the older spelling of the same switch. Only the
-  # current one is offered — protonfixes itself reads this name first and falls back to the other.
   - variable: PROTON_USE_WAYLAND
     label: Run natively on Wayland
     description: Skips XWayland. Required before HDR will do anything.
@@ -15,8 +10,6 @@ settings:
     protonBuilds: ["^GE-Proton", "^(proton-)?cachyos"]
     restrictToProtonBuild: true
 
-  # GE only: it passes this through to winewayland as WAYLANDDRV_PRIMARY_MONITOR, and cachyos has
-  # no such line.
   - variable: PROTON_WAYLAND_MONITOR
     label: Primary monitor
     description: >-
@@ -35,7 +28,6 @@ settings:
     protonBuilds: ["^GE-Proton", "^(proton-)?cachyos"]
     restrictToProtonBuild: true
 
-  # Read by every build installed here.
   - variable: PROTON_LIMIT_RESOLUTIONS
     label: Limit the resolution list
     description: >-

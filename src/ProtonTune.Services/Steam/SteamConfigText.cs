@@ -7,17 +7,10 @@ namespace ProtonTune.Services.Steam;
 /// every other byte of the file exactly as it was.
 /// </summary>
 /// <remarks>
-/// <para>
-/// The obvious approach — parse to an object model, change one value, serialise the whole thing
-/// back — is not safe for <c>localconfig.vdf</c>. That file holds the entire Steam client
-/// configuration, including large cached JSON blobs full of escaped quotes. Re-serialising it
-/// would rewrite all of them, and any difference in how the writer escapes a character would
-/// corrupt settings that have nothing to do with ProtonTune.
-/// </para>
-/// <para>
-/// Splicing one value keeps the blast radius to the string being changed. Everything else,
-/// including formatting and anything this code does not understand, is copied through untouched.
-/// </para>
+/// Parsing to an object model and serialising back is not safe for <c>localconfig.vdf</c>: it
+/// holds the whole client configuration, including cached JSON blobs full of escaped quotes, and
+/// any difference in escaping would corrupt settings unrelated to ProtonTune. Splicing keeps the
+/// blast radius to the string being changed.
 /// </remarks>
 public static class SteamConfigText
 {

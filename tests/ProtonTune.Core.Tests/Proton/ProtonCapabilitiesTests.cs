@@ -32,10 +32,9 @@ public class ProtonCapabilitiesTests
     }
 
     /// <summary>
-    /// The renderer variables are implemented in shipped DLLs, where names are often assembled
-    /// from a prefix at runtime — the DLSS preset overrides are built from DXVK_NVAPI_DRS_ and
-    /// never appear whole. Since ProtonTune reads only the launch script, it has no opinion, and
-    /// must not turn no opinion into "unsupported".
+    /// The renderer variables live in shipped DLLs with names assembled at runtime — the DLSS
+    /// preset overrides are built from DXVK_NVAPI_DRS_ and never appear whole — so reading the
+    /// launch script yields no opinion, which must not become "unsupported".
     /// </summary>
     [Theory]
     [InlineData("DXVK_NVAPI_DRS_NGX_DLSS_RR_OVERRIDE_RENDER_PRESET_SELECTION")]

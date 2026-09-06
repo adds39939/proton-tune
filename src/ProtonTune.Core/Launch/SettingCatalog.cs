@@ -4,15 +4,9 @@ namespace ProtonTune.Core.Launch;
 /// The environment variables ProtonTune recognises, and where each belongs.
 /// </summary>
 /// <remarks>
-/// <para>
-/// Loaded from the setting definition files rather than written in code, so the set of variables
-/// the application offers can grow without it changing.
-/// </para>
-/// <para>
-/// Deliberately partial. Anything absent from it still parses and is still written back — it
-/// simply appears under custom variables rather than in a named section, so an unknown variable
-/// costs the user presentation and never data.
-/// </para>
+/// Loaded from the setting definition files, so the set of variables can grow without changing the
+/// application. Deliberately partial: anything absent still parses and is written back, appearing
+/// under custom variables rather than in a named section.
 /// </remarks>
 public sealed class SettingCatalog
 {
@@ -56,17 +50,15 @@ public sealed class SettingCatalog
     /// A section's settings as the headings its file declares, in the order it declares them.
     /// </summary>
     /// <remarks>
-    /// A run rather than a lookup: a new group starts wherever the heading changes, so the file's
-    /// own order survives and a heading used twice stays two runs rather than being merged into
-    /// one somewhere up the list. A section that declares no headings comes back as a single
-    /// unnamed group, which is the flat list it was before.
+    /// A run rather than a lookup: a new group starts wherever the heading changes, so a heading
+    /// used twice stays two runs. A section declaring no headings comes back as one unnamed group.
     /// </remarks>
     public IReadOnlyList<SettingGroup> GroupsIn(SettingCategory category) =>
         Group(In(category));
 
     /// <summary>
-    /// The same, over a list already narrowed down — the editor hides settings that do not apply
-    /// to the build in force, and a heading whose every setting was hidden should go with them.
+    /// The same, over a list already narrowed down: the editor hides settings that do not apply to
+    /// the build in force, and a heading whose settings were all hidden goes with them.
     /// </summary>
     public static IReadOnlyList<SettingGroup> Group(IEnumerable<SettingDefinition> definitions)
     {

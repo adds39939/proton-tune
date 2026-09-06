@@ -6,19 +6,11 @@ namespace ProtonTune.Services.Steam;
 /// Finds artwork in the cache Steam fills as it browses the library.
 /// </summary>
 /// <remarks>
-/// <para>
-/// The layout is <c>appcache/librarycache/&lt;appid&gt;/…</c>. Steam has moved the files around
-/// twice, and an install that has been upgraded holds both arrangements at once — the assets sit
-/// either directly in the app's directory or one level further down, inside a content-hashed
-/// directory whose name cannot be predicted. Since the app id is a directory in both, the hash
-/// only ever has to be enumerated, never derived, which is what makes the cache usable at all.
-/// </para>
-/// <para>
-/// The file names moved with them: the portrait cover is <c>library_600x900.jpg</c> for older
-/// entries and <c>library_capsule.jpg</c> for newer ones, and the banner is <c>header.jpg</c> or
-/// <c>library_header.jpg</c>. Both names are searched for each shape, since which one is present
-/// says nothing except when Steam last fetched it.
-/// </para>
+/// The layout is <c>appcache/librarycache/&lt;appid&gt;/…</c>, and an upgraded install holds both
+/// of Steam's arrangements at once: assets sit either in the app's directory or one level down in
+/// a content-hashed directory. The app id is a directory in both, so the hash is enumerated rather
+/// than derived. File names moved too — <c>library_600x900.jpg</c> or <c>library_capsule.jpg</c>,
+/// <c>header.jpg</c> or <c>library_header.jpg</c> — so both are searched for each shape.
 /// </remarks>
 internal static class SteamLibraryCache
 {

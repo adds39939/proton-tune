@@ -4,9 +4,8 @@ namespace ProtonTune.Core.Launch;
 /// A section of the configuration screen, as declared by one of the setting definition files.
 /// </summary>
 /// <remarks>
-/// These are data rather than an enumeration, so a new section is a new file rather than a change
-/// to the application. That is also why the identifier matters: it is the stable name, while the
-/// title is free to be reworded.
+/// Data rather than an enumeration, so a new section is a new file. The identifier is the stable
+/// name; the title is free to be reworded.
 /// </remarks>
 /// <param name="Id">
 /// The stable key, lowercase. Two of these are known to the application by name — see
@@ -22,7 +21,7 @@ public sealed record SettingCategory(string Id, string Title, int Order)
     /// </summary>
     /// <remarks>
     /// Gamescope is the reason this exists: none of what it does is reachable through the
-    /// environment, so a section able to describe only variables could not describe it.
+    /// environment.
     /// </remarks>
     public CommandDefinition? Command { get; init; }
 
@@ -34,10 +33,9 @@ public sealed record SettingCategory(string Id, string Title, int Order)
 /// The section identifiers the application looks for by name.
 /// </summary>
 /// <remarks>
-/// Each of these carries a control that is more than a list of variables — the CPU affinity picker
-/// and MangoHud's launch-chain toggle. A section can be renamed in its file freely; renaming one
-/// of these identifiers removes the extra control rather than the section, so it has to be changed
-/// here at the same time.
+/// Each carries a control that is more than a list of variables — the CPU affinity picker and
+/// MangoHud's launch-chain toggle. Renaming one of these identifiers removes that control rather
+/// than the section, so it has to be changed here at the same time.
 /// </remarks>
 public static class SettingCategoryIds
 {

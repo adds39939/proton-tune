@@ -6,9 +6,8 @@ namespace ProtonTune.Services.Steam;
 /// Finds the page inside Steam's interface that the client can be driven through.
 /// </summary>
 /// <remarks>
-/// Steam's debugging interface lists every page it is showing — menus, the store, each window.
-/// Only one of them, the shared context its own code runs in, is handed the object that can
-/// change a game's configuration; the rest would report the object as missing.
+/// Steam's debugging interface lists every page it is showing, but only the shared context its own
+/// code runs in holds the object that can change a game's configuration.
 /// </remarks>
 internal static class SteamDevToolsTarget
 {
@@ -17,8 +16,7 @@ internal static class SteamDevToolsTarget
     /// it, and no page outside the interface is.
     /// </summary>
     /// <remarks>
-    /// Matched on rather than the page's title, which has been several different things across
-    /// Steam versions and branches — "SharedJSContext" on this one, but not on every one.
+    /// Matched on rather than the page title, which differs across Steam versions and branches.
     /// </remarks>
     private const string InterfaceHost = "steamloopback.host";
 
@@ -60,8 +58,6 @@ internal static class SteamDevToolsTarget
             return null;
         }
 
-        // Named first where the name is the one Steam uses, so that a version listing several
-        // pages of its own interface still resolves to the one that matters.
         foreach (var candidate in candidates)
         {
             if (string.Equals(candidate.Title, SharedContextTitle, StringComparison.Ordinal))

@@ -7,8 +7,8 @@ public sealed record ProtonBuild
 {
     /// <summary>
     /// The internal name Steam identifies the build by, such as <c>proton_experimental</c> or
-    /// <c>GE-Proton11-3</c>. This is the string that appears in <c>CompatToolMapping</c>, so it is
-    /// what has to be written to change a game's Proton — the display name will not do.
+    /// <c>GE-Proton11-3</c>. This is what appears in <c>CompatToolMapping</c> and what has to be
+    /// written to change a game's Proton; the display name will not do.
     /// </summary>
     public required string Name { get; init; }
 
@@ -37,10 +37,9 @@ public sealed record ProtonBuild
     /// file Steam wrote.
     /// </summary>
     /// <remarks>
-    /// Only Valve builds can be in this state, and only when Steam's compatibility log has been
-    /// rotated away. The inference is reliable enough to display, but writing an inferred name
-    /// into <c>CompatToolMapping</c> would silently do nothing if it were wrong, so anything that
-    /// writes should treat this as a reason to warn first.
+    /// Only Valve builds, and only when Steam's compatibility log has been rotated away. Reliable
+    /// enough to display, but a wrong name written into <c>CompatToolMapping</c> would silently do
+    /// nothing, so anything that writes should warn first.
     /// </remarks>
     public bool NameIsDerived { get; init; }
 

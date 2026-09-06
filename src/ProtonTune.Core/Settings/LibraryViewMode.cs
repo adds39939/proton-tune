@@ -4,13 +4,12 @@ namespace ProtonTune.Core.Settings;
 /// How the library presents its entries.
 /// </summary>
 /// <remarks>
-/// Declared here rather than beside the component because it is remembered between sessions, and
-/// <see cref="AppSettings" /> cannot reach into the UI. The order is the order the buttons appear
-/// in, and the first is what a fresh installation opens on.
+/// Declared here rather than beside the component because <see cref="AppSettings" /> remembers it
+/// and cannot reach into the UI. Declaration order is button order; the first is the default.
 /// </remarks>
 public enum LibraryViewMode
 {
-    /// <summary>Compact rows, which fit more games on screen and read better when scanning.</summary>
+    /// <summary>Compact rows, which fit more games on screen.</summary>
     List,
 
     /// <summary>Cover art in a grid, the way Steam shows a library.</summary>

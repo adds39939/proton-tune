@@ -13,8 +13,8 @@ public static class LastPlayedDisplay
     /// useful: minutes within the hour, hours within the day, then days.
     /// </summary>
     /// <remarks>
-    /// Elapsed rather than calendar based, and truncated rather than rounded — the convention for
-    /// this kind of label, where "1 hour ago" is understood to mean at least an hour.
+    /// Elapsed rather than calendar based, and truncated rather than rounded: "1 hour ago" means
+    /// at least an hour.
     /// </remarks>
     public static string Format(DateTimeOffset? lastPlayed)
     {

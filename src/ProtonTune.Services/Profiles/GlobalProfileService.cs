@@ -135,9 +135,8 @@ public sealed class GlobalProfileService(
     }
 
     /// <summary>
-    /// Reads the stored profile, treating anything unreadable as empty. A profile is a
-    /// convenience rather than a record of the user's games — losing it costs a retype, so
-    /// failing loudly would be worse than starting fresh.
+    /// Reads the stored profile, treating anything unreadable as empty: losing it costs a retype,
+    /// so starting fresh beats failing loudly.
     /// </summary>
     private async Task<StoredProfile> LoadAsync(CancellationToken cancellationToken)
     {

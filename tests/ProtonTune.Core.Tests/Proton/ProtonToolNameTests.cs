@@ -47,8 +47,8 @@ public class ProtonToolNameTests
         Assert.Equal("proton_9", ProtonToolName.Derive("  Proton 9.0  "));
 
     /// <summary>
-    /// A name ProtonTune has never seen still has to produce something rather than throw. It will
-    /// very likely be wrong, which is why a derived name is recorded as derived.
+    /// A name ProtonTune has never seen produces something rather than throwing, which is why a
+    /// derived name is recorded as derived.
     /// </summary>
     [Fact]
     public void CollapsesPunctuationInUnfamiliarNames() =>

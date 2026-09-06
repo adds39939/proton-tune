@@ -2,13 +2,6 @@ id: gamescope
 title: Gamescope
 order: 5
 
-# Gamescope is a nested compositor the game runs inside, so almost nothing here is an environment
-# variable: it is configured by flags on the command that launches it. The flags below were taken
-# from gamescope 3.16.25's own --help, which is the only place they are written down — there is no
-# man page.
-#
-# Short spellings are what the guides use and what gets written; the long forms are listed as
-# aliases so a string someone wrote out in full is recognised and edited rather than duplicated.
 command:
   name: gamescope
   label: Launch through Gamescope
@@ -116,8 +109,6 @@ command:
           kind: text
           placeholder: "0.5"
 
-        # getopt_long takes any unambiguous abbreviation of a long flag, so --hdr-itm-enable is a
-        # valid spelling of this rather than a typo, and is written that way in most guides.
         - flag: "--hdr-itm-enabled"
           aliases: ["--hdr-itm-enable"]
           label: Inverse tone mapping
@@ -221,12 +212,6 @@ command:
           kind: choice
           choices: [auto, drm, sdl, wayland, headless]
 
-# The WSI layer is what lets a game present straight to Gamescope, and an HDR game needs it to
-# hand over an HDR swapchain at all. Neither variable below is normally worth setting: the layer is
-# a Vulkan implicit layer with an enable_environment, which would leave it off by default, except
-# that Gamescope sets ENABLE_GAMESCOPE_WSI=1 in the environment of whatever it launches. Both are
-# listed because they turn up in guides and in strings people already have, and a variable with a
-# definition is shown in the section it belongs to rather than among the custom ones.
 settings:
   - variable: ENABLE_GAMESCOPE_WSI
     label: Enable the Gamescope WSI layer

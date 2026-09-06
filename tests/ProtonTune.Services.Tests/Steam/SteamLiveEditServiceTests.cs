@@ -4,10 +4,9 @@ using ProtonTune.Services.Steam;
 namespace ProtonTune.Services.Tests.Steam;
 
 /// <summary>
-/// Switching live editing on writes a file into the Steam directory and closes the client
-/// someone is using, so it has to do exactly that and nothing more — and it has to say honestly
-/// whether Steam is offering the interface yet, since a switch reading "on" over a client that
-/// cannot be talked to is the one way this misleads.
+/// Switching live editing on writes a file into the Steam directory and closes the client someone
+/// is using, so it has to do exactly that and nothing more — and report honestly whether Steam is
+/// offering the interface yet.
 /// </summary>
 public sealed class SteamLiveEditServiceTests : IDisposable
 {
@@ -72,8 +71,8 @@ public sealed class SteamLiveEditServiceTests : IDisposable
     }
 
     /// <summary>
-    /// Asked for but not yet offered. This is where the client stands between switching it on and
-    /// Steam coming back, and it is the state the screen has to be able to explain.
+    /// Asked for but not yet offered: where the client stands between switching it on and Steam
+    /// coming back.
     /// </summary>
     [Fact]
     public async Task SeparatesWhatWasAskedForFromWhatSteamIsDoing()
@@ -152,9 +151,8 @@ public sealed class SteamLiveEditServiceTests : IDisposable
     }
 
     /// <summary>
-    /// The file is already correct by the time Steam would be closed, and it costs nothing
-    /// sitting there until the next restart — so a session in progress is worth more than having
-    /// it take effect now.
+    /// The file is already correct by the time Steam would be closed and takes effect at the next
+    /// restart, so a session in progress is worth more.
     /// </summary>
     [Fact]
     public async Task WillNotCloseSteamOutFromUnderAGame()

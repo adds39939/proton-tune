@@ -23,9 +23,6 @@ groups:
         protonBuilds: ["^GE-Proton", "^(proton-)?cachyos"]
         restrictToProtonBuild: true
 
-      # Read by Valve's builds and by GE, but not by proton-cachyos. Named in no list here on
-      # purpose: reading the launch script settles a PROTON_ variable exactly, so cachyos greys
-      # this out on its own. A list is only needed where hiding it outright is wanted.
       - variable: PROTON_SPOOF_STEAMINPUT_VIDPID
         label: Spoof the controller's identity
         description: >-
@@ -51,8 +48,6 @@ groups:
 
   - name: Devices
     settings:
-      # Read by every build installed here. Takes 1 or a comma-separated list of vendor/product
-      # pairs, which is how Proton disables hidraw for one controller rather than for all of them.
       - variable: PROTON_DISABLE_HIDRAW
         label: Disable hidraw
         description: >-
@@ -70,8 +65,6 @@ groups:
         protonBuilds: ["^GE-Proton", "^(proton-)?cachyos"]
         restrictToProtonBuild: true
 
-  # GE ships a set of PlayStation controller fixes and applies each to the games it knows need one.
-  # They are named here for a game with the same fault that is not on GE's list.
   - name: PlayStation controllers
     settings:
       - variable: PROTON_SONY_HIDRAW_XINPUT
@@ -119,7 +112,6 @@ groups:
 
   - name: Keyboard and navigation
     settings:
-      # Both read by every build installed here.
       - variable: PROTON_NO_XIM
         label: Disable the X input method
         description: >-

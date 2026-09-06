@@ -13,18 +13,11 @@ internal static class SteamVdf
     /// Reader settings sized for the largest of these files rather than the smallest.
     /// </summary>
     /// <remarks>
-    /// <para>
-    /// Steam caches JSON blobs inside <c>localconfig.vdf</c> — notification and store preferences
-    /// run to tens of thousands of characters in a single token. The library's 4096-character
-    /// default is far too small for those, and it overruns its own buffer rather than reporting a
-    /// clean error, so the symptom is an <see cref="IndexOutOfRangeException" /> from deep inside
-    /// the reader.
-    /// </para>
-    /// <para>
-    /// Those same blobs contain escaped quotes, so escape sequences have to be honoured or the
-    /// document ends early and parses as truncated. That is safe here because ProtonTune is Linux
-    /// only: the backslash-heavy Windows paths that make escape handling ambiguous never appear.
-    /// </para>
+    /// Steam caches JSON blobs inside <c>localconfig.vdf</c> that run to tens of thousands of
+    /// characters in one token; the library's 4096-character default overruns its own buffer
+    /// rather than reporting cleanly, surfacing as an <see cref="IndexOutOfRangeException" />.
+    /// Those blobs also contain escaped quotes, so escapes must be honoured — safe here because
+    /// ProtonTune is Linux only and the ambiguous Windows paths never appear.
     /// </remarks>
     private static readonly VdfSerializerSettings ReaderSettings = new()
     {
@@ -37,8 +30,8 @@ internal static class SteamVdf
     /// </summary>
     /// <returns>
     /// The root object, or <see langword="null"/> when the file is missing, unreadable, or
-    /// malformed. Steam rewrites these files in place while it runs, so a torn or half-written
-    /// document is an expected outcome rather than an error worth failing the whole scan over.
+    /// malformed. Steam rewrites these in place while it runs, so a torn document is expected
+    /// rather than worth failing the whole scan over.
     /// </returns>
     /// <remarks>
     /// A token longer than <see cref="VdfSerializerSettings.MaximumTokenSize" /> surfaces from the

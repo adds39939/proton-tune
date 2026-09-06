@@ -25,8 +25,7 @@ public sealed class SteamLaunchOptionsService(
 
     /// <summary>
     /// How many times to ask Steam what it holds before deciding a change did not take, and how
-    /// long to leave between asking. Short: this only runs after Steam has already said yes, so
-    /// it is waiting on the client to catch up with itself rather than on the change.
+    /// long to leave between asking. Short, since Steam has already said yes by this point.
     /// </summary>
     private const int SettleAttempts = 5;
 
@@ -39,10 +38,9 @@ public sealed class SteamLaunchOptionsService(
 
     /// <inheritdoc />
     /// <remarks>
-    /// Asks the running client before reading the file. A Steam that is up holds the current
-    /// values in memory and writes them out on its own schedule, so the file is behind whenever
-    /// someone has just changed something — here or in Steam's own interface. Reading the file
-    /// first and writing back what it said is how someone's change gets undone.
+    /// Asks the running client before reading the file: a Steam that is up holds current values in
+    /// memory and writes them on its own schedule, so the file is behind whenever anything has
+    /// just changed. Reading it first is how a change gets undone.
     /// </remarks>
     public async Task<IReadOnlyDictionary<uint, LaunchOptions>> GetManyAsync(
         IReadOnlyCollection<uint> appIds,
@@ -78,8 +76,6 @@ public sealed class SteamLaunchOptionsService(
             return found;
         }
 
-        // Whatever the client could not answer for comes from the file, read once for the lot of
-        // them rather than reopened per game.
         var document = await ReadUserConfigAsync(cancellationToken).ConfigureAwait(false);
 
         foreach (var appId in outstanding)
@@ -96,9 +92,8 @@ public sealed class SteamLaunchOptionsService(
     /// Reads the account's configuration, or <see langword="null"/> when there is none to read.
     /// </summary>
     /// <remarks>
-    /// An unreadable file is a warning rather than a failure. These are settings someone can set
-    /// again, and refusing to open a game's configuration because the file behind it could not be
-    /// read would be worse than opening it empty.
+    /// An unreadable file is a warning rather than a failure: opening a game's configuration empty
+    /// beats refusing to open it.
     /// </remarks>
     private async Task<string?> ReadUserConfigAsync(CancellationToken cancellationToken)
     {
@@ -152,10 +147,9 @@ public sealed class SteamLaunchOptionsService(
 
     /// <inheritdoc />
     /// <remarks>
-    /// Through the running client where it will take the change, and through its files where it
-    /// will not. The client is tried first and every failure to reach it falls through quietly:
-    /// Steam may not be running, live editing may be off, or it may be part way through starting,
-    /// and in all of those the long way round still works.
+    /// Through the running client where it will take the change, through its files where it will
+    /// not. Every failure to reach the client falls through quietly, since the long way still
+    /// works.
     /// </remarks>
     public async Task<LaunchOptionsSaveResult> SaveManyAsync(
         IReadOnlyDictionary<uint, string> launchOptionsByApp,
@@ -188,10 +182,9 @@ public sealed class SteamLaunchOptionsService(
     /// itself.
     /// </summary>
     /// <remarks>
-    /// Nothing is closed and no file of Steam's is touched, so there is nothing here to undo and
-    /// no copy taken — the backups exist to protect against ProtonTune editing files it does not
-    /// own, which on this path it does not do. A game in progress is likewise no obstacle: the
-    /// change lands in the client and applies at the next launch.
+    /// Nothing is closed and no file of Steam's is touched, so no backup is taken — backups guard
+    /// against ProtonTune editing files it does not own, which this path does not do. A game in
+    /// progress is no obstacle either; the change applies at the next launch.
     /// </remarks>
     private async Task<LaunchOptionsSaveResult> SaveThroughSteamAsync(
         ISteamClientSession session,
@@ -249,17 +242,10 @@ public sealed class SteamLaunchOptionsService(
     /// Asks Steam back for what it now holds, and reports what does not match what was asked for.
     /// </summary>
     /// <remarks>
-    /// <para>
-    /// Re-read until it settles rather than judged on the first answer. Steam accepts a change and
-    /// updates the details it reports separately, a moment later, so a read taken straight
-    /// afterwards can still be describing the state before the change. Measured against a running
-    /// client: the launch options were already current, the Proton build was not.
-    /// </para>
-    /// <para>
-    /// A cleared Proton build is not checked at all. Asked to let Steam choose, Steam chooses —
-    /// and then reports the build it picked rather than the nothing that was stored, so comparing
-    /// the two would call every successful reset a failure.
-    /// </para>
+    /// Re-read until it settles: Steam accepts a change and updates what it reports a moment
+    /// later, so the first answer can still describe the state before it. A cleared Proton build
+    /// is not checked at all, since Steam reports the build it picked rather than the stored
+    /// nothing.
     /// </remarks>
     private static async Task<IReadOnlyList<string>> FindLiveMismatchesAsync(
         ISteamClientSession session,
@@ -318,10 +304,9 @@ public sealed class SteamLaunchOptionsService(
     /// Writes the change into the files Steam owns, closing it first where it is running.
     /// </summary>
     /// <remarks>
-    /// The order is load bearing. Both documents are read only after Steam has gone, since it
-    /// rewrites them as it exits and anything read earlier is already stale; both are then
-    /// prepared in full before either is written, so a file that turns out not to be the document
-    /// expected stops the save while everything is still untouched.
+    /// The order is load bearing: both documents are read only after Steam has gone, since it
+    /// rewrites them as it exits, and both are prepared in full before either is written, so an
+    /// unexpected document stops the save while everything is untouched.
     /// </remarks>
     private async Task<LaunchOptionsSaveResult> SaveThroughFilesAsync(
         IReadOnlyDictionary<uint, string> launchOptionsByApp,
@@ -515,9 +500,8 @@ public sealed class SteamLaunchOptionsService(
     /// Keeps the newest few backups and removes the rest, to the count the user has chosen.
     /// </summary>
     /// <remarks>
-    /// Never allowed to fail a save. The write has already happened by this point, and reporting
-    /// a successful change as a failure because some old copies could not be tidied away would be
-    /// worse than the untidiness.
+    /// Never allowed to fail a save: the write has already happened, so untidiness beats reporting
+    /// a successful change as a failure.
     /// </remarks>
     private async Task PruneBackupsAsync(CancellationToken cancellationToken)
     {
@@ -575,9 +559,8 @@ public sealed class SteamLaunchOptionsService(
     /// Finds the <c>localconfig.vdf</c> of the Steam user to act on.
     /// </summary>
     /// <remarks>
-    /// Most machines have exactly one. Where several accounts have signed in, the most recently
-    /// written file is the one belonging to the account currently in use — Steam rewrites it
-    /// throughout a session, so its timestamp tracks the active user closely.
+    /// Where several accounts have signed in, the most recently written file belongs to the one in
+    /// use: Steam rewrites it throughout a session, so its timestamp tracks the active user.
     /// </remarks>
     private string? FindUserConfig()
     {

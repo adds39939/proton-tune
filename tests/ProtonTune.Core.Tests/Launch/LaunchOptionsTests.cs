@@ -3,16 +3,15 @@ using ProtonTune.Core.Launch;
 namespace ProtonTune.Core.Tests.Launch;
 
 /// <summary>
-/// The parser's contract is that it never loses anything. Every edit ProtonTune makes to a game's
-/// launch options goes through a parse and a format, so a setting dropped here is a setting
-/// silently deleted from someone's game.
+/// The parser's contract is that it never loses anything: every edit goes through a parse and a
+/// format, so a setting dropped here is one deleted from someone's game.
 /// </summary>
 public class LaunchOptionsTests
 {
     /// <summary>
-    /// A real, heavily configured launch options string, used as the primary fixture because it
-    /// exercises every part at once: seven assignments, a compound value containing both '=' and
-    /// ',', an absolute path as a wrapper, and a wrapper that takes its own arguments.
+    /// A real, heavily configured string exercising every part at once: seven assignments, a
+    /// compound value containing both '=' and ',', an absolute path as a wrapper, and a wrapper
+    /// that takes its own arguments.
     /// </summary>
     private const string OverwatchOptions =
         "PROTON_ENABLE_WAYLAND=1 PROTON_ENABLE_HDR=1 DXVK_HDR=1 PROTON_ENABLE_NGX_UPDATER=1 " +

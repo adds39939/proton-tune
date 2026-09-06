@@ -28,8 +28,6 @@
     font-weight: 600;
 }
 
-/* Changes the launch options do not show ---------------------------------- */
-
 .also {
     margin-top: 16px;
 }
@@ -60,8 +58,6 @@
     color: var(--warning);
     font-size: 12px;
 }
-
-/* Actions ----------------------------------------------------------------- */
 
 .actions {
     display: flex;

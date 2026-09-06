@@ -6,17 +6,14 @@ namespace ProtonTune.Services.Tests.Steam;
 /// How Steam is launched, which decides whether it outlives ProtonTune.
 /// </summary>
 /// <remarks>
-/// Only the description of the launch is asserted here — actually starting Steam is not something
-/// a test suite should do. The behaviour it stands for was measured separately: a child started
-/// the plain way dies when ProtonTune's process group is signalled, and one in its own session
-/// survives.
+/// Only the description of the launch is asserted; actually starting Steam is not something a test
+/// suite should do. The behaviour it stands for was measured separately.
 /// </remarks>
 public class SteamClientLaunchTests
 {
     /// <summary>
-    /// Steam must not inherit ProtonTune's process group. A terminal closing, or a desktop session
-    /// ending the app, signals the whole group — which would take down the Steam that ProtonTune
-    /// had just restarted on the user's behalf.
+    /// Steam must not inherit ProtonTune's process group: a terminal closing or a desktop session
+    /// ending signals the whole group, taking down the Steam ProtonTune just restarted.
     /// </summary>
     [Fact]
     public void StartsSteamInASessionOfItsOwn()
@@ -52,8 +49,8 @@ public class SteamClientLaunchTests
     }
 
     /// <summary>
-    /// The fallback for a system without setsid runs Steam directly. Worse, but better than not
-    /// starting Steam again at all after ProtonTune has just shut it down.
+    /// The fallback for a system without setsid runs Steam directly, which beats not starting it
+    /// again at all after ProtonTune shut it down.
     /// </summary>
     [Fact]
     public void FallsBackToLaunchingSteamDirectly()

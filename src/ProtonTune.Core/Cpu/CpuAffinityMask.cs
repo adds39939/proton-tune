@@ -48,8 +48,8 @@ public static class CpuAffinityMask
     }
 
     /// <summary>
-    /// Reads a thread list. Malformed sections are skipped rather than throwing: the mask may
-    /// have been typed by hand, and refusing to read it would hide what is set.
+    /// Reads a thread list. Malformed sections are skipped rather than throwing, since the mask
+    /// may have been typed by hand.
     /// </summary>
     public static IReadOnlyList<int> Parse(string? mask)
     {

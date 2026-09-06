@@ -3,16 +3,15 @@ using ProtonTune.Services.Steam;
 namespace ProtonTune.Services.Tests.Steam;
 
 /// <summary>
-/// These edits land in localconfig.vdf, which holds a user's entire Steam client configuration.
-/// The contract is narrow on purpose: change the one value asked for, and copy every other byte
-/// through unchanged.
+/// These edits land in localconfig.vdf, which holds a user's entire Steam client configuration, so
+/// the contract is narrow: change the one value asked for and copy every other byte through.
 /// </summary>
 public class SteamConfigTextTests
 {
     /// <summary>
     /// Shaped like the real file: tab indented, with a cached JSON blob full of escaped quotes
-    /// sitting next to the values being edited. That blob is what makes re-serialising the whole
-    /// document too dangerous to consider, so every test carries it along.
+    /// beside the values being edited. That blob is why re-serialising is not an option, so every
+    /// test carries it along.
     /// </summary>
     private const string Document =
         "\"UserLocalConfigStore\"\n" +
@@ -109,8 +108,8 @@ public class SteamConfigTextTests
     }
 
     /// <summary>
-    /// The file parses whatever the indentation, but a block sitting a level deeper than its
-    /// siblings reads as corruption to anyone who opens the file or diffs a backup against it.
+    /// The file parses whatever the indentation, but a block a level deeper than its siblings
+    /// reads as corruption to anyone diffing it.
     /// </summary>
     [Fact]
     public void IndentsAnInsertedBlockLevelWithTheOnesSteamWrote()

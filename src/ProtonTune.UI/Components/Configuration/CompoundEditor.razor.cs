@@ -51,8 +51,8 @@ public partial class CompoundEditor : ComponentBase
         string.Join(Schema.Separator, "round_corners" + Schema.Assignment + "5", "engine_version");
 
     /// <summary>
-    /// The offered values, plus whatever is already set if it is not among them, so an option this
-    /// build does not know cannot be dropped by opening a menu.
+    /// The offered values, plus whatever is already set if it is not among them, so opening a menu
+    /// cannot drop an option ProtonTune does not know.
     /// </summary>
     private IEnumerable<string> ChoicesFor(CompoundOptionDefinition option) =>
         Current.GetValue(option.Key) is { Length: > 0 } current && !option.Choices.Contains(current)

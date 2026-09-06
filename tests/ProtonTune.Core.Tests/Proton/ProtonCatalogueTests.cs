@@ -52,9 +52,9 @@ public class ProtonCatalogueTests
     }
 
     /// <summary>
-    /// A game with no mapping of its own falls back to the default, but that is a likelihood
-    /// rather than a certainty — Steam may name a build in the game's own metadata, which does
-    /// not live in this file. The selection says so by reporting itself as not explicit.
+    /// A game with no mapping falls back to the default, but only likely so: Steam may name a
+    /// build in the game's own metadata, which is not in this file. The selection reports itself
+    /// as not explicit.
     /// </summary>
     [Fact]
     public void FallsBackToTheDefaultWithoutClaimingItIsExplicit()

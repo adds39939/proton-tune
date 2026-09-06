@@ -42,9 +42,8 @@ public sealed record SettingDefinition(string Variable, SettingCategory Category
     /// it is listed before any of them.
     /// </summary>
     /// <remarks>
-    /// A section is one file, so this is not a second way of dividing them up — it is how a long
-    /// file says which of its settings are one decision. Settings sharing a name are shown
-    /// together in the order the file declares them.
+    /// How a long file says which of its settings are one decision. Settings sharing a name are
+    /// shown together in the order the file declares them.
     /// </remarks>
     public string? Group { get; init; }
 
@@ -59,9 +58,8 @@ public sealed record SettingDefinition(string Variable, SettingCategory Category
     public string OnValue { get; init; } = "1";
 
     /// <summary>
-    /// The values offered for a <see cref="SettingKind.Choice" />. A value already set that is
-    /// not in this list is still offered, so a preset ProtonTune has not heard of is never
-    /// silently replaced.
+    /// The values offered for a <see cref="SettingKind.Choice" />. A value already set but not in
+    /// this list is still offered, so an unknown preset is never silently replaced.
     /// </summary>
     public IReadOnlyList<string> Choices { get; init; } = [];
 
@@ -83,11 +81,9 @@ public sealed record SettingDefinition(string Variable, SettingCategory Category
     /// and version. Empty means it is offered for every build.
     /// </summary>
     /// <remarks>
-    /// A declaration made in the definition file, and the weaker of the two things ProtonTune
-    /// knows: where a build's own launch script can be read, what it actually consults decides.
-    /// This speaks for the variables that reading a script cannot settle — those implemented in
-    /// the shipped renderer libraries, where the names are assembled at runtime and never appear
-    /// whole.
+    /// The weaker of the two things ProtonTune knows: where a build's launch script can be read,
+    /// what it consults decides. This speaks only for variables a script cannot settle — those in
+    /// the shipped renderer libraries, whose names are assembled at runtime.
     /// </remarks>
     public IReadOnlyList<string> ProtonBuilds { get; init; } = [];
 
@@ -96,10 +92,9 @@ public sealed record SettingDefinition(string Variable, SettingCategory Category
     /// it greyed out.
     /// </summary>
     /// <remarks>
-    /// For settings that exist in one family of builds and nowhere else. A GE-Proton feature shown
-    /// against Valve's Proton is not a setting the user might reconsider — it is noise in a list
-    /// they are trying to read. Left off, the setting stays visible and says why it does nothing,
-    /// which is the better answer where the build might plausibly gain it.
+    /// For settings that exist in one family of builds and nowhere else. Left off, the setting
+    /// stays visible and says why it does nothing, which is the better answer where the build
+    /// might plausibly gain it.
     /// </remarks>
     public bool RestrictToProtonBuild { get; init; }
 

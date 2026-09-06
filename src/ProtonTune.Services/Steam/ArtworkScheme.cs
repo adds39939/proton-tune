@@ -6,11 +6,9 @@ namespace ProtonTune.Services.Steam;
 /// The private URL scheme artwork held on disk is served to the web view over.
 /// </summary>
 /// <remarks>
-/// A file path cannot be given to an <c>&lt;img&gt;</c> directly: the page is served from Photino's
-/// own scheme, and a <c>file:</c> source from that origin is not something a web view can be
-/// relied on to load. Reading the image and inlining it as a data URI would work, but it puts a
-/// six-figure string in the render tree for every card in the library. A scheme handler keeps the
-/// markup down to a short URL and lets the bytes go straight from disk to the view.
+/// A <c>file:</c> source is not reliably loadable from Photino's own scheme, and inlining a data
+/// URI would put a six-figure string in the render tree per card. A scheme handler keeps the
+/// markup to a short URL and lets the bytes go straight from disk to the view.
 /// </remarks>
 public static class ArtworkScheme
 {

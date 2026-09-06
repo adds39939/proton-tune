@@ -5,8 +5,8 @@ using ProtonTune.UI.Components.Library;
 namespace ProtonTune.UI.Tests.Components.Library;
 
 /// <summary>
-/// The order the library lists games in. Both orders have to be stable, or the grid reshuffles
-/// itself between scans for no reason a user could explain.
+/// The order the library lists games in. Both have to be stable, or the grid reshuffles itself
+/// between scans.
 /// </summary>
 public class LibrarySortOrderTests
 {
@@ -49,8 +49,7 @@ public class LibrarySortOrderTests
                 Game("REMATCH", MinutesAgo(32))));
 
     /// <summary>
-    /// No timestamp is not the same as a very old one — a game nobody has run is the least likely
-    /// to be the one being looked for, so it sorts last rather than first.
+    /// No timestamp is not the same as a very old one, so a game never played sorts last.
     /// </summary>
     [Fact]
     public void PutsGamesNeverPlayedLast() =>

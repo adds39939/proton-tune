@@ -4,17 +4,10 @@ namespace ProtonTune.Core.Launch;
 /// Editing the flags of a wrapper command ProtonTune has a definition for.
 /// </summary>
 /// <remarks>
-/// <para>
 /// A command's arguments run from the word itself to its terminator — Gamescope's <c>--</c> — and
-/// only tokens naming a declared flag are ever touched. A flag ProtonTune does not list, written
-/// between the two by hand, survives every edit made here untouched.
-/// </para>
-/// <para>
-/// Where the terminator has been left out the arguments end at the first token that is not a
-/// recognised flag, so removing a command cannot swallow the one that follows it. That is the
-/// reading Gamescope itself takes: without <c>--</c> it stops at the first thing that is not an
-/// option and treats the rest as the command to run.
-/// </para>
+/// only tokens naming a declared flag are touched, so an unlisted flag survives every edit. Where
+/// the terminator is missing the arguments end at the first unrecognised token, which is the
+/// reading Gamescope itself takes.
 /// </remarks>
 public sealed partial record LaunchOptions
 {
@@ -34,10 +27,9 @@ public sealed partial record LaunchOptions
     /// Returns a copy with the command added to or removed from the chain.
     /// </summary>
     /// <remarks>
-    /// Added commands go first, so they wrap everything after them, and bring their terminator
-    /// with them. Removing one takes its flags and its terminator too: they name nothing on their
-    /// own, and leaving them behind would hand the next command in the chain arguments meant for
-    /// something else.
+    /// Added commands go first, so they wrap everything after them, and bring their terminator.
+    /// Removing one takes its flags and terminator too, which would otherwise be handed to the
+    /// next command in the chain.
     /// </remarks>
     public LaunchOptions WithCommand(CommandDefinition command, bool present)
     {
@@ -90,8 +82,8 @@ public sealed partial record LaunchOptions
     /// Returns a copy with a switch written on the command, or taken off it.
     /// </summary>
     /// <remarks>
-    /// Switching one on adds the command where it is not already there. A flag outside the command
-    /// it belongs to is not a setting waiting to take effect, it is a word handed to the game.
+    /// Switching one on adds the command where it is not already there: a flag outside the command
+    /// it belongs to is a word handed to the game, not a setting.
     /// </remarks>
     public LaunchOptions WithSwitch(CommandDefinition command, CommandFlagDefinition flag, bool present)
     {

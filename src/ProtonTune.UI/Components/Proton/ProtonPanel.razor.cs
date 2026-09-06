@@ -58,8 +58,8 @@ public partial class ProtonPanel : ComponentBase
     }
 
     /// <summary>
-    /// Describes the fallback build. Steam applies it only where a game's own metadata does not
-    /// name a tool, so the wording stops short of promising it covers everything.
+    /// Describes the fallback build. Steam applies it only where a game's own metadata names no
+    /// tool, so the wording stops short of promising it covers everything.
     /// </summary>
     private string DefaultSummary => Catalogue.Default switch
     {
@@ -82,8 +82,7 @@ public partial class ProtonPanel : ComponentBase
         string.Equals(Catalogue.Default.ToolName, build.Name, StringComparison.OrdinalIgnoreCase);
 
     /// <summary>
-    /// Names the games pointed at a build by hand. Games that inherit the default are left out:
-    /// listing every game under the default would say nothing about the choice made.
+    /// Names the games pointed at a build by hand, leaving out those inheriting the default.
     /// </summary>
     private string GamesSummary(ProtonBuild build)
     {
@@ -96,8 +95,7 @@ public partial class ProtonPanel : ComponentBase
 
     /// <summary>
     /// Says which of ProtonTune's settings a build would ignore, which is the practical difference
-    /// between one build and another — Valve's Experimental reads no HDR or Wayland variable at
-    /// all, and none of the upgrade toggles.
+    /// between builds — Proton Experimental reads no HDR or Wayland variable at all.
     /// </summary>
     private string SupportSummary(ProtonBuild build)
     {

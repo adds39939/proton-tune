@@ -8,10 +8,9 @@ namespace ProtonTune.UI.Components.Configuration;
 /// Chooses which threads a game is pinned to.
 /// </summary>
 /// <remarks>
-/// The presets come from the machine's own topology rather than a fixed list, because the useful
-/// mask depends entirely on the processor. On a part where one die carries more cache than the
-/// other, pinning a game to that die is the single most valuable thing this section does — and
-/// working out which threads those are by hand means reading sysfs.
+/// The presets come from the machine's own topology rather than a fixed list: the useful mask
+/// depends on the processor, and working out which threads share the larger cache by hand means
+/// reading sysfs.
 /// </remarks>
 public partial class CpuAffinityEditor : ComponentBase
 {

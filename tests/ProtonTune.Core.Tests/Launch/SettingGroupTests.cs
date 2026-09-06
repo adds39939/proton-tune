@@ -6,9 +6,8 @@ namespace ProtonTune.Core.Tests.Launch;
 /// How a section's settings are broken into the headings its file declares.
 /// </summary>
 /// <remarks>
-/// The grouping is a run over the declared order rather than a lookup by name, because the file's
-/// order is what a person reading the section sees. Anything that reorders or merges would move
-/// settings around behind the writer's back.
+/// A run over the declared order rather than a lookup by name: the file's order is what a reader
+/// sees, so reordering or merging would move settings behind the writer's back.
 /// </remarks>
 public class SettingGroupTests
 {

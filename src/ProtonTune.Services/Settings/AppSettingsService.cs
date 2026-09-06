@@ -12,9 +12,8 @@ public sealed class AppSettingsService(
     ILogger<AppSettingsService> logger) : IAppSettingsService
 {
     /// <remarks>
-    /// Enums are written by name. A number would tie the file to the order the members happen to
-    /// be declared in, so reordering them — which is how the library's buttons and menu are
-    /// ordered — would silently reinterpret what someone had already chosen.
+    /// Enums are written by name: a number would tie the file to declaration order, which is also
+    /// the library's button and menu order, so reordering would reinterpret a stored choice.
     /// </remarks>
     private static readonly JsonSerializerOptions SerializerOptions = new()
     {

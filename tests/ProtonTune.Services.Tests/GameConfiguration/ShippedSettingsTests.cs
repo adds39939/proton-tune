@@ -6,9 +6,8 @@ using ProtonTune.Services.GameConfiguration;
 namespace ProtonTune.Services.Tests.GameConfiguration;
 
 /// <summary>
-/// Reads the definition files ProtonTune actually ships, rather than fixtures, so a mistake in one
-/// fails here rather than in front of a user. They are hand-edited data, which is exactly the kind
-/// of thing that goes wrong quietly.
+/// Reads the definition files ProtonTune actually ships rather than fixtures, so a mistake in
+/// hand-edited data fails here rather than in front of a user.
 /// </summary>
 public class ShippedSettingsTests
 {
@@ -194,9 +193,8 @@ public class ShippedSettingsTests
     }
 
     /// <summary>
-    /// Gamescope is configured entirely on its own command line, so a section describing only
-    /// variables could not describe it. Losing the command block leaves a section that names a few
-    /// environment variables and cannot switch the compositor on at all.
+    /// Gamescope is configured entirely on its own command line, so losing the command block
+    /// leaves a section that cannot switch the compositor on at all.
     /// </summary>
     [Fact]
     public void ShipsGamescopeAsACommandRatherThanVariables()
@@ -210,9 +208,9 @@ public class ShippedSettingsTests
     }
 
     /// <summary>
-    /// Taken from gamescope 3.16.25's own --help, which is where they are written down. A flag
-    /// spelled wrongly is not rejected — gamescope stops at the first thing that is not an option
-    /// and runs the rest as the command, so the game launches with the setting quietly missing.
+    /// Taken from gamescope 3.16.25's own --help. A misspelled flag is not rejected: gamescope
+    /// stops at the first non-option and runs the rest as the command, so the setting goes missing
+    /// quietly.
     /// </summary>
     [Theory]
     [InlineData("-W", SettingKind.Number)]
@@ -236,9 +234,8 @@ public class ShippedSettingsTests
     }
 
     /// <summary>
-    /// The short spellings are what the guides write and what ProtonTune writes; the long ones are
-    /// what the documentation uses. A string using either has to be recognised, or setting a width
-    /// beside a <c>--output-width</c> already there writes a second one.
+    /// The guides use the short spellings and the documentation the long ones, so both must be
+    /// recognised or setting a width beside an existing <c>--output-width</c> writes a second.
     /// </summary>
     [Theory]
     [InlineData("-W", "--output-width")]
@@ -267,9 +264,8 @@ public class ShippedSettingsTests
     }
 
     /// <summary>
-    /// Neither is normally worth setting — Gamescope enables its own layer for whatever it
-    /// launches — but both turn up in guides, and a variable with a definition is shown in the
-    /// section it belongs to rather than among the custom ones.
+    /// Neither is normally worth setting, but both turn up in guides, and a variable with a
+    /// definition is shown in its own section rather than among the custom ones.
     /// </summary>
     [Theory]
     [InlineData("ENABLE_GAMESCOPE_WSI")]
@@ -291,8 +287,7 @@ public class ShippedSettingsTests
 
     /// <summary>
     /// Checked against the launch scripts of the builds installed here: GE-Proton reads these and
-    /// nothing else does — proton-cachyos mentions HDR nowhere, and the rest are GE's own.
-    /// Restricting them is what keeps a list of features that cannot be used off the screen.
+    /// nothing else does. Restricting them keeps unusable features off the screen.
     /// </summary>
     [Theory]
     [InlineData("PROTON_USE_HDR")]
@@ -308,10 +303,9 @@ public class ShippedSettingsTests
     }
 
     /// <summary>
-    /// The community builds read a great deal Valve's do not, and proton-cachyos reads most of
-    /// what GE does. Naming only GE would hide a working setting on cachyos, which is the mistake
-    /// this catches: the version file drops the leading "proton-", so the pattern has to match
-    /// both the tool name and the version label.
+    /// proton-cachyos reads most of what GE does, so naming only GE would hide a working setting.
+    /// Its version file drops the leading "proton-", so the pattern must match both the tool name
+    /// and the version label.
     /// </summary>
     [Theory]
     [InlineData("PROTON_DLSS_UPGRADE")]
@@ -355,8 +349,7 @@ public class ShippedSettingsTests
     }
 
     /// <summary>
-    /// A section long enough to need headings has to give them, or it is the twenty-line list the
-    /// headings exist to break up. These are the ones that would read worst without.
+    /// A section long enough to need headings has to declare them. These read worst without.
     /// </summary>
     [Theory]
     [InlineData("nvidia", "DLSS")]
@@ -407,9 +400,9 @@ public class ShippedSettingsTests
         Assert.Empty(Catalog.Find(variable)!.ProtonBuilds);
 
     /// <summary>
-    /// No build installed here reads these, but both were real in older Proton. A restriction has
-    /// to name the builds a setting works on, and that cannot be checked against builds that are
-    /// not present — so they are shown greyed out rather than hidden on a guess.
+    /// No build installed here reads these, but both were real in older Proton. A restriction
+    /// naming builds that are not present cannot be checked, so they are greyed out rather than
+    /// hidden on a guess.
     /// </summary>
     [Theory]
     [InlineData("PROTON_ENABLE_NVAPI")]

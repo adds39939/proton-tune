@@ -41,8 +41,8 @@ public sealed class ProtonToolServiceTests : IDisposable
     public void Dispose() => Directory.Delete(_root, recursive: true);
 
     /// <summary>
-    /// The real library service runs over the fake tree, so app manifests are parsed for real —
-    /// only the step that finds Steam is replaced, because that one reads the home directory.
+    /// The real library service runs over the fake tree, so app manifests are parsed for real;
+    /// only the step that finds Steam is replaced, since it reads the home directory.
     /// </summary>
     private ProtonToolService CreateService(string? steamRoot = null)
     {
@@ -253,7 +253,7 @@ public sealed class ProtonToolServiceTests : IDisposable
 
     /// <summary>
     /// Shaped like the real thing: Python that consults the variables by name, which is what makes
-    /// reading them out of it exact rather than a guess.
+    /// reading them exact.
     /// </summary>
     private static void WriteScript(string installPath, params string[] variables) =>
         File.WriteAllText(

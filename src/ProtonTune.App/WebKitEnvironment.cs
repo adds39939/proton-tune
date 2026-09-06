@@ -11,11 +11,11 @@ internal static class WebKitEnvironment
     private static extern int setenv(string name, string value, int overwrite);
 
     /// <summary>
-    /// Falls WebKitGTK back to its software renderer. The DMA-BUF renderer sends buffer
-    /// messages that GTK3's Wayland backend rejects, killing the window with Gdk "Error 71".
-    /// Must be called before the window is created, and goes through libc because
+    /// Falls WebKitGTK back to its software renderer: the DMA-BUF renderer sends buffer messages
+    /// GTK3's Wayland backend rejects, killing the window with Gdk "Error 71". Must be called
+    /// before the window is created, and goes through libc because
     /// <see cref="Environment.SetEnvironmentVariable(string, string)"/> only updates the CLR's
-    /// managed copy on Unix — the native library would never see it.
+    /// managed copy on Unix.
     /// </summary>
     public static void DisableDmaBufRenderer() => setenv("WEBKIT_DISABLE_DMABUF_RENDERER", "1", 1);
 

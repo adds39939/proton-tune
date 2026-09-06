@@ -2,12 +2,6 @@ id: layers
 title: Vulkan layers
 order: 11
 
-# Implicit Vulkan layers sit between the game and the driver, and each is switched on by a variable
-# the loader reads rather than by anything Proton does. GE-Proton and proton-cachyos ship these
-# four and point the loader at their own copies; on another build the same variable still works if
-# the layer is installed on the system. That is why nothing here names a build: the variable is not
-# the build's to read, and a list would be claiming otherwise.
-
 groups:
   - name: Latency
     settings:

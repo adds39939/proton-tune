@@ -12,8 +12,8 @@ public sealed class SteamDebugPort : ISteamDebugPort
     public const int Port = 8080;
 
     /// <summary>
-    /// How long to wait for the connection. Only ever a connection to this machine, so anything
-    /// beyond a moment means nothing is there rather than that the answer is slow.
+    /// How long to wait for the connection. Always to this machine, so anything beyond a moment
+    /// means nothing is there.
     /// </summary>
     private static readonly TimeSpan ConnectTimeout = TimeSpan.FromSeconds(2);
 
@@ -22,9 +22,9 @@ public sealed class SteamDebugPort : ISteamDebugPort
 
     /// <inheritdoc />
     /// <remarks>
-    /// Opens a connection and closes it again without sending anything. Asking for the target
-    /// list over HTTP would say more, but it would also be a request Steam has to serve on every
-    /// visit to the settings screen, and whether the port is open is the whole question here.
+    /// Opens a connection and closes it without sending anything: whether the port is open is the
+    /// whole question, and asking for the target list would make Steam serve a request per visit
+    /// to the settings screen.
     /// </remarks>
     public async Task<bool> IsListeningAsync(CancellationToken cancellationToken = default)
     {
@@ -45,8 +45,6 @@ public sealed class SteamDebugPort : ISteamDebugPort
         }
         catch (OperationCanceledException) when (!cancellationToken.IsCancellationRequested)
         {
-            // The deadline above, not the caller giving up. A caller's own cancellation is theirs
-            // to hear about, so only this one is answered with "nothing is listening".
             return false;
         }
     }

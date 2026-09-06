@@ -3,10 +3,6 @@ title: MangoHud
 order: 10
 
 settings:
-  # MANGOHUD_CONFIG holds many settings in one comma-separated string, so it is described as a
-  # compound rather than a text box and gets a control per option. MangoHud has well over a
-  # hundred; these are the ones worth reaching for while tuning a game, and anything not listed
-  # stays editable as text.
   - variable: MANGOHUD_CONFIG
     label: MangoHud options
     description: Comma-separated MangoHud settings, such as fps_limit and its method.
@@ -34,7 +30,6 @@ settings:
               choices: ["0", "1", "2", "3"]
               description: 0 off, 1 mailbox, 2 relaxed, 3 on.
 
-        # No kind given, so these are flags: written as the bare key with no value.
         - name: Metrics
           options:
             - key: fps

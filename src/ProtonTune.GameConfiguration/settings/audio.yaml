@@ -2,10 +2,6 @@ id: audio
 title: Audio and video
 order: 7
 
-# Proton converts a game's bundled audio and video into formats the shipped GStreamer can decode,
-# because the Windows codecs the game expects are not there. Most of what follows is about that
-# conversion, and the rest is about which sound server Wine talks to.
-
 groups:
   - name: Sound
     settings:
@@ -20,7 +16,6 @@ groups:
 
   - name: Media conversion
     settings:
-      # Read by every build installed here.
       - variable: PROTON_MEDIACONV_NO_VIDEO
         label: Skip video entirely
         description: >-
@@ -76,9 +71,6 @@ groups:
         protonBuilds: ["^(proton-)?cachyos"]
         restrictToProtonBuild: true
 
-  # One game's audio quirk, kept because GE names it and a variable with a definition is shown here
-  # rather than among the custom ones. GE sets it for Monster Hunter Wilds on its own; setting it
-  # by hand is for a game with the same fault that is not on its list.
   - name: Game-specific
     settings:
       - variable: PROTON_ENABLE_MHWILDS_USB_AUDIO

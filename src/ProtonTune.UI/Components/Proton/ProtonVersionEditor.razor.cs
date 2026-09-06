@@ -8,9 +8,8 @@ namespace ProtonTune.UI.Components.Proton;
 /// Chooses which Proton build one game runs under.
 /// </summary>
 /// <remarks>
-/// The choice is not applied here. It is held by the dialog and written with the launch options,
-/// because the two live in different files that a running Steam holds in memory together — saving
-/// them separately would mean closing and reopening Steam twice for one change.
+/// The choice is not applied here: the dialog holds it and writes it with the launch options,
+/// since the two files a running Steam holds in memory must be written in one shutdown.
 /// </remarks>
 public partial class ProtonVersionEditor : ComponentBase
 {
@@ -62,9 +61,8 @@ public partial class ProtonVersionEditor : ComponentBase
     private bool ChoiceIsMissing => !IsInherited && Chosen is null;
 
     /// <summary>
-    /// What is stored for this game, in the same terms the control uses: a game inheriting the
-    /// default has made no choice, so it reads as <see cref="InheritValue" /> rather than as the
-    /// default's name.
+    /// What is stored for this game, in the control's own terms: a game inheriting the default has
+    /// made no choice, so it reads as <see cref="InheritValue" />.
     /// </summary>
     private string StoredValue => Stored.IsExplicit ? Stored.ToolName ?? InheritValue : InheritValue;
 
@@ -100,9 +98,9 @@ public partial class ProtonVersionEditor : ComponentBase
     }
 
     /// <summary>
-    /// Describes what Steam does with a game that has made no choice. It is not a promise: Steam
-    /// applies the default only where the game's own metadata does not name a build, and that
-    /// lives in a cache ProtonTune does not read.
+    /// Describes what Steam does with a game that has made no choice. Not a promise: the default
+    /// applies only where the game's own metadata names no build, which lives in a cache
+    /// ProtonTune does not read.
     /// </summary>
     private string InheritLabel => DefaultSelection.Build is { } build
         ? $"Let Steam decide — usually {build.DisplayName}"

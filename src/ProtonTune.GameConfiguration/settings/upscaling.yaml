@@ -2,14 +2,6 @@ id: upscaling
 title: Upscaling
 order: 2
 
-# The upgrade toggles substitute the build's own copy of an upscaler for whatever the game shipped
-# with, so a game built against FSR 2 can be made to run FSR 4 without patching its files. All of
-# them belong to the community builds: GE-Proton and proton-cachyos read them, and no Valve build
-# has an equivalent, so they are hidden rather than greyed out there.
-#
-# DLSS has the same pair of switches and is listed under Nvidia, beside the driver settings it
-# depends on.
-
 settings:
   - variable: PROTON_FSR3_UPGRADE
     label: Upgrade to FSR 3

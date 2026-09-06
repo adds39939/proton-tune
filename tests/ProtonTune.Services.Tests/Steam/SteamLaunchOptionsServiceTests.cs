@@ -191,9 +191,8 @@ public sealed class SteamLaunchOptionsServiceTests : IDisposable
     }
 
     /// <summary>
-    /// A mapping is more than a name. Steam settles competing mappings by priority, and the ones
-    /// that come from app metadata sit at 90 — so a name written without a priority would lose to
-    /// whatever Steam had already decided, and the change would appear to do nothing.
+    /// A mapping is more than a name: Steam settles competing ones by priority and those from app
+    /// metadata sit at 90, so a name written without one would silently lose.
     /// </summary>
     [Fact]
     public async Task RecordsANewChoiceWithEverythingSteamNeedsToHonourIt()
@@ -306,8 +305,8 @@ public sealed class SteamLaunchOptionsServiceTests : IDisposable
     }
 
     /// <summary>
-    /// Every save leaves a copy behind, so without pruning the directory beside Steam's own
-    /// configuration grows by a hundred and thirty kilobytes each time and never shrinks.
+    /// Every save leaves a copy behind, so without pruning the directory grows by about 130 KB
+    /// each time and never shrinks.
     /// </summary>
     [Fact]
     public async Task SavingKeepsOnlyTheNewestBackups()
@@ -394,15 +393,9 @@ public sealed class SteamLaunchOptionsServiceTests : IDisposable
         }
     }
 
-    // Live editing ----------------------------------------------------------
-    //
-    // Where the running client will take the change, Steam is handed it directly and the files it
-    // owns are left alone. What has to hold is that the long way round is not taken as well, that
-    // nothing is closed, and that a client which cannot do the job is noticed rather than assumed.
-
     /// <summary>
-    /// The point of the whole thing: a running Steam keeps running, and the file it holds in
-    /// memory is left for Steam to write rather than spliced behind its back.
+    /// A running Steam keeps running, and the file it holds in memory is left for Steam to write
+    /// rather than spliced behind its back.
     /// </summary>
     [Fact]
     public async Task HandsTheChangeToARunningSteamWithoutClosingIt()
@@ -421,8 +414,8 @@ public sealed class SteamLaunchOptionsServiceTests : IDisposable
     }
 
     /// <summary>
-    /// And leaves the file exactly as it was. Steam writes it out itself; writing it here as well
-    /// would be two authors on one document, with Steam's copy in memory winning.
+    /// And leaves the file exactly as it was: Steam writes it out itself, and writing it here too
+    /// would put two authors on one document with Steam's copy winning.
     /// </summary>
     [Fact]
     public async Task DoesNotTouchTheFileWhenSteamTakesTheChange()
@@ -489,8 +482,7 @@ public sealed class SteamLaunchOptionsServiceTests : IDisposable
     }
 
     /// <summary>
-    /// Nothing is closed, so a game in progress is not in the way. Refusing here would keep the
-    /// old restriction long after the reason for it had gone.
+    /// Nothing is closed, so a game in progress is not in the way.
     /// </summary>
     [Fact]
     public async Task SavesWhileAGameIsRunning()
@@ -505,8 +497,7 @@ public sealed class SteamLaunchOptionsServiceTests : IDisposable
     }
 
     /// <summary>
-    /// A Steam that says no is reported by name rather than counted as done. Reporting a save that
-    /// did not happen is worse than reporting a failure.
+    /// A Steam that says no is reported by name rather than counted as done.
     /// </summary>
     [Fact]
     public async Task ReportsWhatSteamWouldNotAccept()
@@ -541,10 +532,9 @@ public sealed class SteamLaunchOptionsServiceTests : IDisposable
 
 
     /// <summary>
-    /// Steam accepts a change and updates what it reports separately, a moment later, so the first
-    /// read back can still describe the state before the change. Seen against a running client
-    /// with the Proton build; judged on that first answer, every such save would be reported as
-    /// having failed when it had not.
+    /// Steam accepts a change and updates what it reports a moment later, so the first read back
+    /// can still describe the state before it. Seen against a running client with the Proton
+    /// build; judged on that answer, every such save would be reported as failed.
     /// </summary>
     [Fact]
     public async Task WaitsForSteamToCatchUpWithItselfBeforeCallingItAMismatch()
@@ -575,9 +565,8 @@ public sealed class SteamLaunchOptionsServiceTests : IDisposable
     }
 
     /// <summary>
-    /// Read from the client rather than the file while Steam is up. Steam writes its copy out on
-    /// its own schedule, so the file is behind whenever someone has just changed something — and
-    /// the value read here is the one a save would write back.
+    /// Read from the client rather than the file while Steam is up: Steam writes its copy out on
+    /// its own schedule, so the file is behind whenever anything has just changed.
     /// </summary>
     [Fact]
     public async Task ReadsWhatTheRunningSteamHoldsRatherThanTheFile()
@@ -604,9 +593,8 @@ public sealed class SteamLaunchOptionsServiceTests : IDisposable
 
 
     /// <summary>
-    /// One connection for the batch. Walking a library one game at a time would be a connection
-    /// to Steam and a pass over its configuration file each, which is the wait the batch exists
-    /// to avoid.
+    /// One connection for the batch: one game at a time would be a connection and a pass over the
+    /// configuration file each.
     /// </summary>
     [Fact]
     public async Task ReadsAWholeBatchThroughOneConnection()
@@ -627,8 +615,8 @@ public sealed class SteamLaunchOptionsServiceTests : IDisposable
     }
 
     /// <summary>
-    /// Every game asked about is answered for, whether or not anything is set. A caller matching
-    /// a library against a profile needs a value for each, not a gap to interpret.
+    /// Every game asked about is answered for, so a caller matching a library against a profile
+    /// gets a value for each rather than a gap to interpret.
     /// </summary>
     [Fact]
     public async Task AnswersForEveryGameAskedAbout()
@@ -638,8 +626,6 @@ public sealed class SteamLaunchOptionsServiceTests : IDisposable
         Assert.Equal("PROTON_ENABLE_HDR=1 %command%", found[AppId].Format());
         Assert.Equal(string.Empty, found[12210].Format());
     }
-
-    // How a save would land -------------------------------------------------
 
     [Fact]
     public async Task SaysTheFilesCanBeWrittenWhenSteamIsNotRunning()
@@ -667,9 +653,8 @@ public sealed class SteamLaunchOptionsServiceTests : IDisposable
     }
 
     /// <summary>
-    /// Only a Steam that would have to be closed is blocked by a game. With live editing the
-    /// question does not arise, which is what stops the screen warning about a restart that is
-    /// not going to happen.
+    /// Only a Steam that would have to be closed is blocked by a game, which is what stops the
+    /// screen warning about a restart that will not happen.
     /// </summary>
     [Fact]
     public async Task SaysNothingCanBeSavedWhileAGameRunsWithoutLiveEditing()
@@ -748,8 +733,6 @@ public sealed class SteamLaunchOptionsServiceTests : IDisposable
                 return Task.FromResult(false);
             }
 
-            // An empty name asks Steam to choose, and Steam then reports the build it picked
-            // rather than the nothing it was given.
             Held[appId] = (Held.GetValueOrDefault(appId) ?? new SteamAppDetails(string.Empty, string.Empty))
                 with { CompatToolName = toolName.Length == 0 ? "proton_experimental" : toolName };
 

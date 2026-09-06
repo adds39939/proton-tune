@@ -6,19 +6,9 @@ namespace ProtonTune.Core.Proton;
 /// Infers the internal name Steam gives a Valve Proton build from the name it displays.
 /// </summary>
 /// <remarks>
-/// <para>
-/// Builds installed by hand state their internal name in <c>compatibilitytool.vdf</c>, but
-/// Valve's do not: they ship only a <c>toolmanifest.vdf</c> and a <c>version</c> file, and the
-/// name Steam knows them by lives in a binary metadata cache. Steam does record it in plain text
-/// in its compatibility log, which is the preferred source; this is the fallback for when that
-/// log has been rotated away.
-/// </para>
-/// <para>
-/// The rule below reproduces all fourteen names Steam has registered on the development machine —
-/// <c>proton_experimental</c>, <c>proton_hotfix</c>, and <c>proton_37</c> through
-/// <c>proton_11</c> — but it is a pattern observed rather than a contract Valve publishes, so
-/// callers should treat a derived name as a guess.
-/// </para>
+/// Valve builds do not state their internal name on disk; Steam records it in plain text in its
+/// compatibility log, and this is the fallback for when that log has been rotated away. The rule
+/// is a pattern observed rather than one Valve publishes, so a derived name is a guess.
 /// </remarks>
 public static partial class ProtonToolName
 {

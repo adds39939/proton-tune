@@ -2,11 +2,6 @@ id: graphics
 title: Graphics
 order: 6
 
-# Two halves. The PROTON_ variables choose which translation layer runs a given Direct3D version,
-# and are read out of the build's own launch script. The DXVK_ and VKD3D_ ones configure whichever
-# layer was chosen; those live in the shipped renderer libraries, so nothing among them is
-# restricted — reading a binary cannot settle what a renderer variable does.
-
 groups:
   - name: Renderer
     settings:
@@ -37,8 +32,6 @@ groups:
           than it breaks.
         kind: toggle
 
-      # Two spellings of the same idea in two different builds: GE ships d7vk behind PROTON_USE_D7VK,
-      # cachyos wires DirectDraw to it behind PROTON_D7VK_DDRAW. Neither build reads the other's name.
       - variable: PROTON_USE_D7VK
         label: Direct3D 7 through d7vk
         description: Runs Direct3D 7 and earlier games on Vulkan rather than on Wine's own renderer.
@@ -89,9 +82,6 @@ groups:
 
   - name: DXVK
     settings:
-      # Anything in dxvk.conf can be set through DXVK_CONFIG instead, one entry per option,
-      # semicolon separated — which is exactly how Proton itself writes to it. The options offered
-      # there are the ones worth reaching for while tuning a game; the rest stays editable as text.
       - variable: DXVK_CONFIG
         label: DXVK options
         description: Semicolon-separated dxvk.conf settings, applied without writing a file.
@@ -248,11 +238,6 @@ groups:
         description: Path to a dxvk.conf holding per-game renderer tweaks.
         placeholder: /home/you/dxvk.conf
 
-      # DXVK dropped this variable when its options moved behind DXVK_CONFIG, so the DXVK shipped in
-      # every build installed here reads nothing by this name. GE and cachyos put it back in
-      # protonfixes, which translates it into dxgi.maxFrameRate and d3d9.maxFrameRate before the game
-      # starts; Valve's builds carry no such translation, and there it does nothing. Named rather than
-      # dropped, because a great many launch strings already have it.
       - variable: DXVK_FRAME_RATE
         label: Frame rate cap
         description: >-
@@ -276,8 +261,6 @@ groups:
           doing only on a read-only or very slow filesystem.
         placeholder: /home/you/.cache/dxvk
 
-      # Another comma-separated list, described the same way MANGOHUD_CONFIG is. Partial, as those
-      # always are: anything DXVK accepts that is not listed stays editable as text.
       - variable: DXVK_HUD
         label: DXVK HUD
         description: DXVK's own overlay, separate from MangoHud.
@@ -328,9 +311,6 @@ groups:
 
   - name: VKD3D-Proton
     settings:
-      # VKD3D_CONFIG is a comma-separated list of bare flags rather than assignments, so its
-      # options are written as the flag alone. The names come from the table inside d3d12core.dll;
-      # note that ray tracing is on by default now, so the flag worth knowing turns it off.
       - variable: VKD3D_CONFIG
         label: VKD3D options
         description: Comma-separated VKD3D-Proton flags.

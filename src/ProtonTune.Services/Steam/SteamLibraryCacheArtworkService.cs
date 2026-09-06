@@ -6,11 +6,9 @@ namespace ProtonTune.Services.Steam;
 
 /// <inheritdoc cref="IGameArtworkService" />
 /// <remarks>
-/// Serves the artwork Steam has already downloaded, which is the only source that covers every
-/// installed game. Steam's own CDN is addressed by app id alone for most titles, but recent ones
-/// publish under a content-hashed path that cannot be derived from the id, so a game released
-/// after that change has no reachable URL and would otherwise show a lettered tile forever.
-/// Reading the cache also means no network round trip and no artwork at all outside it.
+/// Serves the artwork Steam has already downloaded, the only source covering every installed game:
+/// titles published under a content-hashed CDN path have no URL derivable from the app id. Reading
+/// the cache also means no network round trip.
 /// </remarks>
 public sealed class SteamLibraryCacheArtworkService(ISteamInstallLocator steam)
     : IGameArtworkService, ICustomSchemeHandler
@@ -19,13 +17,12 @@ public sealed class SteamLibraryCacheArtworkService(ISteamInstallLocator steam)
     public string Scheme => ArtworkScheme.Name;
     
     /// <summary>
-    /// Resolved paths, kept because the library re-renders every card on each keystroke in the
-    /// search box and each miss would otherwise walk the app's cache directory again.
+    /// Resolved paths, kept because the library re-renders every card on each keystroke and each
+    /// miss would otherwise walk the app's cache directory again.
     /// </summary>
     /// <remarks>
-    /// Only hits are remembered. Steam writes artwork the first time a game is shown in its own
-    /// library, so a game can gain a cover while ProtonTune is open, and a remembered miss would
-    /// hide it until the next launch.
+    /// Only hits are remembered: a game can gain a cover while ProtonTune is open, and a remembered
+    /// miss would hide it until the next launch.
     /// </remarks>
     private readonly ConcurrentDictionary<(uint AppId, GameArtworkKind Kind), string> _found = new();
 
@@ -79,7 +76,7 @@ public sealed class SteamLibraryCacheArtworkService(ISteamInstallLocator steam)
 
     /// <summary>
     /// The type to serve a file as. Steam stores covers as JPEG and logos as PNG; anything else
-    /// is served as a JPEG, which is what every artwork file in the cache has turned out to be.
+    /// is served as a JPEG.
     /// </summary>
     private static string ContentTypeFor(string path) =>
         Path.GetExtension(path).Equals(".png", StringComparison.OrdinalIgnoreCase)

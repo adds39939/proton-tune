@@ -236,10 +236,9 @@ public sealed class GlobalProfileServiceTests : IDisposable
     /// <summary>Names scripts under the temporary root so none of this touches a real install.</summary>
 
     /// <summary>
-    /// Which games follow the profile is ProtonTune's own belief. Anything that changes launch
-    /// options behind its back — Steam, an edit elsewhere, a configuration restored from a backup
-    /// — can make that belief false, and a game shown as following a profile it does not match
-    /// would be rewritten the next time the profile is saved.
+    /// Which games follow the profile is ProtonTune's own belief, and anything editing launch
+    /// options behind its back can make it false. A game shown as following a profile it does not
+    /// match would be rewritten on the next save.
     /// </summary>
     [Fact]
     public async Task DropsGamesThatNoLongerMatchTheProfile()

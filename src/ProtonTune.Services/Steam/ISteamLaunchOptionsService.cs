@@ -21,10 +21,9 @@ public interface ISteamLaunchOptionsService
     /// </summary>
     /// <returns>An entry for every app asked about, empty where the app has none set.</returns>
     /// <remarks>
-    /// One trip for the batch, as with saving. Read one at a time this would be a connection to
-    /// Steam and a pass over its configuration file per game, which anything walking a library —
-    /// working out which games still follow the global profile, most of all — turns into a wait
-    /// proportional to how many games someone owns.
+    /// One trip for the batch, as with saving. One at a time would be a connection to Steam and a
+    /// pass over its configuration file per game, so anything walking a library would wait in
+    /// proportion to the library's size.
     /// </remarks>
     Task<IReadOnlyDictionary<uint, LaunchOptions>> GetManyAsync(
         IReadOnlyCollection<uint> appIds,
@@ -34,9 +33,8 @@ public interface ISteamLaunchOptionsService
     /// How a save made right now would reach Steam.
     /// </summary>
     /// <remarks>
-    /// Asked rather than worked out from whether Steam is running, because the answer turns on
-    /// whether the running client is offering live editing — which cannot be known without
-    /// speaking to it.
+    /// Asked rather than inferred from whether Steam is running: whether the client offers live
+    /// editing cannot be known without speaking to it.
     /// </remarks>
     Task<SteamSaveMethod> GetSaveMethodAsync(CancellationToken cancellationToken = default);
 
@@ -44,11 +42,9 @@ public interface ISteamLaunchOptionsService
     /// Writes launch options for an app, restarting Steam around the write when it is running.
     /// </summary>
     /// <remarks>
-    /// Where the running client offers live editing, the change is handed to Steam itself and
-    /// nothing is closed. Otherwise Steam keeps its configuration in memory and writes it out as
-    /// it exits, so a change made while it is running is discarded moments later — and the only
-    /// order that works is to close Steam, write, and start it again, never to write and then
-    /// restart.
+    /// Where the client offers live editing the change is handed to Steam and nothing is closed.
+    /// Otherwise Steam writes its in-memory configuration out as it exits, so the only order that
+    /// works is close, write, start — never write and then restart.
     /// </remarks>
     Task<LaunchOptionsSaveResult> SaveAsync(
         uint appId,
@@ -59,9 +55,8 @@ public interface ISteamLaunchOptionsService
     /// Writes launch options for several apps at once.
     /// </summary>
     /// <remarks>
-    /// One trip through Steam, however many games are involved. Saving them individually would
-    /// close and reopen Steam once per game where live editing is off, which a profile applied
-    /// across a library makes intolerable — and would leave the library half updated if one
+    /// One trip through Steam however many games are involved. Saving individually would close and
+    /// reopen Steam per game where live editing is off, and leave the library half updated if one
     /// failed.
     /// </remarks>
     Task<LaunchOptionsSaveResult> SaveManyAsync(
@@ -77,12 +72,10 @@ public interface ISteamLaunchOptionsService
     /// the choice and lets Steam decide; an app absent from the map keeps whatever it has.
     /// </param>
     /// <remarks>
-    /// The two land in different files — launch options in the account's
-    /// <c>localconfig.vdf</c>, the build in the installation's <c>config.vdf</c> — but both are
-    /// held in memory by a running Steam and must be written inside the same shutdown. Saving them
-    /// separately would close and reopen Steam twice for one change, and the second shutdown would
-    /// discard the first write. Through live editing they are two requests to a client that is
-    /// staying up, so the same call covers both without the choreography.
+    /// The two land in different files — launch options in the account's <c>localconfig.vdf</c>,
+    /// the build in the installation's <c>config.vdf</c> — but a running Steam holds both in
+    /// memory, so they must be written inside the same shutdown or the second discards the first.
+    /// Through live editing they are simply two requests to a client that stays up.
     /// </remarks>
     Task<LaunchOptionsSaveResult> SaveManyAsync(
         IReadOnlyDictionary<uint, string> launchOptionsByApp,

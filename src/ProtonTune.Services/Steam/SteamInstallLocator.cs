@@ -2,10 +2,9 @@ namespace ProtonTune.Services.Steam;
 
 /// <inheritdoc cref="ISteamInstallLocator" />
 /// <remarks>
-/// Steam has accumulated several install locations on Linux — the historic <c>~/.steam</c>
-/// symlinks, the XDG data directory the native client uses today, the Debian package's own
-/// directory, and the Flatpak sandbox. They frequently coexist, and several are symlinks to the
-/// same place, so candidates are resolved and deduplicated before being probed.
+/// Steam has several install locations on Linux — the historic <c>~/.steam</c> symlinks, the XDG
+/// data directory, the Debian package's directory, the Flatpak sandbox — which coexist and often
+/// point at the same place, so candidates are resolved and deduplicated before being probed.
 /// </remarks>
 public sealed class SteamInstallLocator : ISteamInstallLocator
 {

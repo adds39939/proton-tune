@@ -28,9 +28,8 @@ public partial class SettingEditor : ComponentBase
     /// case setting it does nothing at all.
     /// </summary>
     /// <remarks>
-    /// The control stays usable. A false negative here would take away a setting that works, and
-    /// the probe cannot see into every component — saying so and leaving the decision alone is
-    /// safer than deciding for the user.
+    /// The control stays usable: the probe cannot see into every component, and a false negative
+    /// would take away a setting that works.
     /// </remarks>
     [Parameter]
     public bool IsIgnored { get; set; }
@@ -42,8 +41,8 @@ public partial class SettingEditor : ComponentBase
     private bool IsOn => Definition.IsOn(Value);
 
     /// <summary>
-    /// The offered values, plus whatever is already set if it is not among them. A preset newer
-    /// than this build must not disappear because the user opened a dropdown.
+    /// The offered values, plus whatever is already set if it is not among them, so a preset newer
+    /// than this build survives opening the menu.
     /// </summary>
     private IEnumerable<string> Choices =>
         Value is { Length: > 0 } current && !Definition.Choices.Contains(current)

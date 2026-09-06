@@ -6,17 +6,10 @@ namespace ProtonTune.UI.Components.Configuration;
 /// One heading within a configuration section, and the controls listed under it.
 /// </summary>
 /// <remarks>
-/// <para>
-/// A <c>details</c> element rather than a button and a flag, so the open state is the browser's to
-/// keep. That is what makes it survive a re-render: the render tree always says <c>open</c>, so
-/// Blazor never writes the attribute again and never argues with a person who has closed one.
-/// The caller keys the group where its position can change, which is what stops a closed group in
-/// one section reappearing closed as a different group in the next.
-/// </para>
-/// <para>
-/// Groups open by default. A closed group hides what is set inside it, so the count in the summary
-/// is not decoration — without it, closing a group would be a way to lose track of a setting.
-/// </para>
+/// A <c>details</c> element rather than a button and a flag, so the open state is the browser's:
+/// the render tree always says <c>open</c>, so Blazor never rewrites the attribute over someone
+/// who closed one. Callers key the group where its position can change. Groups open by default,
+/// and the count in the summary is what stops a closed one hiding a setting.
 /// </remarks>
 public partial class CollapsibleGroup : ComponentBase
 {
