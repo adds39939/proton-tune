@@ -38,6 +38,16 @@ public partial class SettingEditor : ComponentBase
     [Parameter]
     public string? BuildName { get; set; }
 
+    /// <summary>
+    /// Whether a variable packing many settings should list only the ones it actually carries.
+    /// </summary>
+    /// <remarks>
+    /// Passed through to the compound editor, and meaningless for a variable holding one value:
+    /// that control is already showing what is set.
+    /// </remarks>
+    [Parameter]
+    public bool SetOnly { get; set; }
+
     private bool IsOn => Definition.IsOn(Value);
 
     /// <summary>

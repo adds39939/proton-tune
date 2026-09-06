@@ -30,7 +30,31 @@ public partial class CompoundEditor : ComponentBase
     [Parameter]
     public EventCallback<string?> ValueChanged { get; set; }
 
+    /// <summary>
+    /// Whether to list only the options this value actually carries.
+    /// </summary>
+    /// <remarks>
+    /// For the tab answering "what is set", where a variable holding four of a hundred options has
+    /// to show the four. Everywhere else the whole list is the point, since an option cannot be
+    /// turned on from a list it is missing from.
+    /// </remarks>
+    [Parameter]
+    public bool SetOnly { get; set; }
+
     private CompoundValue Current => CompoundValue.Parse(Schema, Value);
+
+    /// <summary>
+    /// The groups worth drawing, with the options they should carry. A heading whose every option
+    /// went is dropped rather than left standing over nothing.
+    /// </summary>
+    private IEnumerable<CompoundOptionGroup> ListedGroups =>
+        SetOnly ? Current.GroupsWithValues() : Schema.Groups;
+
+    /// <summary>
+    /// Whether the free-text field belongs on screen. Listing only what is set means listing it
+    /// only when it holds something, since there is nothing to add to here.
+    /// </summary>
+    private bool ShowsAdditional => !SetOnly || AdditionalCount > 0;
 
     /// <summary>The entries with no control, as the text the user edits.</summary>
     private string AdditionalOptions =>

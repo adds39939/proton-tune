@@ -290,7 +290,7 @@ public class ShippedSettingsTests
     /// nothing else does. Restricting them keeps unusable features off the screen.
     /// </summary>
     [Theory]
-    [InlineData("PROTON_USE_HDR")]
+    [InlineData("PROTON_ENABLE_HDR")]
     [InlineData("PROTON_NO_NTSYNC")]
     [InlineData("PROTON_USE_WRITECOPY")]
     [InlineData("PROTON_WAYLAND_MONITOR")]
@@ -310,7 +310,7 @@ public class ShippedSettingsTests
     [Theory]
     [InlineData("PROTON_DLSS_UPGRADE")]
     [InlineData("PROTON_DLSS_INDICATOR")]
-    [InlineData("PROTON_USE_WAYLAND")]
+    [InlineData("PROTON_ENABLE_WAYLAND")]
     [InlineData("PROTON_FSR4_UPGRADE")]
     [InlineData("PROTON_XESS_UPGRADE")]
     [InlineData("PROTON_USE_OPTISCALER")]
@@ -419,4 +419,37 @@ public class ShippedSettingsTests
         Assert.DoesNotContain(
             Catalog.All.Where(definition => definition.RestrictToProtonBuild),
             definition => !definition.Variable.StartsWith("PROTON_", StringComparison.Ordinal));
+
+    /// <summary>
+    /// The older spelling of a switch that has two, kept so a game already using one is still
+    /// shown a labelled control, and held back so a new one is offered a single switch.
+    /// </summary>
+    [Theory]
+    [InlineData("PROTON_USE_WAYLAND", "PROTON_ENABLE_WAYLAND")]
+    [InlineData("PROTON_USE_HDR", "PROTON_ENABLE_HDR")]
+    public void HoldsBackTheOlderSpellingOfASwitchListedTwice(string older, string current)
+    {
+        var superseded = Catalog.Find(older)!;
+        var listed = Catalog.Find(current)!;
+
+        Assert.True(superseded.HideUnlessSet);
+        Assert.False(listed.HideUnlessSet);
+
+        Assert.Equal(listed.Category.Id, superseded.Category.Id);
+        Assert.Equal(listed.ProtonBuilds, superseded.ProtonBuilds);
+        Assert.Equal(listed.Kind, superseded.Kind);
+    }
+
+    /// <summary>
+    /// Holding a setting back only makes sense where another says the same thing, so nothing else
+    /// may declare it: a variable hidden with no listed equivalent could never be discovered.
+    /// </summary>
+    [Fact]
+    public void HidesNothingElseUntilItIsSet() =>
+        Assert.Equal(
+            ["PROTON_USE_HDR", "PROTON_USE_WAYLAND"],
+            Catalog.All
+                .Where(definition => definition.HideUnlessSet)
+                .Select(definition => definition.Variable)
+                .Order(StringComparer.Ordinal));
 }

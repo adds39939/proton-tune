@@ -14,10 +14,23 @@ namespace ProtonTune.UI.Components.Configuration;
 /// Per-game configuration: reads what Steam has stored, hands it to the shared editor, and writes
 /// it back.
 /// </summary>
-public partial class GameConfigDialog : ComponentBase
+/// <remarks>
+/// Reached by its own route rather than opened over the library, so a game being configured has an
+/// address: it survives a reload, and the library is a step back rather than a dismissal.
+/// </remarks>
+public partial class GameConfigPanel : ComponentBase
 {
+    /// <summary>Where the library lives, which is what Back returns to.</summary>
+    private const string LibraryRoute = "/";
+
+    /// <summary>Steam's own address for running a game, shown so it can be read at a glance.</summary>
+    private const string LaunchedMessage = "Asked Steam to launch the game.";
+
     [Inject]
     private ISteamLaunchOptionsService LaunchOptionsService { get; set; } = null!;
+
+    [Inject]
+    private ISteamLibraryService SteamLibrary { get; set; } = null!;
 
     [Inject]
     private IGlobalProfileService Profile { get; set; } = null!;
@@ -25,14 +38,31 @@ public partial class GameConfigDialog : ComponentBase
     [Inject]
     private IProtonToolService ProtonTools { get; set; } = null!;
 
-    /// <summary>The entry being configured.</summary>
-    [Parameter]
-    [EditorRequired]
-    public required SteamLibraryEntry Entry { get; set; }
+    [Inject]
+    private ISteamClient SteamClient { get; set; } = null!;
 
-    /// <summary>Raised when the dialog asks to be dismissed.</summary>
+    [Inject]
+    private NavigationManager Navigation { get; set; } = null!;
+
+    /// <summary>
+    /// The app to configure, as the route spells it.
+    /// </summary>
+    /// <remarks>
+    /// A <see cref="long" /> because that is the widest whole number a route constraint offers and
+    /// Steam's identifiers are unsigned. Anything outside the range is a typed address rather than
+    /// a game, and is answered the same way an unknown identifier is.
+    /// </remarks>
     [Parameter]
-    public EventCallback OnClose { get; set; }
+    public long AppId { get; set; }
+
+    /// <summary>
+    /// The entry being configured, or <see langword="null"/> while it is being looked up and where
+    /// no installed app carries the identifier.
+    /// </summary>
+    private SteamLibraryEntry? Entry { get; set; }
+
+    /// <summary>The identifier the state below was loaded for, so a re-render does not reload.</summary>
+    private long? _loadedAppId;
 
     /// <summary>The configuration as it currently stands in the dialog.</summary>
     private LaunchOptions Editing { get; set; } = new();
@@ -54,6 +84,16 @@ public partial class GameConfigDialog : ComponentBase
     private string? SaveMessage { get; set; }
 
     private bool SaveFailed { get; set; }
+
+    /// <summary>
+    /// How the status line reads the message it is showing. A launch waiting to be confirmed is a
+    /// warning rather than a result, so it is not coloured as one.
+    /// </summary>
+    private string StatusClass => SaveFailed
+        ? "status-error"
+        : LaunchPending
+            ? "status-warning"
+            : "status-success";
 
     /// <summary>How a save made now would reach Steam, which is what the footer warns about.</summary>
     private SteamSaveMethod SaveMethod { get; set; }
@@ -110,6 +150,9 @@ public partial class GameConfigDialog : ComponentBase
     /// <summary>Whether the confirmation is open, waiting for the save to be agreed to.</summary>
     private bool IsConfirmingSave { get; set; }
 
+    /// <summary>Whether the picker for copying another game's configuration is open.</summary>
+    private bool IsChoosingSource { get; set; }
+
     /// <summary>
     /// What the save would do beyond writing the launch options. These land in other files or in
     /// ProtonTune's own storage, so none appear in the line being previewed.
@@ -141,21 +184,52 @@ public partial class GameConfigDialog : ComponentBase
     /// <summary>Whether the reset button is waiting for a second click.</summary>
     private bool ResetPending { get; set; }
 
+    /// <summary>
+    /// Whether the launch button is waiting for a second click, having found unsaved changes.
+    /// </summary>
+    /// <remarks>
+    /// Steam runs the game from what it has stored, so launching with edits on screen would run
+    /// the settings the person can see and has not agreed to yet — silently, and looking as though
+    /// it had used them.
+    /// </remarks>
+    private bool LaunchPending { get; set; }
+
     /// <summary>Whether there is anything to reset at all.</summary>
     private bool HasAnythingToReset =>
         Saved.Length > 0 || SavedUsesGlobal;
 
-    /// <inheritdoc />
+    /// <summary>
+    /// Loads the game the address names, once per identifier.
+    /// </summary>
+    /// <remarks>
+    /// Guarded on the identifier rather than run on every parameter set: a reload here would throw
+    /// away edits that have not been saved, and a re-render is not a request for a different game.
+    /// </remarks>
     protected override async Task OnParametersSetAsync()
     {
+        if (_loadedAppId == AppId)
+        {
+            return;
+        }
+
+        _loadedAppId = AppId;
+
         IsLoading = true;
         LoadError = null;
         SaveMessage = null;
 
+        Entry = null;
         _hasChosenSection = false;
 
         try
         {
+            Entry = await FindEntryAsync();
+
+            if (Entry is null)
+            {
+                return;
+            }
+
             Editing = await LaunchOptionsService.GetAsync(Entry.AppId);
             Saved = Editing.Format();
             SavedUsesGlobal = await Profile.IsLinkedAsync(Entry.AppId);
@@ -184,6 +258,26 @@ public partial class GameConfigDialog : ComponentBase
         }
     }
 
+    /// <summary>
+    /// Finds the installed app the address names.
+    /// </summary>
+    /// <returns>
+    /// <see langword="null"/> where nothing installed carries the identifier, which includes an
+    /// address outside the range Steam's identifiers occupy at all.
+    /// </returns>
+    private async Task<SteamLibraryEntry?> FindEntryAsync()
+    {
+        if (AppId is <= 0 or > uint.MaxValue)
+        {
+            return null;
+        }
+
+        var wanted = (uint)AppId;
+        var apps = await SteamLibrary.GetInstalledAppsAsync();
+
+        return apps.FirstOrDefault(app => app.AppId == wanted);
+    }
+
     /// <inheritdoc />
     protected override void OnAfterRender(bool firstRender)
     {
@@ -208,6 +302,7 @@ public partial class GameConfigDialog : ComponentBase
         UsesGlobal = false;
         SaveMessage = null;
         ResetPending = false;
+        LaunchPending = false;
     }
 
     /// <summary>
@@ -239,6 +334,7 @@ public partial class GameConfigDialog : ComponentBase
         CompatTool = toolName;
         SaveMessage = null;
         ResetPending = false;
+        LaunchPending = false;
     }
 
     private void Revert()
@@ -248,6 +344,7 @@ public partial class GameConfigDialog : ComponentBase
         CompatTool = SavedCompatTool;
         SaveMessage = null;
         ResetPending = false;
+        LaunchPending = false;
     }
 
     /// <summary>
@@ -260,6 +357,11 @@ public partial class GameConfigDialog : ComponentBase
     /// </remarks>
     private async Task ResetAsync()
     {
+        if (Entry is not { } entry)
+        {
+            return;
+        }
+
         if (!ResetPending)
         {
             ResetPending = true;
@@ -273,13 +375,13 @@ public partial class GameConfigDialog : ComponentBase
 
         try
         {
-            var result = await LaunchOptionsService.SaveAsync(Entry.AppId, string.Empty);
+            var result = await LaunchOptionsService.SaveAsync(entry.AppId, string.Empty);
 
             SaveFailed = !result.IsSuccess;
 
             if (result.IsSuccess)
             {
-                await Profile.SetLinkedAsync(Entry.AppId, false);
+                await Profile.SetLinkedAsync(entry.AppId, false);
 
                 Editing = new LaunchOptions();
                 Saved = string.Empty;
@@ -318,6 +420,7 @@ public partial class GameConfigDialog : ComponentBase
     {
         SaveMessage = null;
         ResetPending = false;
+        LaunchPending = false;
         IsConfirmingSave = true;
     }
 
@@ -325,15 +428,20 @@ public partial class GameConfigDialog : ComponentBase
 
     private async Task SaveAsync()
     {
+        if (Entry is not { } entry)
+        {
+            return;
+        }
+
         IsSaving = true;
         SaveMessage = null;
 
         try
         {
             var result = await LaunchOptionsService.SaveManyAsync(
-                new Dictionary<uint, string> { [Entry.AppId] = Editing.Format() },
+                new Dictionary<uint, string> { [entry.AppId] = Editing.Format() },
                 CompatToolChanged
-                    ? new Dictionary<uint, string> { [Entry.AppId] = CompatTool }
+                    ? new Dictionary<uint, string> { [entry.AppId] = CompatTool }
                     : new Dictionary<uint, string>());
 
             SaveFailed = !result.IsSuccess;
@@ -343,7 +451,7 @@ public partial class GameConfigDialog : ComponentBase
                 Saved = Editing.Format();
                 SavedCompatTool = CompatTool;
 
-                await Profile.SetLinkedAsync(Entry.AppId, UsesGlobal);
+                await Profile.SetLinkedAsync(entry.AppId, UsesGlobal);
                 SavedUsesGlobal = UsesGlobal;
 
                 SaveMessage = result.SteamWasRestarted
@@ -368,12 +476,98 @@ public partial class GameConfigDialog : ComponentBase
         }
     }
 
-    private Task Close() => OnClose.InvokeAsync();
+    private void AskToCopy()
+    {
+        SaveMessage = null;
+        ResetPending = false;
+        LaunchPending = false;
+        IsChoosingSource = true;
+    }
+
+    private void CancelCopy() => IsChoosingSource = false;
 
     /// <summary>
-    /// Dismisses on Escape, unless a save is in flight — Steam is mid-restart — or the
-    /// confirmation is open, which backs out of itself rather than taking the dialog with it.
+    /// Takes another game's launch options and its choice of Proton build.
     /// </summary>
-    private Task OnKeyDown(KeyboardEventArgs args) =>
-        args.Key == "Escape" && !IsSaving && !IsConfirmingSave ? Close() : Task.CompletedTask;
+    /// <remarks>
+    /// Held as an unsaved change like any edit, so what arrived can be read, altered and thrown
+    /// away before anything is written. Following the global profile stops, for the same reason
+    /// editing by hand stops it: the settings are now this game's own.
+    /// </remarks>
+    private async Task CopyFrom(SteamLibraryEntry source)
+    {
+        IsChoosingSource = false;
+
+        try
+        {
+            Editing = await LaunchOptionsService.GetAsync(source.AppId);
+
+            var selection = ProtonBuilds.SelectionFor(source.AppId);
+
+            CompatTool = selection.IsExplicit
+                ? selection.ToolName ?? ProtonVersionEditor.InheritValue
+                : ProtonVersionEditor.InheritValue;
+
+            UsesGlobal = false;
+            SaveFailed = false;
+            SaveMessage = $"Copied from {source.Name}. Nothing is written until you save.";
+        }
+        catch (Exception e)
+        {
+            SaveFailed = true;
+            SaveMessage = $"Could not read {source.Name}: {e.Message}";
+        }
+    }
+
+    /// <summary>
+    /// Hands the game to Steam, once it is clear that is what was meant.
+    /// </summary>
+    /// <remarks>
+    /// Asks twice where there is anything unsaved, the way reset does, rather than offering to
+    /// save first: which of the two was wanted is the person's to decide, and a launch that
+    /// quietly saved would be a save nobody asked for.
+    /// </remarks>
+    private void Launch()
+    {
+        if (Entry is not { } entry || IsSaving)
+        {
+            return;
+        }
+
+        ResetPending = false;
+
+        if (HasChanges && !LaunchPending)
+        {
+            LaunchPending = true;
+            SaveFailed = false;
+            SaveMessage = "There are unsaved changes. Launching now runs the game as Steam has it " +
+                          "stored. Launch again to go ahead, or save first.";
+
+            return;
+        }
+
+        LaunchPending = false;
+
+        var launched = SteamClient.LaunchGame(entry.AppId);
+
+        SaveFailed = !launched;
+        SaveMessage = launched
+            ? LaunchedMessage
+            : "Steam could not be asked to launch the game.";
+    }
+
+    /// <summary>Returns to the library, which is where this page was reached from.</summary>
+    private void Back() => Navigation.NavigateTo(LibraryRoute);
+
+    /// <summary>
+    /// Goes back on Escape, unless a save is in flight — Steam is mid-restart — or the
+    /// confirmation is open, which backs out of itself rather than taking the page with it.
+    /// </summary>
+    private void OnKeyDown(KeyboardEventArgs args)
+    {
+        if (args.Key == "Escape" && !IsSaving && !IsConfirmingSave)
+        {
+            Back();
+        }
+    }
 }

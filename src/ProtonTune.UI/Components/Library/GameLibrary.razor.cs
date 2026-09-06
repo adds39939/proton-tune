@@ -18,6 +18,9 @@ public partial class GameLibrary : ComponentBase
     [Inject]
     private IAppSettingsService Settings { get; set; } = null!;
 
+    [Inject]
+    private NavigationManager Navigation { get; set; } = null!;
+
     private IReadOnlyList<SteamLibraryEntry> Apps { get; set; } = [];
 
     private string SearchTerm { get; set; } = string.Empty;
@@ -35,9 +38,6 @@ public partial class GameLibrary : ComponentBase
     private LibraryViewMode ViewMode { get; set; }
 
     private LibrarySortOrder SortOrder { get; set; }
-
-    /// <summary>The entry whose configuration dialog is open, or null when none is.</summary>
-    private SteamLibraryEntry? SelectedApp { get; set; }
 
     private bool IsLoading { get; set; } = true;
 
@@ -84,6 +84,13 @@ public partial class GameLibrary : ComponentBase
         await LoadAsync();
     }
 
+    /// <summary>
+    /// Reads the library, going back to disk rather than to the held answer.
+    /// </summary>
+    /// <remarks>
+    /// This is both the first read and what the rescan button does, and a rescan that returned the
+    /// answer already on screen would be a button that does nothing.
+    /// </remarks>
     private async Task LoadAsync()
     {
         IsLoading = true;
@@ -91,6 +98,8 @@ public partial class GameLibrary : ComponentBase
 
         try
         {
+            SteamLibrary.Invalidate();
+
             Apps = await SteamLibrary.GetInstalledAppsAsync();
         }
         catch (Exception e)
@@ -144,9 +153,11 @@ public partial class GameLibrary : ComponentBase
         }
     }
 
-    private void Select(SteamLibraryEntry entry) => SelectedApp = entry;
-
-    private void CloseDialog() => SelectedApp = null;
+    /// <summary>
+    /// Opens a game's configuration, which is a page of its own rather than an overlay.
+    /// </summary>
+    private void Select(SteamLibraryEntry entry) =>
+        Navigation.NavigateTo($"/library/{entry.AppId}");
 
     private bool MatchesSearch(SteamLibraryEntry app)
     {

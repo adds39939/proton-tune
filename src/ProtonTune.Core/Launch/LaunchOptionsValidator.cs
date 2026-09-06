@@ -17,6 +17,15 @@ namespace ProtonTune.Core.Launch;
 /// </remarks>
 public static class LaunchOptionsValidator
 {
+    /// <summary>
+    /// The two spellings of the switch that puts a game on Wayland natively. Both are read by
+    /// every build that reads either, so a rule asking whether it is on has to accept either.
+    /// </summary>
+    private static readonly string[] WaylandVariables = ["PROTON_ENABLE_WAYLAND", "PROTON_USE_WAYLAND"];
+
+    /// <summary>The same pair, for the switch that has Proton advertise HDR.</summary>
+    private static readonly string[] ProtonHdrVariables = ["PROTON_ENABLE_HDR", "PROTON_USE_HDR"];
+
     /// <summary>The wrapper command MangoHud's configuration variable depends on.</summary>
     private const string MangoHudCommand = "mangohud";
 
@@ -42,8 +51,8 @@ public static class LaunchOptionsValidator
     {
         var warnings = new List<string>();
 
-        if ((IsOn(options, "PROTON_ENABLE_HDR") || IsOn(options, "DXVK_HDR")) &&
-            !IsOn(options, "PROTON_ENABLE_WAYLAND"))
+        if ((IsAnyOn(options, ProtonHdrVariables) || IsOn(options, "DXVK_HDR")) &&
+            !IsAnyOn(options, WaylandVariables))
         {
             warnings.Add(
                 "HDR is enabled but the game is not set to run natively on Wayland. HDR does " +
@@ -98,6 +107,10 @@ public static class LaunchOptionsValidator
         options.FindEnvironment(variable) is { Value: var value } &&
         value.Length > 0 &&
         !string.Equals(value, "0", StringComparison.Ordinal);
+
+    /// <summary>Whether any spelling of a switch is on.</summary>
+    private static bool IsAnyOn(LaunchOptions options, string[] variables) =>
+        variables.Any(variable => IsOn(options, variable));
 
     /// <summary>
     /// Whether a command appears in the launch chain. Matched on the file name so an absolute

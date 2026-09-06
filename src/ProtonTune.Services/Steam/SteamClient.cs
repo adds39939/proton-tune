@@ -123,6 +123,23 @@ public sealed class SteamClient(ILogger<SteamClient> logger) : ISteamClient
         return TryRun();
     }
 
+    /// <inheritdoc />
+    public bool LaunchGame(uint appId)
+    {
+        logger.LogInformation("Asking Steam to launch app {AppId}.", appId);
+
+        return TryRun(GameUrl(appId));
+    }
+
+    /// <summary>
+    /// The address Steam runs a game by.
+    /// </summary>
+    /// <remarks>
+    /// <c>rungameid</c> rather than <c>run</c>: it is the form Steam's own shortcuts use, and the
+    /// one that carries the launch options and compatibility settings the app has been given.
+    /// </remarks>
+    internal static string GameUrl(uint appId) => $"steam://rungameid/{appId}";
+
     /// <summary>
     /// Runs the <c>steam</c> launcher without waiting for it. The launcher forwards to the real
     /// client and returns immediately either way.

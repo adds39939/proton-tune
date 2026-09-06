@@ -1,12 +1,15 @@
-<CommandToggle Label="@Command.Label"
-               Command="@Command.Command"
-               Description="@Command.Description"
-               IsOn="@IsOn"
-               IsOnChanged="OnCommandToggled"/>
-
-@foreach (var group in Command.Groups)
+@if (ShowsToggle)
 {
-    <CollapsibleGroup Name="@group.Name" SetCount="@SetCountIn(group)" @key="group">
+    <CommandToggle Label="@Command.Label"
+                   Command="@Command.Command"
+                   Description="@Command.Description"
+                   IsOn="@IsOn"
+                   IsOnChanged="OnCommandToggled"/>
+}
+
+@foreach (var group in ListedGroups)
+{
+    <CollapsibleGroup Name="@group.Name" SetCount="@SetCountIn(group)" @key="group.Flags[0].Flag">
         @foreach (var flag in group.Flags)
         {
             <div class="flag" @key="flag.Flag">

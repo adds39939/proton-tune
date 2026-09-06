@@ -27,7 +27,33 @@ public partial class CommandEditor : ComponentBase
     [Parameter]
     public EventCallback<LaunchOptions> OptionsChanged { get; set; }
 
+    /// <summary>
+    /// The search narrowing what is listed, if one is running.
+    /// </summary>
+    /// <remarks>
+    /// Flags are searched beside the variables in the same section, so a term naming one finds it
+    /// here rather than only in a section made of environment variables.
+    /// </remarks>
+    [Parameter]
+    public SettingSearch Search { get; set; } = SettingSearch.None;
+
     private bool IsOn => Options.HasCommand(Command);
+
+    /// <summary>
+    /// Whether to offer the switch that puts the command in the chain. Held back while a search
+    /// names only some of the flags, where it is not one of the answers.
+    /// </summary>
+    private bool ShowsToggle => !Search.IsActive || Search.Matches(Command);
+
+    /// <summary>
+    /// The flag groups worth drawing: those with a flag the search names, with the flags it does
+    /// not left out. A heading whose every flag went goes with them.
+    /// </summary>
+    private IEnumerable<CommandFlagGroup> ListedGroups => Search.IsActive
+        ? Command.Groups
+            .Select(group => group with { Flags = group.Flags.Where(Search.Matches).ToList() })
+            .Where(group => group.Flags.Count > 0)
+        : Command.Groups;
 
     /// <summary>
     /// How many of a group's flags are set, shown beside its heading so a closed group still says

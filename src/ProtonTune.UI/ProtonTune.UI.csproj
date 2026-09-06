@@ -22,6 +22,10 @@
     </ItemGroup>
 
     <ItemGroup>
+      <InternalsVisibleTo Include="ProtonTune.UI.Tests" />
+    </ItemGroup>
+
+    <ItemGroup>
       <ProjectReference Include="..\ProtonTune.Core\ProtonTune.Core.csproj" />
       <ProjectReference Include="..\ProtonTune.Services\ProtonTune.Services.csproj" />
     </ItemGroup>

@@ -3,12 +3,22 @@ title: HDR
 order: 3
 
 settings:
-  - variable: PROTON_USE_HDR
+  - variable: PROTON_ENABLE_HDR
     label: Enable HDR in Proton
     description: Lets Proton advertise HDR support to the game. Needs a Wayland session.
     kind: toggle
     protonBuilds: ["^GE-Proton"]
     restrictToProtonBuild: true
+
+  - variable: PROTON_USE_HDR
+    label: Enable HDR in Proton (older name)
+    description: >-
+      The same switch under the name it was introduced with. GE-Proton reads both spellings, so
+      there is nothing to gain by moving, and one of the two is enough.
+    kind: toggle
+    protonBuilds: ["^GE-Proton"]
+    restrictToProtonBuild: true
+    hideUnlessSet: true
 
   - variable: DXVK_HDR
     label: Enable HDR in DXVK

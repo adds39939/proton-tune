@@ -1,6 +1,6 @@
-@foreach (var group in Schema.Groups)
+@foreach (var group in ListedGroups)
 {
-    <CollapsibleGroup Name="@group.Name" SetCount="@SetCountIn(group)" @key="group">
+    <CollapsibleGroup Name="@group.Name" SetCount="@SetCountIn(group)" @key="group.Options[0].Key">
         @foreach (var option in group.Options)
         {
             <div class="option" @key="option.Key">
@@ -68,16 +68,19 @@
     </CollapsibleGroup>
 }
 
-<CollapsibleGroup Name="Additional options" SetCount="@AdditionalCount">
-    <p class="group-note">
-        Appended to everything above. Anything the variable accepts that ProtonTune does not list
-        can go here, and whatever was already set is kept.
-    </p>
+@if (ShowsAdditional)
+{
+    <CollapsibleGroup Name="Additional options" SetCount="@AdditionalCount">
+        <p class="group-note">
+            Appended to everything above. Anything the variable accepts that ProtonTune does not
+            list can go here, and whatever was already set is kept.
+        </p>
 
-    <input class="control control-wide"
-           type="text"
-           spellcheck="false"
-           placeholder="@AdditionalPlaceholder"
-           value="@AdditionalOptions"
-           @onchange="OnAdditionalChanged"/>
-</CollapsibleGroup>
+        <input class="control control-wide"
+               type="text"
+               spellcheck="false"
+               placeholder="@AdditionalPlaceholder"
+               value="@AdditionalOptions"
+               @onchange="OnAdditionalChanged"/>
+    </CollapsibleGroup>
+}

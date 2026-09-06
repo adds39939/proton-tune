@@ -30,9 +30,38 @@ public sealed class SteamLibraryService(
         SteamControllerConfigsAppId
     ];
 
+    /// <summary>Serialises the scan, so several screens opening at once read the disk once.</summary>
+    private readonly SemaphoreSlim _gate = new(1, 1);
+
+    /// <summary>The last scan, or null when there has not been one since the last invalidation.</summary>
+    private IReadOnlyList<SteamLibraryEntry>? _apps;
+
     /// <inheritdoc />
     public async Task<IReadOnlyList<SteamLibraryEntry>> GetInstalledAppsAsync(
         CancellationToken cancellationToken = default)
+    {
+        if (_apps is { } held)
+        {
+            return held;
+        }
+
+        await _gate.WaitAsync(cancellationToken).ConfigureAwait(false);
+
+        try
+        {
+            return _apps ??= await ScanAsync(cancellationToken).ConfigureAwait(false);
+        }
+        finally
+        {
+            _gate.Release();
+        }
+    }
+
+    /// <inheritdoc />
+    public void Invalidate() => _apps = null;
+
+    /// <summary>Reads every library folder from disk.</summary>
+    private async Task<IReadOnlyList<SteamLibraryEntry>> ScanAsync(CancellationToken cancellationToken)
     {
         var steamRoot = installLocator.Locate();
 

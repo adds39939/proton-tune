@@ -115,6 +115,22 @@ public sealed record CompoundValue
         };
 
     /// <summary>The entries with no definition, in order.</summary>
+    /// <summary>
+    /// The schema's groups, narrowed to the options this value actually carries.
+    /// </summary>
+    /// <remarks>
+    /// What a summary of everything set needs: a variable listing a hundred options and holding
+    /// four has to show the four, not the hundred with four of them on. A group left with nothing
+    /// is dropped rather than kept as a heading over an empty list.
+    /// </remarks>
+    public IReadOnlyList<CompoundOptionGroup> GroupsWithValues() => Schema.Groups
+        .Select(group => group with
+        {
+            Options = group.Options.Where(option => Contains(option.Key)).ToList()
+        })
+        .Where(group => group.Options.Count > 0)
+        .ToList();
+
     public IReadOnlyList<CompoundEntry> Unrecognised =>
         Entries.Where(entry => Schema.Find(entry.Key) is null).ToList();
 

@@ -18,6 +18,7 @@ settings:
     placeholder: "144"              # text and number only: an example value.
     protonBuilds: ["^GE-Proton"]    # optional: builds this applies to, as regular expressions.
     restrictToProtonBuild: true     # optional: hide it elsewhere, rather than greying it out.
+    hideUnlessSet: true             # optional: list it only where a game already has it set.
 ```
 
 Only `variable` and `label` are required. `kind` defaults to `text`, and `on` to `1`.
@@ -165,6 +166,23 @@ than the section, so rename them only alongside the code that looks for them.
 
 Nothing else is known by name. Nvidia's DLSS settings used to be, held back by the editor so they
 could be listed under their own heading; that heading is now declared in the file like any other.
+
+## `hideUnlessSet`
+
+Some switches have two names. `PROTON_ENABLE_WAYLAND` and `PROTON_USE_WAYLAND` are one setting,
+and every build that reads either reads both; the same goes for `PROTON_ENABLE_HDR` and
+`PROTON_USE_HDR` in GE-Proton. Listing both offers the same switch twice, and listing only the
+current one drops a game already using the other into custom variables, where it is unlabelled.
+
+`hideUnlessSet: true` is the third answer. The setting is left out of its section entirely until a
+game has it written, and appears in place with its own label as soon as one does. Declare it on the
+older name and leave the current one listed normally, so a new configuration is offered one switch
+and an existing one is still shown what it says.
+
+It is stronger than `restrictToProtonBuild`, which hides a setting only where it does not apply.
+A setting carrying both is hidden everywhere but where it is set, which is what a second spelling
+wants: `protonBuilds` still describes where the variable works, so a game that has it set is shown
+it plainly on a build that reads it rather than greyed out.
 
 ## Variables ProtonTune does not know
 

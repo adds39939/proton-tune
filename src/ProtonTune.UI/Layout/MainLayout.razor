@@ -8,7 +8,10 @@
     <nav class="nav">
         @foreach (var item in NavItems)
         {
-            <NavLink class="nav-tab" href="@item.Path" Match="@item.Match" @key="item.Path">
+            <NavLink class="@TabClass(item)"
+                     href="@item.Path"
+                     Match="@item.Match"
+                     @key="item.Path">
                 @item.Label
             </NavLink>
         }

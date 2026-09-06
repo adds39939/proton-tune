@@ -25,11 +25,24 @@ component impossible to drop onto a second page later.
 `Layout/MainLayout.razor.cs`, which is what draws the tab bar. A route that exists without a nav
 entry is reachable but invisible.
 
+`Pages/Game.razor` is the deliberate exception: `/library/{AppId:long}` is reached by picking a
+game rather than from the tab bar, so it has no `NavItems` entry of its own. A detail page about
+one thing is not a place the tab bar can send someone. It is `long` because that is the widest
+whole number a route constraint offers and Steam's identifiers are unsigned — narrowing it, and
+deciding whether it names an installed game, belongs to the component rather than the route.
+
+It still lights the Library tab. `NavLink` compares one address and cannot speak for a section
+spread over two, so a `NavItem` may name a `Section` — a path prefix it also owns — and
+`MainLayout` adds the same `active` class `NavLink` would. Library is at `/` with `Section` of
+`library`, which is why the game route sits under `/library/` rather than a `/game/` of its own.
+
 The root route `/` needs `NavLinkMatch.All`; with the default `Prefix` its tab stays highlighted
 on every other page.
 
 Keep pages thin. `Pages/Home.razor` is a `@page` directive and `<GameLibrary/>` — the work lives
-in the component, which keeps it testable and reusable.
+in the component, which keeps it testable and reusable. A page taking a route parameter stays just
+as thin: `Pages/Game.razor` declares the parameter in its code-behind and hands it straight to
+`GameConfigPanel`, which does the looking up and owns every state the answer can take.
 
 `Router.NotFound` is obsolete in .NET 10. Use `NotFoundPage="@typeof(NotFound)"`, which takes a
 page type rather than inline content.
@@ -114,8 +127,13 @@ does own when that is genuinely needed, and prefer moving the rule into the chil
 `MainLayout.razor.css` shows the legitimate case — `NavLink` renders its own anchor, which never
 carries the layout's scope attribute, so the tab styles hang off `.nav ::deep`.
 
-`MainLayout`'s `.content` is a full-height flex column that scrolls, so a short page needs to do
-nothing. A page that should instead pin its chrome and scroll only one region claims the height —
+`MainLayout`'s `.content` is a full-height flex column that scrolls and draws no gutter of its own:
+the page owns its margin, because a page that has to reach the window edge cannot cancel a parent's
+padding without knowing the number. Every page but one sets `margin: 28px` (`margin: 28px auto`
+where it is also `max-width: 1180px`); `GameConfigPanel` sets none, which is what lets the settings
+editor run edge to edge under its header band.
+
+A short page needs to do nothing else. A page that should instead pin its chrome and scroll only one region claims the height —
 `flex: 1; min-height: 0` on itself, `flex: none` on the parts that stay put, and
 `flex: 1; min-height: 0; overflow-y: auto` on the region that scrolls. `GameLibrary` does this so
 the header, search and view toggle never leave the window. Omitting either `min-height: 0` makes

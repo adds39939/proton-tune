@@ -1,59 +1,66 @@
-.backdrop {
-    position: fixed;
-    inset: 0;
-    z-index: 10;
-    background: var(--surface-0);
-}
-
-.panel {
+.config {
     display: flex;
     flex-direction: column;
-    height: 100%;
+    flex: 1;
+    min-height: 0;
 }
 
-.panel-header {
+.config-header {
     display: flex;
     align-items: center;
     gap: 14px;
     flex: none;
-    padding: 14px 24px;
+    padding: 12px 24px;
     border-bottom: 1px solid var(--border);
     background: var(--surface-1);
 }
 
-.panel-heading {
+.config-heading {
     flex: 1;
     min-width: 0;
 }
 
-.panel-title {
+.config-title {
     margin: 0;
-    font-size: 16px;
+    font-size: 18px;
     font-weight: 600;
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
 }
 
-.panel-subtitle {
+.config-subtitle {
     margin: 2px 0 0;
     color: var(--text-muted);
-    font-size: 12px;
+    font-size: 13px;
     font-variant-numeric: tabular-nums;
 }
 
-.panel-message {
-    flex: 1;
-    padding: 60px 0;
-    text-align: center;
-    color: var(--text-muted);
+.config-actions {
+    display: flex;
+    gap: 8px;
+    flex: none;
 }
 
-.panel-message-error {
+.config-message {
+    margin: 0;
+    padding: 28px;
+    color: var(--text-muted);
+    font-size: 13px;
+}
+
+.config-message-error {
     color: var(--danger);
 }
 
-.panel-footer {
+.config-editor {
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+    min-height: 0;
+}
+
+.config-footer {
     display: flex;
     align-items: center;
     gap: 20px;
@@ -62,11 +69,6 @@
     padding: 12px 24px;
     border-top: 1px solid var(--border);
     background: var(--surface-1);
-}
-
-.panel-status {
-    color: var(--text-muted);
-    font-size: 12px;
 }
 
 .footer-status {
@@ -94,16 +96,6 @@
     flex: none;
 }
 
-.global-link {
-    display: flex;
-    align-items: center;
-    gap: 16px;
-    flex: none;
-    padding: 10px 24px;
-    border-bottom: 1px solid var(--border);
-    background: var(--surface-1);
-}
-
 .switch {
     display: flex;
     align-items: center;
@@ -123,7 +115,7 @@
 }
 
 .global-note {
+    min-width: 0;
     color: var(--text-muted);
     font-size: 12px;
 }
-

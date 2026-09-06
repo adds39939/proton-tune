@@ -98,6 +98,17 @@ public sealed record SettingDefinition(string Variable, SettingCategory Category
     /// </remarks>
     public bool RestrictToProtonBuild { get; init; }
 
+    /// <summary>
+    /// Whether to leave the setting out of its section until a game already has it set.
+    /// </summary>
+    /// <remarks>
+    /// For a variable that is a second name for one listed beside it. Both spellings work, so
+    /// showing both would offer the same switch twice; dropping the older one would leave a game
+    /// already using it with an unlabelled custom variable. This shows it only where it is
+    /// already written, which is the one case it has something to say.
+    /// </remarks>
+    public bool HideUnlessSet { get; init; }
+
     /// <summary>Whether a stored value counts as this setting being on.</summary>
     public bool IsOn(string? value) =>
         value is not null && !string.Equals(value, "0", StringComparison.Ordinal) && value.Length > 0;

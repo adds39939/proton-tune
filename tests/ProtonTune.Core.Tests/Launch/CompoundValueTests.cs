@@ -133,4 +133,43 @@ public class CompoundValueTests
         Assert.NotNull(schema.Find("dxr"));
         Assert.Null(schema.Find("nothing"));
     }
+    /// <summary>
+    /// What a summary of everything set has to list. The bug this fixes showed every option a
+    /// variable knows about the moment the variable had any value at all, so a game that had asked
+    /// for one VKD3D flag was told it had asked for fifteen.
+    /// </summary>
+    [Fact]
+    public void ListsOnlyTheOptionsAValueCarries()
+    {
+        var schema = new CompoundSchema(
+            ",",
+            "=",
+            [
+                new CompoundOptionGroup("Features", [new CompoundOptionDefinition("dxr12", "DXR 1.2"),
+                                                     new CompoundOptionDefinition("nodxr", "No ray tracing")]),
+                new CompoundOptionGroup("Memory", [new CompoundOptionDefinition("no_upload_hvv", "No HVV")])
+            ]);
+
+        var groups = CompoundValue.Parse(schema, "dxr12").GroupsWithValues();
+
+        var group = Assert.Single(groups);
+
+        Assert.Equal("Features", group.Name);
+        Assert.Equal(["dxr12"], group.Options.Select(option => option.Key));
+    }
+
+    /// <summary>A heading over nothing says a section has settings when it has none.</summary>
+    [Fact]
+    public void DropsAGroupNoneOfWhoseOptionsAreSet()
+    {
+        var schema = new CompoundSchema(
+            ",",
+            "=",
+            [
+                new CompoundOptionGroup("Features", [new CompoundOptionDefinition("dxr12", "DXR 1.2")]),
+                new CompoundOptionGroup("Memory", [new CompoundOptionDefinition("no_upload_hvv", "No HVV")])
+            ]);
+
+        Assert.Empty(CompoundValue.Parse(schema, "something_else").GroupsWithValues());
+    }
 }

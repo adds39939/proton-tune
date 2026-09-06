@@ -381,6 +381,13 @@ groups:
                   label: Global pipeline cache
                   description: One shared pipeline cache rather than one per pipeline library.
 
+                - key: descriptor_heap
+                  label: Descriptor heaps
+                  description: >-
+                    Binds descriptors through Vulkan descriptor sets rather than the descriptor
+                    buffers VKD3D-Proton prefers where the driver offers them. The way back for a
+                    game the newer path renders wrongly.
+
       - variable: VKD3D_FEATURE_LEVEL
         label: VKD3D feature level
         description: Caps the Direct3D 12 feature level reported to the game.

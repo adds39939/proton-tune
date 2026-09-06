@@ -74,6 +74,23 @@ groups:
         kind: choice
         choices: *renderPresets
 
+      - variable: DXVK_NVAPI_DRS_NGX_DLSS_FG_OVERRIDE
+        label: Force frame generation
+        description: >-
+          Turns frame generation on or off over the top of the game's own setting, for a title that
+          offers no switch for it or refuses to enable one.
+        kind: choice
+        choices: ["on", "off"]
+
+      - variable: DXVK_NVAPI_DRS_NGX_DLSSG_MULTI_FRAME_COUNT
+        label: Generated frames per rendered frame
+        description: >-
+          How many frames multi frame generation produces for each one the game draws — 1 for none,
+          up to 4. Needs a card whose driver offers it, and frame generation forced on or enabled
+          in the game.
+        kind: number
+        placeholder: "3"
+
   - name: NVAPI
     settings:
       - variable: PROTON_DISABLE_NVAPI
@@ -181,3 +198,20 @@ groups:
         kind: toggle
         protonBuilds: ["^GE-Proton", "^(proton-)?cachyos"]
         restrictToProtonBuild: true
+
+  - name: Smooth Motion
+    settings:
+      - variable: NVPRESENT_ENABLE_SMOOTH_MOTION
+        label: Enable Smooth Motion
+        description: >-
+          Loads NVIDIA's presentation layer, which interpolates frames in the driver for a game
+          that has no frame generation of its own. Read by the layer rather than by Proton, so it
+          works under any build against a driver that ships it.
+        kind: toggle
+
+      - variable: NVPRESENT_QUEUE_FAMILY
+        label: Present on a separate queue
+        description: >-
+          Moves the presentation layer off the queue the game submits on. The workaround for a game
+          that picks up Smooth Motion but stutters or shows nothing.
+        kind: toggle

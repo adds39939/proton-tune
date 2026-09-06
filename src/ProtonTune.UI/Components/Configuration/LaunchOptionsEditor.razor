@@ -1,234 +1,321 @@
-<div class="panel-body">
-    <nav class="sections" aria-label="Setting sections">
-        @if (Entry is not null)
-        {
-            <button type="button"
-                    class="section-tab @(SelectedSpecial == ProtonSection ? "is-active" : string.Empty)"
-                    @onclick="() => SelectSpecial(ProtonSection)">
-                <span>@ProtonSection</span>
-            </button>
+<div class="editor">
+    <div class="editor-bar">
+        <div class="bar-leading">@Leading</div>
+
+        <input class="search"
+               type="search"
+               aria-label="Search settings"
+               placeholder="Search settings…"
+               spellcheck="false"
+               value="@SearchText"
+               @oninput="OnSearchInput"/>
+    </div>
+
+    <div class="panel-body">
+        <nav class="sections" aria-label="Setting sections">
+            @if (Entry is not null)
+            {
+                <button type="button"
+                        class="section-tab @(SelectedSpecial == ProtonSection ? "is-active" : string.Empty)"
+                        @onclick="() => SelectSpecial(ProtonSection)">
+                    <span>@ProtonSection</span>
+                </button>
+
+                <hr class="section-divider"/>
+            }
+
+            @foreach (var category in VisibleCategories)
+            {
+                var count = SetCountIn(category);
+
+                var isHit = IsSearching && HasSearchHit(category);
+
+                <button type="button"
+                        class="section-tab @(SelectedCategory?.Id == category.Id ? "is-active" : string.Empty) @(isHit ? "is-match" : string.Empty)"
+                        @key="category.Id"
+                        @onclick="() => SelectCategory(category)">
+                    <span>@category.Title</span>
+                    @if (count > 0)
+                    {
+                        <span class="section-count">@count</span>
+                    }
+                </button>
+            }
 
             <hr class="section-divider"/>
-        }
-
-        @foreach (var category in VisibleCategories)
-        {
-            var count = SetCountIn(category);
 
             <button type="button"
-                    class="section-tab @(SelectedCategory?.Id == category.Id ? "is-active" : string.Empty)"
-                    @key="category.Id"
-                    @onclick="() => SelectCategory(category)">
-                <span>@category.Title</span>
-                @if (count > 0)
-                {
-                    <span class="section-count">@count</span>
-                }
+                    class="section-tab @(SelectedSpecial == LaunchChainSection ? "is-active" : string.Empty)"
+                    @onclick="() => SelectSpecial(LaunchChainSection)">
+                <span>@LaunchChainSection</span>
+                <span class="section-count">@Options.Wrapper.Count</span>
             </button>
-        }
 
-        <hr class="section-divider"/>
+            <button type="button"
+                    class="section-tab @(SelectedSpecial == CustomSection ? "is-active" : string.Empty) @(IsSearching && CustomHasSearchHit ? "is-match" : string.Empty)"
+                    @onclick="() => SelectSpecial(CustomSection)">
+                <span>@CustomSection</span>
+                <span class="section-count">@CustomVariables.Count</span>
+            </button>
 
-        <button type="button"
-                class="section-tab @(SelectedSpecial == LaunchChainSection ? "is-active" : string.Empty)"
-                @onclick="() => SelectSpecial(LaunchChainSection)">
-            <span>@LaunchChainSection</span>
-            <span class="section-count">@Options.Wrapper.Count</span>
-        </button>
+            <button type="button"
+                    class="section-tab @(SelectedSpecial == AppliedSection ? "is-active" : string.Empty) @(IsSearching && AppliedHasSearchHit ? "is-match" : string.Empty)"
+                    @onclick="() => SelectSpecial(AppliedSection)">
+                <span>@AppliedSection</span>
+                <span class="section-count">@AppliedCount</span>
+            </button>
 
-        <button type="button"
-                class="section-tab @(SelectedSpecial == CustomSection ? "is-active" : string.Empty)"
-                @onclick="() => SelectSpecial(CustomSection)">
-            <span>@CustomSection</span>
-            <span class="section-count">@CustomVariables.Count</span>
-        </button>
+            <button type="button"
+                    class="section-tab @(SelectedSpecial == RawSection ? "is-active" : string.Empty)"
+                    @onclick="() => SelectSpecial(RawSection)">
+                <span>@RawSection</span>
+            </button>
+        </nav>
 
-        <button type="button"
-                class="section-tab @(SelectedSpecial == RawSection ? "is-active" : string.Empty)"
-                @onclick="() => SelectSpecial(RawSection)">
-            <span>@RawSection</span>
-        </button>
-    </nav>
-
-    <div class="section-content">
-        @if (Warnings.Count > 0)
-        {
-            <ul class="warnings">
-                @foreach (var warning in Warnings)
-                {
-                    <li @key="warning">@warning</li>
-                }
-            </ul>
-        }
-
-        @if (SelectedCategory is { } selected)
-        {
-            <h3 class="section-title">@selected.Title</h3>
-
-            @if (selected.Command is { } command)
+        <div class="section-content">
+            @if (Warnings.Count > 0)
             {
-                <CommandEditor Command="@command" Options="@Options" OptionsChanged="Publish"/>
-            }
-
-            @if (selected.Is(SettingCategoryIds.MangoHud))
-            {
-                <CommandToggle Label="Launch through MangoHud"
-                               Command="@MangoHudCommand"
-                               Description="Adds mangohud to the launch chain. Without it none of these options apply."
-                               IsOn="@Options.HasWrapperCommand(MangoHudCommand)"
-                               IsOnChanged="@(on => ApplyWrapperCommand(MangoHudCommand, on))"/>
-            }
-
-            @if (selected.Is(SettingCategoryIds.Cpu))
-            {
-                <CpuAffinityEditor Value="@Options.CpuAffinity"
-                                   ValueChanged="ApplyCpuAffinity"/>
-
-                <CollapsibleGroup Name="Scheduling"
-                                  SetCount="@(Options.HasWrapperCommand(GameModeCommand) ? 1 : 0)">
-                    <CommandToggle Label="Launch through GameMode"
-                                   Command="@GameModeCommand"
-                                   Description="Asks the system to favour the game while it runs."
-                                   IsOn="@Options.HasWrapperCommand(GameModeCommand)"
-                                   IsOnChanged="@(on => ApplyWrapperCommand(GameModeCommand, on))"/>
-                </CollapsibleGroup>
-            }
-
-            foreach (var group in ListedGroupsIn(selected))
-            {
-                // Keyed by the section and the first variable under the heading rather than by
-                // position, so a group that is open stays open when one above it appears or goes,
-                // and a closed group in one section never comes back as a different one in the next.
-                var key = $"{selected.Id}:{group.Settings[0].Variable}";
-
-                <CollapsibleGroup Name="@(group.Name ?? UnheadedGroupName(selected))"
-                                  SetCount="@SetCountIn(group)"
-                                  @key="key">
-                    @foreach (var definition in group.Settings)
+                <ul class="warnings">
+                    @foreach (var warning in Warnings)
                     {
-                        <SettingEditor Definition="@definition"
-                                       Value="@Options.FindEnvironment(definition.Variable)?.Value"
-                                       ValueChanged="@(value => ApplySetting(definition, value))"
-                                       IsIgnored="@IsIgnored(definition)"
-                                       BuildName="@BuildName"
-                                       @key="definition.Variable"/>
+                        <li @key="warning">@warning</li>
                     }
-                </CollapsibleGroup>
+                </ul>
             }
-        }
-        else
-            switch (SelectedSpecial)
+
+            @if (SelectedCategory is { } selected)
             {
-                case ProtonSection when Entry is { } protonGame:
-                {
-                    <h3 class="section-title">Proton</h3>
-                    <p class="section-note">
-                        The compatibility build the game runs under. Saved with everything else, in
-                        the same trip through Steam.
-                    </p>
+                <h3 class="section-title">@selected.Title</h3>
 
-                    <ProtonVersionEditor AppId="@protonGame.AppId"
-                                         Value="@CompatTool"
-                                         ValueChanged="@CompatToolChanged"
-                                         IsBusy="@IsBusy"/>
-                    break;
+                @if (selected.Command is { } command && ShowsCommand(selected))
+                {
+                    <CommandEditor Command="@command"
+                                   Options="@Options"
+                                   OptionsChanged="Publish"
+                                   Search="@_search"/>
                 }
-                case LaunchChainSection:
-                {
-                    <h3 class="section-title">Launch chain</h3>
-                    <p class="section-note">
-                        Commands the game is launched through, in order. Not editable here yet —
-                        change it in the raw options for now.
-                    </p>
 
-                    if (Options.Wrapper.Count == 0)
+                @if (ShowsExtras && selected.Is(SettingCategoryIds.MangoHud))
+                {
+                    <CommandToggle Label="Launch through MangoHud"
+                                   Command="@MangoHudCommand"
+                                   Description="Adds mangohud to the launch chain. Without it none of these options apply."
+                                   IsOn="@Options.HasWrapperCommand(MangoHudCommand)"
+                                   IsOnChanged="@(on => ApplyWrapperCommand(MangoHudCommand, on))"/>
+                }
+
+                @if (ShowsExtras && selected.Is(SettingCategoryIds.Cpu))
+                {
+                    <CpuAffinityEditor Value="@Options.CpuAffinity"
+                                       ValueChanged="ApplyCpuAffinity"/>
+
+                    <CollapsibleGroup Name="Scheduling"
+                                      SetCount="@(Options.HasWrapperCommand(GameModeCommand) ? 1 : 0)">
+                        <CommandToggle Label="Launch through GameMode"
+                                       Command="@GameModeCommand"
+                                       Description="Asks the system to favour the game while it runs."
+                                       IsOn="@Options.HasWrapperCommand(GameModeCommand)"
+                                       IsOnChanged="@(on => ApplyWrapperCommand(GameModeCommand, on))"/>
+                    </CollapsibleGroup>
+                }
+
+                foreach (var group in ListedGroupsIn(selected))
+                {
+                    // Keyed by the section and the first variable under the heading rather than by
+                    // position, so a group that is open stays open when one above it appears or goes,
+                    // and a closed group in one section never comes back as a different one in the next.
+                    var key = $"{selected.Id}:{group.Settings[0].Variable}";
+
+                    <CollapsibleGroup Name="@(group.Name ?? UnheadedGroupName(selected))"
+                                      SetCount="@SetCountIn(group)"
+                                      @key="key">
+                        @foreach (var definition in group.Settings)
+                        {
+                            <SettingEditor Definition="@definition"
+                                           Value="@Options.FindEnvironment(definition.Variable)?.Value"
+                                           ValueChanged="@(value => ApplySetting(definition, value))"
+                                           IsIgnored="@IsIgnored(definition)"
+                                           BuildName="@BuildName"
+                                           @key="definition.Variable"/>
+                        }
+                    </CollapsibleGroup>
+                }
+
+                @if (SelectedIsEmptyUnderSearch)
+                {
+                    <p class="section-empty">Nothing in @selected.Title matches “@_search.Term”.</p>
+                }
+            }
+            else
+                switch (SelectedSpecial)
+                {
+                    case ProtonSection when Entry is { } protonGame:
                     {
-                        <p class="section-empty">The game is launched directly.</p>
+                        <h3 class="section-title">Proton</h3>
+                        <p class="section-note">
+                            The compatibility build the game runs under. Saved with everything else, in
+                            the same trip through Steam.
+                        </p>
+
+                        <ProtonVersionEditor AppId="@protonGame.AppId"
+                                             Value="@CompatTool"
+                                             ValueChanged="@CompatToolChanged"
+                                             IsBusy="@IsBusy"/>
+                        break;
                     }
-                    else
+                    case LaunchChainSection:
                     {
-                        <ol class="chain">
-                            @foreach (var token in Options.Wrapper)
+                        <h3 class="section-title">Launch chain</h3>
+                        <p class="section-note">
+                            Commands the game is launched through, in order. Not editable here yet —
+                            change it in the raw options for now.
+                        </p>
+
+                        if (Options.Wrapper.Count == 0)
+                        {
+                            <p class="section-empty">The game is launched directly.</p>
+                        }
+                        else
+                        {
+                            <ol class="chain">
+                                @foreach (var token in Options.Wrapper)
+                                {
+                                    <li><code>@token</code></li>
+                                }
+                            </ol>
+                        }
+
+                        <SettingRow Label="Command placeholder"
+                                    Variable="%command%"
+                                    Value="@(Options.HasCommandPlaceholder ? "present" : "absent — options are appended")"
+                                    Description="Where Steam substitutes the game's own command line."/>
+
+                        if (Options.Arguments.Count > 0)
+                        {
+                            <SettingRow Label="Game arguments"
+                                        Variable="after %command%"
+                                        Value="@string.Join(' ', Options.Arguments)"
+                                        Description="Passed to the game itself."/>
+                        }
+
+                        break;
+                    }
+                    case CustomSection:
+                    {
+                        <h3 class="section-title">Custom variables</h3>
+                        <p class="section-note">
+                            Anything ProtonTune has no definition for, plus whatever you want to add.
+                        </p>
+
+                        foreach (var variable in ListedCustomVariables)
+                        {
+                            <CustomVariableRow Name="@variable.Name"
+                                               Value="@variable.Value"
+                                               ValueChanged="@(value => SetCustomVariable(variable.Name, value))"
+                                               OnRemove="@(() => RemoveCustomVariable(variable.Name))"
+                                               @key="variable.Name"/>
+                        }
+
+                        if (IsSearching)
+                        {
+                            if (ListedCustomVariables.Count == 0)
                             {
-                                <li><code>@token</code></li>
+                                <p class="section-empty">No custom variable matches “@_search.Term”.</p>
                             }
-                        </ol>
+                        }
+                        else
+                        {
+                            <div class="new-variable">
+                                <input class="new-name"
+                                       type="text"
+                                       spellcheck="false"
+                                       aria-label="New variable name"
+                                       placeholder="VARIABLE_NAME"
+                                       value="@NewVariableName"
+                                       @onchange="@(args => NewVariableName = args.Value?.ToString() ?? string.Empty)"/>
+
+                                <input class="new-value"
+                                       type="text"
+                                       spellcheck="false"
+                                       aria-label="New variable value"
+                                       placeholder="value"
+                                       value="@NewVariableValue"
+                                       @onchange="@(args => NewVariableValue = args.Value?.ToString() ?? string.Empty)"/>
+
+                                <Button OnClick="AddCustomVariable">Add</Button>
+                            </div>
+                        }
+
+                        break;
                     }
-
-                    <SettingRow Label="Command placeholder"
-                                Variable="%command%"
-                                Value="@(Options.HasCommandPlaceholder ? "present" : "absent — options are appended")"
-                                Description="Where Steam substitutes the game's own command line."/>
-
-                    if (Options.Arguments.Count > 0)
+                    case AppliedSection:
                     {
-                        <SettingRow Label="Game arguments"
-                                    Variable="after %command%"
-                                    Value="@string.Join(' ', Options.Arguments)"
-                                    Description="Passed to the game itself."/>
+                        <h3 class="section-title">Applied</h3>
+                        <p class="section-note">
+                            Every variable this game has set, under the section it belongs to. The
+                            same controls as the sections themselves, so anything listed here can be
+                            changed or switched off without going to find it.
+                        </p>
+
+                        foreach (var group in AppliedGroups)
+                        {
+                            <CollapsibleGroup Name="@group.Name"
+                                              SetCount="@group.Settings.Count"
+                                              @key="group.Name">
+                                @foreach (var definition in group.Settings)
+                                {
+                                    <SettingEditor Definition="@definition"
+                                                   Value="@Options.FindEnvironment(definition.Variable)?.Value"
+                                                   ValueChanged="@(value => ApplySetting(definition, value))"
+                                                   IsIgnored="@IsIgnored(definition)"
+                                                   BuildName="@BuildName"
+                                                   SetOnly="true"
+                                                   @key="definition.Variable"/>
+                                }
+                            </CollapsibleGroup>
+                        }
+
+                        if (ListedCustomVariables.Count > 0)
+                        {
+                            <CollapsibleGroup Name="@CustomSection" SetCount="@ListedCustomVariables.Count">
+                                @foreach (var variable in ListedCustomVariables)
+                                {
+                                    <CustomVariableRow Name="@variable.Name"
+                                                       Value="@variable.Value"
+                                                       ValueChanged="@(value => SetCustomVariable(variable.Name, value))"
+                                                       OnRemove="@(() => RemoveCustomVariable(variable.Name))"
+                                                       @key="variable.Name"/>
+                                }
+                            </CollapsibleGroup>
+                        }
+
+                        if (!AppliedHasSearchHit)
+                        {
+                            <p class="section-empty">
+                                @(IsSearching
+                                    ? $"Nothing set matches “{_search.Term}”."
+                                    : "Nothing is set. This game runs with no launch options.")
+                            </p>
+                        }
+
+                        break;
                     }
+                    default:
+                        <h3 class="section-title">Raw launch options</h3>
+                        <p class="section-note">
+                            The whole string, as Steam stores it. Editing here is the escape hatch for
+                            anything ProtonTune does not yet understand.
+                        </p>
 
-                    break;
+                        <textarea class="raw-editor"
+                          rows="6"
+                          spellcheck="false"
+                          placeholder="No launch options are set."
+                          disabled="@IsBusy"
+                          value="@RawDraft"
+                          @oninput="OnRawInput"></textarea>
+                        break;
                 }
-                case CustomSection:
-                {
-                    <h3 class="section-title">Custom variables</h3>
-                    <p class="section-note">
-                        Anything ProtonTune has no definition for, plus whatever you want to add.
-                    </p>
-
-                    foreach (var variable in CustomVariables)
-                    {
-                        <div class="custom" @key="variable.Name">
-                            <code class="custom-name">@variable.Name</code>
-
-                            <input class="custom-value"
-                                   type="text"
-                                   spellcheck="false"
-                                   value="@variable.Value"
-                                   @onchange="@(args => SetCustomVariable(variable.Name, args.Value?.ToString()))"/>
-
-                            <Button Variant="ButtonVariant.Quiet"
-                                    OnClick="() => RemoveCustomVariable(variable.Name)">
-                                Remove
-                            </Button>
-                        </div>
-                    }
-
-                    <div class="custom custom-new">
-                        <input class="custom-name-input"
-                               type="text"
-                               spellcheck="false"
-                               placeholder="VARIABLE_NAME"
-                               value="@NewVariableName"
-                               @onchange="@(args => NewVariableName = args.Value?.ToString() ?? string.Empty)"/>
-
-                        <input class="custom-value"
-                               type="text"
-                               spellcheck="false"
-                               placeholder="value"
-                               value="@NewVariableValue"
-                               @onchange="@(args => NewVariableValue = args.Value?.ToString() ?? string.Empty)"/>
-
-                        <Button OnClick="AddCustomVariable">Add</Button>
-                    </div>
-                    break;
-                }
-                default:
-                    <h3 class="section-title">Raw launch options</h3>
-                    <p class="section-note">
-                        The whole string, as Steam stores it. Editing here is the escape hatch for
-                        anything ProtonTune does not yet understand.
-                    </p>
-
-                    <textarea class="raw-editor"
-                      rows="6"
-                      spellcheck="false"
-                      placeholder="No launch options are set."
-                      disabled="@IsBusy"
-                      value="@RawDraft"
-                      @oninput="OnRawInput"></textarea>
-                    break;
-            }
+        </div>
     </div>
 </div>

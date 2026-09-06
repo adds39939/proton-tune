@@ -24,6 +24,18 @@ public class SteamClientLaunchTests
         Assert.Equal(["--fork", "steam"], startInfo.ArgumentList);
     }
 
+    /// <summary>
+    /// Launching goes through Steam's own address rather than running the game's binary, so it
+    /// arrives with the launch options, the Proton build and the overlay Steam would give it.
+    /// </summary>
+    [Fact]
+    public void LaunchesAGameThroughSteamsOwnAddress()
+    {
+        var startInfo = SteamClient.BuildStartInfo(detached: true, [SteamClient.GameUrl(440)]);
+
+        Assert.Equal(["--fork", "steam", "steam://rungameid/440"], startInfo.ArgumentList);
+    }
+
     [Fact]
     public void PassesArgumentsThroughToSteam()
     {

@@ -143,6 +143,27 @@ public class LaunchOptionsValidatorTests
         Assert.DoesNotContain(warnings, warning => warning.Contains("Wayland", StringComparison.Ordinal));
     }
 
+    /// <summary>
+    /// Both spellings are one switch to every build that reads either, so a configuration written
+    /// with the older pair is complete and must draw no warning.
+    /// </summary>
+    [Fact]
+    public void StaysQuietWhenHdrHasWaylandUnderTheOlderSpelling()
+    {
+        var warnings = LaunchOptionsValidator.Validate(
+            LaunchOptions.Parse("PROTON_USE_WAYLAND=1 PROTON_USE_HDR=1 %command%"));
+
+        Assert.DoesNotContain(warnings, warning => warning.Contains("Wayland", StringComparison.Ordinal));
+    }
+
+    [Fact]
+    public void WarnsWhenHdrIsEnabledUnderTheOlderSpellingWithoutWayland()
+    {
+        var warnings = LaunchOptionsValidator.Validate(LaunchOptions.Parse("PROTON_USE_HDR=1 %command%"));
+
+        Assert.Contains(warnings, warning => warning.Contains("Wayland", StringComparison.Ordinal));
+    }
+
     [Fact]
     public void SaysNothingAboutADlssOverrideWithoutNvapi()
     {

@@ -1,3 +1,28 @@
+.editor {
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+    min-height: 0;
+}
+
+.editor-bar {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    flex: none;
+    padding: 10px 24px;
+    border-bottom: 1px solid var(--border);
+    background: var(--surface-1);
+}
+
+.bar-leading {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    flex: 1;
+    min-width: 0;
+}
+
 .panel-body {
     display: flex;
     flex: 1;
@@ -14,6 +39,27 @@
     border-right: 1px solid var(--border);
     background: var(--surface-1);
     overflow-y: auto;
+}
+
+.search {
+    flex: none;
+    width: 240px;
+    padding: 7px 10px;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    background: var(--surface-0);
+    color: var(--text);
+    font: inherit;
+    font-size: 12px;
+}
+
+.search::placeholder {
+    color: var(--text-muted);
+}
+
+.search:focus {
+    outline: none;
+    border-color: var(--accent);
 }
 
 .section-tab {
@@ -40,6 +86,21 @@
 .section-tab.is-active {
     background: var(--surface-2);
     color: var(--text);
+}
+
+.section-tab.is-match {
+    background: var(--accent-soft);
+    color: var(--accent);
+}
+
+.section-tab.is-match .section-count {
+    color: var(--accent);
+}
+
+.section-tab.is-match.is-active {
+    background: var(--surface-2);
+    color: var(--text);
+    box-shadow: inset 2px 0 0 var(--accent);
 }
 
 .section-count {
@@ -142,25 +203,16 @@
     margin-top: 4px;
 }
 
-.custom {
+.new-variable {
     display: flex;
     align-items: center;
     gap: 12px;
+    margin-top: 8px;
     padding: 10px 0;
-    border-bottom: 1px solid var(--border);
 }
 
-.custom-name {
-    flex: none;
-    width: 34%;
-    color: var(--text);
-    font-family: "JetBrains Mono", ui-monospace, monospace;
-    font-size: 12px;
-    overflow-wrap: anywhere;
-}
-
-.custom-name-input,
-.custom-value {
+.new-name,
+.new-value {
     padding: 7px 10px;
     border: 1px solid var(--border);
     border-radius: 8px;
@@ -170,28 +222,23 @@
     font-size: 12px;
 }
 
-.custom-name-input {
+.new-name {
     flex: none;
     width: 34%;
 }
 
-.custom-value {
+.new-value {
     flex: 1;
     min-width: 0;
 }
 
-.custom-name-input:focus,
-.custom-value:focus {
+.new-name:focus,
+.new-value:focus {
     outline: none;
     border-color: var(--accent);
 }
 
-.custom-name-input::placeholder,
-.custom-value::placeholder {
+.new-name::placeholder,
+.new-value::placeholder {
     color: var(--text-muted);
-}
-
-.custom-new {
-    border-bottom: none;
-    margin-top: 8px;
 }

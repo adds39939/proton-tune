@@ -3,12 +3,23 @@ title: Display
 order: 4
 
 settings:
-  - variable: PROTON_USE_WAYLAND
+  - variable: PROTON_ENABLE_WAYLAND
     label: Run natively on Wayland
     description: Skips XWayland. Required before HDR will do anything.
     kind: toggle
     protonBuilds: ["^GE-Proton", "^(proton-)?cachyos"]
     restrictToProtonBuild: true
+
+  - variable: PROTON_USE_WAYLAND
+    label: Run natively on Wayland (older name)
+    description: >-
+      The same switch under the name it was introduced with. Every build that reads the current
+      spelling reads this one too, so there is nothing to gain by moving, and one of the two is
+      enough.
+    kind: toggle
+    protonBuilds: ["^GE-Proton", "^(proton-)?cachyos"]
+    restrictToProtonBuild: true
+    hideUnlessSet: true
 
   - variable: PROTON_WAYLAND_MONITOR
     label: Primary monitor
@@ -50,3 +61,12 @@ settings:
       Makes DXVK present into a window whatever the game asked for, which is the way out of a game
       that takes the display over and will not give it back.
     kind: toggle
+
+  - variable: SDL_VIDEO_DRIVER
+    label: SDL video driver
+    description: >-
+      Which windowing system a game built on SDL talks to. Read by the game itself rather than by
+      Proton, so it is the lever for a native Linux title, and the way to push one onto Wayland or
+      back onto X11 whichever the session prefers.
+    kind: choice
+    choices: ["wayland", "x11"]

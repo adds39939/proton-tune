@@ -304,5 +304,14 @@ public sealed class SteamConfigBackupServiceTests : IDisposable
 
             return true;
         }
+
+        public bool LaunchGame(uint appId)
+        {
+            LaunchedAppIds.Add(appId);
+
+            return true;
+        }
+
+        public List<uint> LaunchedAppIds { get; } = [];
     }
 }

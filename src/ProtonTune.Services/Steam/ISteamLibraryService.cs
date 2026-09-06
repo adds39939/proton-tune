@@ -14,5 +14,19 @@ public interface ISteamLibraryService
     /// <returns>
     /// The installed apps, or an empty list when Steam is not installed on this machine.
     /// </returns>
+    /// <remarks>
+    /// The answer is held after the first read, since every screen wants the same list and reading
+    /// it means parsing a manifest per installed app. Call <see cref="Invalidate" /> where the
+    /// answer could have changed.
+    /// </remarks>
     Task<IReadOnlyList<SteamLibraryEntry>> GetInstalledAppsAsync(CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Discards the held answer, so the next read goes back to disk.
+    /// </summary>
+    /// <remarks>
+    /// Nothing watches the manifests, so this is what a rescan means: the user has installed or
+    /// removed something and is asking to be told about it.
+    /// </remarks>
+    void Invalidate();
 }
