@@ -89,7 +89,6 @@
 }
 
 .section-tab.is-match {
-    background: var(--accent-soft);
     color: var(--accent);
 }
 

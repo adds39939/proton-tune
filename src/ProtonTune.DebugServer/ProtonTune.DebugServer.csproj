@@ -1,0 +1,17 @@
+<Project Sdk="Microsoft.NET.Sdk.Web">
+
+    <PropertyGroup>
+        <TargetFramework>net10.0</TargetFramework>
+        <Nullable>enable</Nullable>
+        <ImplicitUsings>enable</ImplicitUsings>
+        <IsPackable>false</IsPackable>
+    </PropertyGroup>
+
+    <ItemGroup>
+      <ProjectReference Include="..\ProtonTune.Core\ProtonTune.Core.csproj" />
+      <ProjectReference Include="..\ProtonTune.GameConfiguration\ProtonTune.GameConfiguration.csproj" />
+      <ProjectReference Include="..\ProtonTune.Services\ProtonTune.Services.csproj" />
+      <ProjectReference Include="..\ProtonTune.UI\ProtonTune.UI.csproj" />
+    </ItemGroup>
+
+</Project>
